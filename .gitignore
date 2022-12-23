@@ -3,3 +3,8 @@
 /.pids/
 /dist/
 
+# IntelliJ projects.
+.idea/
+*.iml
+*.ipr
+
