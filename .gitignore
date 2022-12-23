@@ -1,2 +1,5 @@
+# Pants control and output dirs.
 /.pants.d/
 /.pids/
+/dist/
+

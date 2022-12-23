@@ -1,2 +1,47 @@
 [GLOBAL]
-pants_version = "2.14.0"
+pants_version = "2.15.0rc0"
+
+backend_packages = [
+    "pants.backend.python",
+    "pants.backend.python.lint.black",
+    "pants.backend.python.lint.isort",
+    "pants.backend.python.typecheck.mypy",
+]
+
+[anonymous-telemetry]
+enabled = true
+repo_id = "7b104180-82fa-11ed-937c-00155d25fe7b"
+
+[black]
+version = "black==22.10.0"
+lockfile = "pants-support/tool-locks/black.lock"
+
+[isort]
+version = "isort==5.10.1"
+lockfile = "pants-support/tool-locks/isort.lock"
+
+[mypy]
+version = "mypy==0.991"
+config = "pyproject.toml"
+lockfile = "pants-support/tool-locks/mypy.lock"
+
+[pex-cli]
+version = "v2.1.119"
+known_versions = [
+    "v2.1.119|linux_arm64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
+    "v2.1.119|linux_x86_64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
+    "v2.1.119|macos_arm64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
+    "v2.1.119|macos_x86_64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
+]
+
+[pytest]
+version = "pytest==7.2.0"
+lockfile = "pants-support/tool-locks/pytest.lock"
+
+[python]
+enable_resolves = true
+interpreter_constraints = ["==3.10.*"]
+
+[python.resolves]
+python-default = "lock.json"
+
