@@ -3,4 +3,6 @@ click
 filelock
 httpx
 pex
+tqdm
 types-appdirs
+types-tqdm

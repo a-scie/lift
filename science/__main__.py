@@ -1,5 +1,6 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 from pathlib import Path, PurePath
 from urllib.parse import urlparse
 
@@ -7,6 +8,7 @@ import click
 
 from science import __version__
 from science.fetcher import fetch_and_verify
+from science.platform import Platform
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -24,8 +26,17 @@ def main() -> None:  # TODO(John Sirois): XXX:
 
 
 @main.command()
-def init() -> None:
-    click.echo("Science init!")
+@click.option(
+    "-p",
+    "--platform",
+    "platforms",
+    type=Platform.parse,
+    multiple=True,
+    default=[Platform.current()],
+)
+def init(platforms: tuple[Platform, ...]) -> None:
+    click.echo(f"Science init!:")
+    click.echo(f"{platforms=}")
 
 
 @main.command()

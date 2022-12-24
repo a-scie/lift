@@ -14,7 +14,9 @@
 //     "filelock",
 //     "httpx",
 //     "pex",
-//     "types-appdirs"
+//     "tqdm",
+//     "types-appdirs",
+//     "types-tqdm"
 //   ],
 //   "manylinux": "manylinux2014",
 //   "requirement_constraints": [],
@@ -308,6 +310,33 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "6fee160d6ffcd1b1c68c65f14c829c22832bc401726335ce92c52d395944a6a1",
+              "url": "https://files.pythonhosted.org/packages/47/bb/849011636c4da2e44f1253cd927cfb20ada4374d8b3a4e425416e84900cc/tqdm-4.64.1-py2.py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "5f4f682a004951c1b450bc753c710e9280c5746ce6ffedee253ddbcbf54cf1e4",
+              "url": "https://files.pythonhosted.org/packages/c1/c2/d8a40e5363fb01806870e444fc1d066282743292ff32a9da54af51ce36a2/tqdm-4.64.1.tar.gz"
+            }
+          ],
+          "project_name": "tqdm",
+          "requires_dists": [
+            "colorama; platform_system == \"Windows\"",
+            "importlib-resources; python_version < \"3.7\"",
+            "ipywidgets>=6; extra == \"notebook\"",
+            "py-make>=0.1.0; extra == \"dev\"",
+            "requests; extra == \"telegram\"",
+            "slack-sdk; extra == \"slack\"",
+            "twine; extra == \"dev\"",
+            "wheel; extra == \"dev\""
+          ],
+          "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7",
+          "version": "4.64.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "9cff9736bb4ea0baa2ce452244ccaae8932b852f7eb7a7afba3222c5ba90377a",
               "url": "https://files.pythonhosted.org/packages/43/db/786de195cc88f67529f2115342cf515105c72b1a1fd135bd4ff4eb423891/types_appdirs-1.4.3.1-py3-none-any.whl"
             },
@@ -321,6 +350,24 @@
           "requires_dists": [],
           "requires_python": null,
           "version": "1.4.3.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "8871999c7f4a8cd24655dcb44cfcca03efd931a9b49e62530a8880bd909c5474",
+              "url": "https://files.pythonhosted.org/packages/5f/1f/08e461659f939d656b104b0dcfe89279cf26801b4c11f23d5a6b63e9ce52/types_tqdm-4.64.7.9-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "aecd96552e9c3b87e1926cb312734f135426ffc3254d8e64cfeb3ba591ef72c5",
+              "url": "https://files.pythonhosted.org/packages/24/c4/186ee3d88c7ec90a32a89646293cc98976cf8f75054a3642b4507b663984/types-tqdm-4.64.7.9.tar.gz"
+            }
+          ],
+          "project_name": "types-tqdm",
+          "requires_dists": [],
+          "requires_python": null,
+          "version": "4.64.7.9"
         }
       ],
       "platform_tag": null
@@ -336,7 +383,9 @@
     "filelock",
     "httpx",
     "pex",
-    "types-appdirs"
+    "tqdm",
+    "types-appdirs",
+    "types-tqdm"
   ],
   "requires_python": [
     "==3.10.*"

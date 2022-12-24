@@ -8,11 +8,15 @@ from enum import Enum
 
 
 class Platform(Enum):
-    Linux_aarch64 = ("linux-aarch64",)
-    Linux_x86_64 = ("linux-x86_64",)
-    Macos_aarch64 = ("macos-aarch64",)
-    Macos_x86_64 = ("macos-x86_64",)
-    Windows_x86_64 = ("windows-x86_64",)
+    Linux_aarch64 = "linux-aarch64"
+    Linux_x86_64 = "linux-x86_64"
+    Macos_aarch64 = "macos-aarch64"
+    Macos_x86_64 = "macos-x86_64"
+    Windows_x86_64 = "windows-x86_64"
+
+    @classmethod
+    def parse(cls, value: str) -> Platform:
+        return Platform.current() if "current" == value else Platform(value)
 
     @classmethod
     def current(cls) -> Platform:
