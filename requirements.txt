@@ -1,4 +1,6 @@
+appdirs
 click
+filelock
 httpx
 pex
-
+types-appdirs

@@ -9,9 +9,12 @@
 //     "CPython==3.10.*"
 //   ],
 //   "generated_with_requirements": [
+//     "appdirs",
 //     "click",
+//     "filelock",
 //     "httpx",
-//     "pex"
+//     "pex",
+//     "types-appdirs"
 //   ],
 //   "manylinux": "manylinux2014",
 //   "requirement_constraints": [],
@@ -70,6 +73,24 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128",
+              "url": "https://files.pythonhosted.org/packages/3b/00/2344469e2084fb287c2e0b57b72910309874c3245463acd6cf5e3db69324/appdirs-1.4.4-py2.py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41",
+              "url": "https://files.pythonhosted.org/packages/d7/d8/05696357e0311f5b5c316d7b95f46c669dd9c15aaeecbb48c7d0aeb88c40/appdirs-1.4.4.tar.gz"
+            }
+          ],
+          "project_name": "appdirs",
+          "requires_dists": [],
+          "requires_python": null,
+          "version": "1.4.4"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18",
               "url": "https://files.pythonhosted.org/packages/71/4c/3db2b8021bd6f2f0ceb0e088d6b2d49147671f25832fb17970e9b583d742/certifi-2022.12.7-py3-none-any.whl"
             },
@@ -104,6 +125,33 @@
           ],
           "requires_python": ">=3.7",
           "version": "8.1.3"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "8df285554452285f79c035efb0c861eb33a4bcfa5b7a137016e32e6a90f9792c",
+              "url": "https://files.pythonhosted.org/packages/7c/37/4fed6f28d8010c791437b808a94f37c4ae58ee3998b653d2c0286a8cc190/filelock-3.8.2-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "7565f628ea56bfcd8e54e42bdc55da899c85c1abfe1b5bcfd147e9188cebb3b2",
+              "url": "https://files.pythonhosted.org/packages/d8/73/292d9ea2370840a163e6dd2d2816a571244e9335e2f6ad957bf0527c492f/filelock-3.8.2.tar.gz"
+            }
+          ],
+          "project_name": "filelock",
+          "requires_dists": [
+            "covdefaults>=2.2.2; extra == \"testing\"",
+            "coverage>=6.5; extra == \"testing\"",
+            "furo>=2022.9.29; extra == \"docs\"",
+            "pytest-cov>=4; extra == \"testing\"",
+            "pytest-timeout>=2.1; extra == \"testing\"",
+            "pytest>=7.2; extra == \"testing\"",
+            "sphinx-autodoc-typehints>=1.19.5; extra == \"docs\"",
+            "sphinx>=5.3; extra == \"docs\""
+          ],
+          "requires_python": ">=3.7",
+          "version": "3.8.2"
         },
         {
           "artifacts": [
@@ -255,6 +303,24 @@
           "requires_dists": [],
           "requires_python": ">=3.7",
           "version": "1.3.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "9cff9736bb4ea0baa2ce452244ccaae8932b852f7eb7a7afba3222c5ba90377a",
+              "url": "https://files.pythonhosted.org/packages/43/db/786de195cc88f67529f2115342cf515105c72b1a1fd135bd4ff4eb423891/types_appdirs-1.4.3.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "cf77d89a5cb86b1d40ea9b96f643fbe68ecd28c1739290e91612c44cd9bb92a1",
+              "url": "https://files.pythonhosted.org/packages/7b/4a/9810b55623edeef26656048fe4d6a243cc5e45e85b19d601f303386adfa3/types-appdirs-1.4.3.1.tar.gz"
+            }
+          ],
+          "project_name": "types-appdirs",
+          "requires_dists": [],
+          "requires_python": null,
+          "version": "1.4.3.1"
         }
       ],
       "platform_tag": null
@@ -265,9 +331,12 @@
   "pip_version": "20.3.4-patched",
   "prefer_older_binary": false,
   "requirements": [
+    "appdirs",
     "click",
+    "filelock",
     "httpx",
-    "pex"
+    "pex",
+    "types-appdirs"
   ],
   "requires_python": [
     "==3.10.*"
