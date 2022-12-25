@@ -1,0 +1,47 @@
+[science]
+name = "science"
+description = "Ship your interpreted executables using science."
+platforms = [
+    "linux-aarch64",
+    "linux-x86_64",
+    "macos-aarch64",
+    "macos-x86_64",
+    "windows-x86_64",
+]
+
+[[science.interpreters]]
+id = "cpython"
+# Providers can generate a lift manifest JSON file entry given a platform.
+provider = "science.providers.PBS"
+source = "fetch"
+
+# Providers can define a configuration object (table) of arbitrary shape to be handed to them by
+# the science infra.
+[science.interpreters.configuration]
+release = "20221220"
+version = "3.10"
+flavor = "install_only"
+
+[[science.files]]
+path = "science.pex"
+
+[[science.commands]]
+# Sharp substitution always references an id and is the only substitution science performs. The
+# rest of {...} flow through to the generated lift manifest JSON.
+# The sharp substitution requires ids do not contain '{', '}' or ':'.
+# A provider can define just 1 exported file, in which case #{provider-id} accesses it.
+# A provider can define several exported files, in which case #{provider-id:file-id} accesses each.
+# PBS proably will export `python`, and `pip`
+exe = "#{cpython:python}"
+args = [
+    "{science.pex}"
+]
+
+[science.commands.env]
+remove = [
+    "PEX_.*"
+]
+replace = { PEX_ROOT = "{scie.bindings}/pex_root", PEX_PYTHON_PATH = "#{cpython:python}" }
+
+# For clarity on full specification.
+default = {}

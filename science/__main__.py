@@ -15,10 +15,16 @@ from science.platform import Platform
 @click.version_option(__version__, "-V", "--version", message="%(version)s")
 def main() -> None:  # TODO(John Sirois): XXX:
     # Expose
-    # --platform ... selection
+    # // --platform ... selection
+    #
     # --python ... selection (lazy)
+    # --python PBS(release=X,version=Y,flavor=Z)
     # --java ... selection (lazy)
     # --js ... selection (lazy)
+    #
+    # Interpreter provider PBS, needs 3 parameters to select a release and 1 parameter to select
+    # platform. It the provides {python} which is mapped to scie-jump placeholder per-platform.
+    #
     # TODO(John Sirois): XXX: How to reference files from above
     #  Also, when the reference is platform specific, then this seems to fall apart.
     # --exe --args --env
