@@ -50,6 +50,8 @@ def parse_command(data: Mapping[str, Any]) -> Command:
 
 
 def parse_config_data(data: Mapping[str, Any]) -> Application:
+    # TODO(John Sirois): wrap up [] accesses to provide useful information on KeyError.
+
     science = data["science"]
     name = science["name"]
     description = science.get("description")
