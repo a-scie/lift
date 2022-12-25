@@ -16,7 +16,7 @@ from science.model import (
     File,
     FileType,
     Interpreter,
-    Source,
+    Source, Identifier,
 )
 from science.platform import Platform
 from science.provider import get_provider
@@ -66,14 +66,14 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
 
     interpreters = []
     for interpreter in science.get("interpreters", ()):
-        name = interpreter["name"]
+        identifier = Identifier.parse(interpreter["id"])
         lazy = interpreter.get("lazy", False)
         provider_name = interpreter["provider"]
         if not (provider := get_provider(provider_name)):
             raise ValueError(f"The provider '{provider_name}' is not registered.")
         interpreters.append(
             Interpreter(
-                name=name,
+                id=identifier,
                 provider=provider.create(**interpreter.get("configuration", {})),
                 lazy=lazy,
             )

@@ -66,9 +66,22 @@ class Command:
     description: str | None = None
 
 
+@dataclass(frozen=True)
+class Identifier:
+    @classmethod
+    def parse(cls, value) -> Identifier:
+        if any(char in value for char in ("{", "}", ":")):
+            raise ValueError(
+                f"An identifier can not contain any of '{', '}' or ':', given: {value}"
+            )
+        return cls(value)
+
+    value: str
+
+
 class Distribution:
     file: File
-    placeholders: frozendict[str, str]
+    placeholders: frozendict[Identifier, str]
 
 
 class Provider(Protocol):
@@ -82,7 +95,7 @@ class Provider(Protocol):
 
 @dataclass(frozen=True)
 class Interpreter:
-    name: str
+    id: Identifier
     provider: Provider
     lazy: bool = False
 

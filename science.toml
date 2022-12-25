@@ -10,7 +10,7 @@ platforms = [
 ]
 
 [[science.interpreters]]
-name = "cpython"
+id = "cpython"
 # Providers can generate a lift manifest JSON file entry given a platform.
 provider = "science.providers.PBS"
 lazy = true
