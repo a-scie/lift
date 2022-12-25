@@ -34,11 +34,11 @@ name = "science.pex"
 # PBS proably will export `python`, and `pip`
 exe = "#{cpython:python}"
 args = [
-    "{science.pex}"
+    "{science.pex}",
 ]
-
-[science.commands.env]
-remove_re = [
-    "PEX_.*"
+env.remove_re = [
+    "PEX_.*",
 ]
-replace = { PEX_ROOT = "{scie.bindings}/pex_root", PEX_PYTHON_PATH = "#{cpython:python}" }
+[science.commands.env.replace]
+PEX_ROOT = "{scie.bindings}/pex_root"
+PEX_PYTHON_PATH = "#{cpython:python}"
