@@ -11,14 +11,22 @@ from tqdm import tqdm
 from science.cache import Missing, download_cache
 
 
-def fetch_and_verify(url: str, dest: Path, executable: bool = False) -> None:
+def fetch_and_verify(
+    url: str,
+    dest: Path,
+    digest_url: str | None = None,
+    digest_algorithm: str = "sha256",
+    executable: bool = False,
+) -> None:
     with download_cache().get_or_create(url) as cache_result:
         match cache_result:
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")
                 with httpx.Client(follow_redirects=True) as client:
-                    expected_fingerprint = client.get(f"{url}.sha256").text.split(" ", 1)[0].strip()
-                    digest = hashlib.sha256()
+                    expected_fingerprint = (
+                        client.get(digest_url or f"{url}.sha256").text.split(" ", 1)[0].strip()
+                    )
+                    digest = hashlib.new(digest_algorithm)
                     with client.stream("GET", url) as response, work.open("wb") as cache_fp:
                         total = int(response.headers["Content-Length"])
                         with tqdm(
@@ -43,5 +51,6 @@ def fetch_and_verify(url: str, dest: Path, executable: bool = False) -> None:
                         )
                     if executable:
                         work.chmod(0o755)
+
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.symlink_to(cache_result.path)

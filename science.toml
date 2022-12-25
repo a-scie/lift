@@ -10,20 +10,20 @@ platforms = [
 ]
 
 [[science.interpreters]]
-id = "cpython"
+name = "cpython"
 # Providers can generate a lift manifest JSON file entry given a platform.
 provider = "science.providers.PBS"
-source = "fetch"
+lazy = true
 
-# Providers can define a configuration object (table) of arbitrary shape to be handed to them by
-# the science infra.
+# Providers can define an optional configuration object (table) of arbitrary shape to be handed to
+# them by the science infra.
 [science.interpreters.configuration]
 release = "20221220"
 version = "3.10"
 flavor = "install_only"
 
 [[science.files]]
-path = "science.pex"
+name = "science.pex"
 
 [[science.commands]]
 # Sharp substitution always references an id and is the only substitution science performs. The
@@ -38,10 +38,7 @@ args = [
 ]
 
 [science.commands.env]
-remove = [
+remove_re = [
     "PEX_.*"
 ]
 replace = { PEX_ROOT = "{scie.bindings}/pex_root", PEX_PYTHON_PATH = "#{cpython:python}" }
-
-# For clarity on full specification.
-default = {}

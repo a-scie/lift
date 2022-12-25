@@ -12,10 +12,14 @@
 //     "appdirs",
 //     "click",
 //     "filelock",
+//     "frozendict",
 //     "httpx",
 //     "pex",
+//     "pytest==7.2.0",
+//     "tomli",
 //     "tqdm",
 //     "types-appdirs",
+//     "types-frozendict",
 //     "types-tqdm"
 //   ],
 //   "manylinux": "manylinux2014",
@@ -93,6 +97,52 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "29e95c7f6778868dbd49170f98f8818f78f3dc5e0e37c0b1f474e3561b240836",
+              "url": "https://files.pythonhosted.org/packages/fb/6e/6f83bf616d2becdf333a1640f1d463fef3150e2e926b7010cb0f81c95e88/attrs-22.2.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "c9227bfc2f01993c03f68db37d1d15c9690188323c067c641f1a35ca58185f99",
+              "url": "https://files.pythonhosted.org/packages/21/31/3f468da74c7de4fcf9b25591e682856389b3400b4b62f201e65f15ea3e07/attrs-22.2.0.tar.gz"
+            }
+          ],
+          "project_name": "attrs",
+          "requires_dists": [
+            "attrs[docs,tests]; extra == \"dev\"",
+            "attrs[tests-no-zope]; extra == \"tests\"",
+            "attrs[tests]; extra == \"cov\"",
+            "cloudpickle; platform_python_implementation == \"CPython\" and extra == \"tests-no-zope\"",
+            "cloudpickle; platform_python_implementation == \"CPython\" and extra == \"tests_no_zope\"",
+            "coverage-enable-subprocess; extra == \"cov\"",
+            "coverage[toml]>=5.3; extra == \"cov\"",
+            "furo; extra == \"docs\"",
+            "hypothesis; extra == \"tests-no-zope\"",
+            "hypothesis; extra == \"tests_no_zope\"",
+            "mypy<0.990,>=0.971; platform_python_implementation == \"CPython\" and extra == \"tests-no-zope\"",
+            "mypy<0.990,>=0.971; platform_python_implementation == \"CPython\" and extra == \"tests_no_zope\"",
+            "myst-parser; extra == \"docs\"",
+            "pympler; extra == \"tests-no-zope\"",
+            "pympler; extra == \"tests_no_zope\"",
+            "pytest-mypy-plugins; (platform_python_implementation == \"CPython\" and python_version < \"3.11\") and extra == \"tests-no-zope\"",
+            "pytest-mypy-plugins; (platform_python_implementation == \"CPython\" and python_version < \"3.11\") and extra == \"tests_no_zope\"",
+            "pytest-xdist[psutil]; extra == \"tests-no-zope\"",
+            "pytest-xdist[psutil]; extra == \"tests_no_zope\"",
+            "pytest>=4.3.0; extra == \"tests-no-zope\"",
+            "pytest>=4.3.0; extra == \"tests_no_zope\"",
+            "sphinx-notfound-page; extra == \"docs\"",
+            "sphinx; extra == \"docs\"",
+            "sphinxcontrib-towncrier; extra == \"docs\"",
+            "towncrier; extra == \"docs\"",
+            "zope.interface; extra == \"docs\"",
+            "zope.interface; extra == \"tests\""
+          ],
+          "requires_python": ">=3.6",
+          "version": "22.2.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18",
               "url": "https://files.pythonhosted.org/packages/71/4c/3db2b8021bd6f2f0ceb0e088d6b2d49147671f25832fb17970e9b583d742/certifi-2022.12.7-py3-none-any.whl"
             },
@@ -132,6 +182,26 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "327cbda3da756e2de031a3107b81ab7b3770a602c4d16ca618298c526f4bec1e",
+              "url": "https://files.pythonhosted.org/packages/e8/14/9c6a7e5f12294ccd6975a45e02899ed25468cd7c2c86f3d9725f387f9f5f/exceptiongroup-1.1.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "bcb67d800a4497e1b404c2dd44fca47d3b7a5e5433dbab67f96c1a685cdfdf23",
+              "url": "https://files.pythonhosted.org/packages/15/ab/dd27fb742b19a9d020338deb9ab9a28796524081bca880ac33c172c9a8f6/exceptiongroup-1.1.0.tar.gz"
+            }
+          ],
+          "project_name": "exceptiongroup",
+          "requires_dists": [
+            "pytest>=6; extra == \"test\""
+          ],
+          "requires_python": ">=3.7",
+          "version": "1.1.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "8df285554452285f79c035efb0c861eb33a4bcfa5b7a137016e32e6a90f9792c",
               "url": "https://files.pythonhosted.org/packages/7c/37/4fed6f28d8010c791437b808a94f37c4ae58ee3998b653d2c0286a8cc190/filelock-3.8.2-py3-none-any.whl"
             },
@@ -154,6 +224,34 @@
           ],
           "requires_python": ">=3.7",
           "version": "3.8.2"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "d722f3d89db6ae35ef35ecc243c40c800eb344848c83dba4798353312cd37b15",
+              "url": "https://files.pythonhosted.org/packages/33/dc/9948e7cf82103aab0a4d9f31a955b8646330e4b10d29b97fa00e47419ed9/frozendict-2.3.4-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "15b4b18346259392b0d27598f240e9390fafbff882137a9c48a1e0104fb17f78",
+              "url": "https://files.pythonhosted.org/packages/2d/ad/96e39d15df0c825d55dc0481016a7c743ad646d7fd4c11caf9306c606f93/frozendict-2.3.4.tar.gz"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "84c9887179a245a66a50f52afa08d4d92ae0f269839fab82285c70a0fa0dd782",
+              "url": "https://files.pythonhosted.org/packages/3a/f5/ea26dc01044e8ab28287f399822c72827d8188c3ab9b05c0820349d8b48e/frozendict-2.3.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "4a3b32d47282ae0098b9239a6d53ec539da720258bd762d62191b46f2f87c5fc",
+              "url": "https://files.pythonhosted.org/packages/ec/c9/28be056852c784e85393cf4bc9af57daf80882533917305d29987d3e1ab2/frozendict-2.3.4-cp310-cp310-macosx_10_9_x86_64.whl"
+            }
+          ],
+          "project_name": "frozendict",
+          "requires_dists": [],
+          "requires_python": ">=3.6",
+          "version": "2.3.4"
         },
         {
           "artifacts": [
@@ -252,6 +350,42 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3",
+              "url": "https://files.pythonhosted.org/packages/9b/dd/b3c12c6d707058fa947864b67f0c4e0c39ef8610988d7baea9578f3c48f3/iniconfig-1.1.1-py2.py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32",
+              "url": "https://files.pythonhosted.org/packages/23/a2/97899f6bd0e873fed3a7e67ae8d3a08b21799430fb4da15cfedf10d6e2c2/iniconfig-1.1.1.tar.gz"
+            }
+          ],
+          "project_name": "iniconfig",
+          "requires_dists": [],
+          "requires_python": null,
+          "version": "1.1.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "957e2148ba0e1a3b282772e791ef1d8083648bc131c8ab0c1feba110ce1146c3",
+              "url": "https://files.pythonhosted.org/packages/8f/7b/42582927d281d7cb035609cd3a543ffac89b74f3f4ee8e1c50914bcb57eb/packaging-22.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "2198ec20bd4c017b8f9717e00f0c8714076fc2fd93816750ab48e2c41de2cfd3",
+              "url": "https://files.pythonhosted.org/packages/6b/f7/c240d7654ddd2d2f3f328d8468d4f1f876865f6b9038b146bec0a6737c65/packaging-22.0.tar.gz"
+            }
+          ],
+          "project_name": "packaging",
+          "requires_dists": [],
+          "requires_python": ">=3.7",
+          "version": "22.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "b0dbdf2b1c608b159e50b19fa03b74659d1ecab593335bba0f2ec2ac1184ed7b",
               "url": "https://files.pythonhosted.org/packages/ac/96/1484f982b5f63281a60529e002770654ca90133bbbf639e359366d39ebe7/pex-2.1.119-py2.py3-none-any.whl"
             },
@@ -267,6 +401,64 @@
           ],
           "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,<3.12,>=2.7",
           "version": "2.1.119"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3",
+              "url": "https://files.pythonhosted.org/packages/9e/01/f38e2ff29715251cf25532b9082a1589ab7e4f571ced434f98d0139336dc/pluggy-1.0.0-py2.py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159",
+              "url": "https://files.pythonhosted.org/packages/a1/16/db2d7de3474b6e37cbb9c008965ee63835bba517e22cdb8c35b5116b5ce1/pluggy-1.0.0.tar.gz"
+            }
+          ],
+          "project_name": "pluggy",
+          "requires_dists": [
+            "importlib-metadata>=0.12; python_version < \"3.8\"",
+            "pre-commit; extra == \"dev\"",
+            "pytest-benchmark; extra == \"testing\"",
+            "pytest; extra == \"testing\"",
+            "tox; extra == \"dev\""
+          ],
+          "requires_python": ">=3.6",
+          "version": "1.0.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71",
+              "url": "https://files.pythonhosted.org/packages/67/68/a5eb36c3a8540594b6035e6cdae40c1ef1b6a2bfacbecc3d1a544583c078/pytest-7.2.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "c4014eb40e10f11f355ad4e3c2fb2c6c6d1919c73f3b5a433de4708202cade59",
+              "url": "https://files.pythonhosted.org/packages/0b/21/055f39bf8861580b43f845f9e8270c7786fe629b2f8562ff09007132e2e7/pytest-7.2.0.tar.gz"
+            }
+          ],
+          "project_name": "pytest",
+          "requires_dists": [
+            "argcomplete; extra == \"testing\"",
+            "attrs>=19.2.0",
+            "colorama; sys_platform == \"win32\"",
+            "exceptiongroup>=1.0.0rc8; python_version < \"3.11\"",
+            "hypothesis>=3.56; extra == \"testing\"",
+            "importlib-metadata>=0.12; python_version < \"3.8\"",
+            "iniconfig",
+            "mock; extra == \"testing\"",
+            "nose; extra == \"testing\"",
+            "packaging",
+            "pluggy<2.0,>=0.12",
+            "pygments>=2.7.2; extra == \"testing\"",
+            "requests; extra == \"testing\"",
+            "tomli>=1.0.0; python_version < \"3.11\"",
+            "xmlschema; extra == \"testing\""
+          ],
+          "requires_python": ">=3.7",
+          "version": "7.2.0"
         },
         {
           "artifacts": [
@@ -305,6 +497,24 @@
           "requires_dists": [],
           "requires_python": ">=3.7",
           "version": "1.3.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+              "url": "https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f",
+              "url": "https://files.pythonhosted.org/packages/c0/3f/d7af728f075fb08564c5949a9c95e44352e23dee646869fa104a3b2060a3/tomli-2.0.1.tar.gz"
+            }
+          ],
+          "project_name": "tomli",
+          "requires_dists": [],
+          "requires_python": ">=3.7",
+          "version": "2.0.1"
         },
         {
           "artifacts": [
@@ -355,6 +565,24 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "d4292ef14f87ddec575ab1d968102dcba2c8f1e490acc67945eee1fc7de24d08",
+              "url": "https://files.pythonhosted.org/packages/f7/ce/b82dc24a102905e86e45502e23ee60bbc57703ba1b82a65f12a43486b4f2/types_frozendict-2.0.9-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "446b5f33125566c9885c31363e065d6416f8da6c81252af1e459a4e67a15487b",
+              "url": "https://files.pythonhosted.org/packages/47/f6/e0cad2befd140af466063594afdaba23313580ab74e099e48c61f051df80/types-frozendict-2.0.9.tar.gz"
+            }
+          ],
+          "project_name": "types-frozendict",
+          "requires_dists": [],
+          "requires_python": null,
+          "version": "2.0.9"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "8871999c7f4a8cd24655dcb44cfcca03efd931a9b49e62530a8880bd909c5474",
               "url": "https://files.pythonhosted.org/packages/5f/1f/08e461659f939d656b104b0dcfe89279cf26801b4c11f23d5a6b63e9ce52/types_tqdm-4.64.7.9-py3-none-any.whl"
             },
@@ -381,10 +609,14 @@
     "appdirs",
     "click",
     "filelock",
+    "frozendict",
     "httpx",
     "pex",
+    "pytest==7.2.0",
+    "tomli",
     "tqdm",
     "types-appdirs",
+    "types-frozendict",
     "types-tqdm"
   ],
   "requires_python": [
