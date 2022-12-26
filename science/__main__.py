@@ -78,7 +78,7 @@ def build(config: Path, file_mappings: list[FileMapping], dest_dir: Path) -> Non
     for platform in application.platforms:
         with tempfile.TemporaryDirectory() as td:
             temp_dir = Path(td)
-            jump_path = jump.load(temp_dir, platform)
+            jump_path = jump.load(platform)
 
             files: list[File] = []
             fetch = any("fetch" == file.source for file in application.files)

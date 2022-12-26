@@ -14,7 +14,6 @@ def load(
     binary_name = platform.qualified_binary_name("ptex")
     base_url = "https://github.com/a-scie/ptex/releases"
     version_path = f"download/v{version}" if version else "latest/download"
-    fetch_and_verify(
-        url=f"{base_url}/{version_path}/{binary_name}", dest=dest_dir / binary_name, executable=True
-    )
+    ptex_path = fetch_and_verify(url=f"{base_url}/{version_path}/{binary_name}", executable=True)
+    (dest_dir / binary_name).symlink_to(ptex_path)
     return File(name=binary_name, key="ptex", is_executable=True)

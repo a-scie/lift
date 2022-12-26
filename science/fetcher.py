@@ -13,11 +13,10 @@ from science.cache import Missing, download_cache
 
 def fetch_and_verify(
     url: str,
-    dest: Path,
     digest_url: str | None = None,
     digest_algorithm: str = "sha256",
     executable: bool = False,
-) -> None:
+) -> Path:
     with download_cache().get_or_create(url) as cache_result:
         match cache_result:
             case Missing(work=work):
@@ -56,5 +55,4 @@ def fetch_and_verify(
                     if executable:
                         work.chmod(0o755)
 
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.symlink_to(cache_result.path)
+        return cache_result.path
