@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import os.path
+import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, Literal, Protocol, TypeAlias
+from typing import Iterable, Literal, Match, Protocol, TypeAlias
 
 from frozendict import frozendict
 
@@ -48,6 +50,10 @@ class File:
     eager_extract: bool = False
     source: Source = None
 
+    @property
+    def placeholder(self) -> str:
+        return f"{{{self.key or self.name}}}"
+
 
 @dataclass(frozen=True)
 class Env:
@@ -79,9 +85,26 @@ class Identifier:
     value: str
 
 
+@dataclass(frozen=True)
 class Distribution:
+    id: Identifier
     file: File
     placeholders: frozendict[Identifier, str]
+
+    def expand_placeholder(self, match: Match) -> str:
+        if placeholder := match.group("placeholder"):
+            return os.path.join(
+                self.file.placeholder, self.placeholders[Identifier.parse(placeholder)]
+            )
+        else:
+            return self.file.placeholder
+
+    def expand_placeholders(self, value: str) -> str:
+        return re.sub(
+            rf"#{{{re.escape(self.id.value)}(?::(?P<placeholder>[^{{}}:]+))?}}",
+            self.expand_placeholder,
+            value,
+        )
 
 
 class Provider(Protocol):
