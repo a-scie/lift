@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import re
-import sys
 from dataclasses import dataclass
 
 from packaging.version import Version
