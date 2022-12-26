@@ -10,8 +10,7 @@ from science.platform import Platform
 def load(
     dest_dir: Path, platform: Platform = Platform.current(), version: str | None = None
 ) -> Path:
-    extension = ".exe" if platform == Platform.Windows_x86_64 else ""
-    binary_name = f"scie-jump-{platform.value}{extension}"
+    binary_name = platform.qualified_binary_name("scie-jump")
     base_url = "https://github.com/a-scie/jump/releases"
     version_path = f"download/v{version}" if version else "latest/download"
     dest = dest_dir / binary_name

@@ -36,3 +36,13 @@ class Platform(Enum):
                     "The current platform is not supported!: "
                     f"{platform.system()} {platform.machine()}"
                 )
+
+    @property
+    def extension(self):
+        return ".exe" if self is self.Windows_x86_64 else ""
+
+    def binary_name(self, binary_name: str) -> str:
+        return f"{binary_name}{self.extension}"
+
+    def qualified_binary_name(self, binary_name: str) -> str:
+        return f"{binary_name}-{self.value}{self.extension}"

@@ -11,8 +11,7 @@ from science.platform import Platform
 def load(
     dest_dir: Path, platform: Platform = Platform.current(), version: str | None = None
 ) -> File:
-    extension = ".exe" if platform == Platform.Windows_x86_64 else ""
-    binary_name = f"ptex-{platform.value}{extension}"
+    binary_name = platform.qualified_binary_name("ptex")
     base_url = "https://github.com/a-scie/ptex/releases"
     version_path = f"download/v{version}" if version else "latest/download"
     fetch_and_verify(

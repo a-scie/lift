@@ -51,8 +51,12 @@ class File:
     source: Source = None
 
     @property
+    def id(self) -> str:
+        return self.key or self.name
+
+    @property
     def placeholder(self) -> str:
-        return f"{{{self.key or self.name}}}"
+        return f"{{{self.id}}}"
 
 
 @dataclass(frozen=True)

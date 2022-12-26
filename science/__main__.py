@@ -1,8 +1,12 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+from __future__ import annotations
+
+import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 import click
@@ -47,13 +51,30 @@ def init(platforms: tuple[Platform, ...]) -> None:
     click.echo(f"{platforms=}")
 
 
+@dataclass(frozen=True)
+class FileMapping:
+    @classmethod
+    def parse(cls, value: str) -> FileMapping:
+        components = value.split(" ", 1)
+        if len(components) != 2:
+            raise ValueError(
+                "Invalid file mapping. A file mapping must be of the form "
+                f"`(<name>|<key>)=<path>`: {value}"
+            )
+        return cls(id=components[0], path=Path(components[1]))
+
+    id: str
+    path: Path
+
+
 @main.command()
 @click.option("--config", type=Path)
-@click.option("--file", "file_mappings", multiple=True, default=[])
+@click.option("--file", "file_mappings", type=FileMapping, multiple=True, default=[])
 @click.option("--dest-dir", type=Path, default=Path.cwd())
-def build(config: Path, file_mappings: list[str], dest_dir: Path) -> None:
+def build(config: Path, file_mappings: list[FileMapping], dest_dir: Path) -> None:
     application = parse_config_file(config)
 
+    use_platform_suffix = application.platforms != frozenset([Platform.current()])
     for platform in application.platforms:
         with tempfile.TemporaryDirectory() as td:
             temp_dir = Path(td)
@@ -70,10 +91,26 @@ def build(config: Path, file_mappings: list[str], dest_dir: Path) -> None:
                     files.append(distribution.file)
             files.extend(application.files)
 
-            commands: list[Command] = []
-            bindings: list[Command] = []
-            lift_path = lift.emit_manifest(temp_dir, files, commands, bindings)
+            file_paths_by_id = {
+                file_mapping.id: file_mapping.path for file_mapping in file_mappings
+            }
+            for file in files:
+                path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
+                if not path.exists():
+                    raise ValueError(f"The file for {file.id} is not mapped or cannot be found.")
+                path.symlink_to(temp_dir / file.name)
+
+            lift_path = lift.emit_manifest(
+                temp_dir, files, application.commands, application.bindings
+            )
             subprocess.run(args=[str(jump_path), str(lift_path)], cwd=td, check=True)
+            src_binary_name = platform.binary_name(application.name)
+            dst_binary_name = (
+                platform.qualified_binary_name(application.name)
+                if use_platform_suffix
+                else platform.binary_name(application.name)
+            )
+            shutil.move(src=temp_dir / src_binary_name, dst=dest_dir / dst_binary_name)
 
 
 if __name__ == "__main__":
