@@ -3,6 +3,7 @@
 
 import hashlib
 import json
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -13,8 +14,8 @@ from tqdm import tqdm
 from science.cache import Missing, download_cache
 
 
-def fetch_text(url: str) -> str:
-    with download_cache().get_or_create(url) as cache_result:
+def fetch_text(url: str, ttl: timedelta | None = None) -> str:
+    with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
                 with httpx.stream("GET", url, follow_redirects=True) as response, work.open(
@@ -26,8 +27,8 @@ def fetch_text(url: str) -> str:
     return cache_result.path.read_text()
 
 
-def fetch_json(url: str) -> dict[str, Any]:
-    with download_cache().get_or_create(url) as cache_result:
+def fetch_json(url: str, ttl: timedelta | None = None) -> dict[str, Any]:
+    with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
                 with httpx.stream("GET", url, follow_redirects=True) as response, work.open(
@@ -45,8 +46,9 @@ def fetch_and_verify(
     digest_url: str | None = None,
     digest_algorithm: str = "sha256",
     executable: bool = False,
+    ttl: timedelta | None = None,
 ) -> Path:
-    with download_cache().get_or_create(url) as cache_result:
+    with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")

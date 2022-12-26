@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from dataclasses import dataclass
+from datetime import timedelta
 
 from frozendict import frozendict
 from packaging.version import Version
@@ -85,12 +87,13 @@ class PBS(Provider):
     @classmethod
     def create(cls, identifier: Identifier, **kwargs) -> PBS:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
-        release_url = (
-            f"{api_url}/tags/{release}"
-            if (release := kwargs.get("release"))
-            else f"{api_url}/latest"
-        )
-        release_data = fetch_json(release_url)
+        if release := kwargs.get("release"):
+            release_url = f"{api_url}/tags/{release}"
+            ttl = None
+        else:
+            release_url = f"{api_url}/latest"
+            ttl = timedelta(days=5)
+        release_data = fetch_json(release_url, ttl=ttl)
 
         release = release_data["name"]
         version = Version(kwargs["version"])
