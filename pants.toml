@@ -40,6 +40,7 @@ known_versions = [
 ]
 
 [pytest]
+# N.B.: Keep aligned with requirements.txt.
 version = "pytest==7.2.0"
 lockfile = "pants-support/tool-locks/pytest.lock"
 
