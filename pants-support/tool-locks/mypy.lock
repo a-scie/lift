@@ -9,7 +9,7 @@
 //     "CPython==3.10.*"
 //   ],
 //   "generated_with_requirements": [
-//     "mypy==0.991"
+//     "mypy"
 //   ],
 //   "manylinux": "manylinux2014",
 //   "requirement_constraints": [],
@@ -144,7 +144,7 @@
   "pip_version": "20.3.4-patched",
   "prefer_older_binary": false,
   "requirements": [
-    "mypy==0.991"
+    "mypy"
   ],
   "requires_python": [
     "==3.10.*"

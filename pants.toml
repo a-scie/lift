@@ -14,19 +14,19 @@ enabled = true
 repo_id = "7b104180-82fa-11ed-937c-00155d25fe7b"
 
 [autoflake]
-version = "autoflake==2.0.0"
+version = "autoflake"
 lockfile = "pants-support/tool-locks/autoflake.lock"
 
 [black]
-version = "black==22.10.0"
+version = "black"
 lockfile = "pants-support/tool-locks/black.lock"
 
 [isort]
-version = "isort==5.10.1"
+version = "isort"
 lockfile = "pants-support/tool-locks/isort.lock"
 
 [mypy]
-version = "mypy==0.991"
+version = "mypy"
 config = "pyproject.toml"
 lockfile = "pants-support/tool-locks/mypy.lock"
 
