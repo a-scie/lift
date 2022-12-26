@@ -3,6 +3,7 @@ pants_version = "2.15.0rc0"
 
 backend_packages = [
     "pants.backend.python",
+    "pants.backend.python.lint.autoflake",
     "pants.backend.python.lint.black",
     "pants.backend.python.lint.isort",
     "pants.backend.python.typecheck.mypy",
@@ -11,6 +12,10 @@ backend_packages = [
 [anonymous-telemetry]
 enabled = true
 repo_id = "7b104180-82fa-11ed-937c-00155d25fe7b"
+
+[autoflake]
+version = "autoflake==2.0.0"
+lockfile = "pants-support/tool-locks/autoflake.lock"
 
 [black]
 version = "black==22.10.0"

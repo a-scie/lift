@@ -13,7 +13,7 @@ import click
 
 from science import __version__, jump, lift, ptex
 from science.config import parse_config_file
-from science.model import Command, File
+from science.model import File
 from science.platform import Platform
 
 
