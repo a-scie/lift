@@ -1,13 +1,15 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-from pathlib import Path, PurePath
-from urllib.parse import urlparse
+import subprocess
+import tempfile
+from pathlib import Path
 
 import click
 
-from science import __version__
-from science.fetcher import fetch_and_verify
+from science import __version__, jump, lift, ptex
+from science.config import parse_config_file
+from science.model import Command, File
 from science.platform import Platform
 
 
@@ -46,15 +48,32 @@ def init(platforms: tuple[Platform, ...]) -> None:
 
 
 @main.command()
-def build() -> None:
-    click.echo("Science build!")
+@click.option("--config", type=Path)
+@click.option("--file", "file_mappings", multiple=True, default=[])
+@click.option("--dest-dir", type=Path, default=Path.cwd())
+def build(config: Path, file_mappings: list[str], dest_dir: Path) -> None:
+    application = parse_config_file(config)
 
+    for platform in application.platforms:
+        with tempfile.TemporaryDirectory() as td:
+            temp_dir = Path(td)
+            jump_path = jump.load(temp_dir, platform)
 
-@main.command()
-@click.option("-x", "--executable", is_flag=True, default=False)
-@click.argument("url")
-def download(url: str, executable: bool = False) -> None:
-    fetch_and_verify(url, Path.cwd() / PurePath(urlparse(url).path).name, executable=executable)
+            files: list[File] = []
+            fetch = any("fetch" == file.source for file in application.files)
+            fetch |= any(interpreter.lazy for interpreter in application.interpreters)
+            if fetch:
+                files.append(ptex.load(temp_dir, platform))
+            for interpreter in application.interpreters:
+                distribution = interpreter.provider.distribution(platform)
+                if distribution:
+                    files.append(distribution.file)
+            files.extend(application.files)
+
+            commands: list[Command] = []
+            bindings: list[Command] = []
+            lift_path = lift.emit_manifest(temp_dir, files, commands, bindings)
+            subprocess.run(args=[str(jump_path), str(lift_path)], cwd=td, check=True)
 
 
 if __name__ == "__main__":

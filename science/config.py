@@ -15,8 +15,9 @@ from science.model import (
     Env,
     File,
     FileType,
+    Identifier,
     Interpreter,
-    Source, Identifier,
+    Source,
 )
 from science.platform import Platform
 from science.provider import get_provider
