@@ -28,7 +28,11 @@ def fetch_and_verify(
                     )
                     digest = hashlib.new(digest_algorithm)
                     with client.stream("GET", url) as response, work.open("wb") as cache_fp:
-                        total = int(response.headers["Content-Length"])
+                        total = (
+                            int(content_length)
+                            if (content_length := response.headers.get("Content-Length"))
+                            else None
+                        )
                         with tqdm(
                             total=total, unit_scale=True, unit_divisor=1024, unit="B"
                         ) as progress:

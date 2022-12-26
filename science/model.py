@@ -91,18 +91,17 @@ class Distribution:
     file: File
     placeholders: frozendict[Identifier, str]
 
-    def expand_placeholder(self, match: Match) -> str:
+    def _expand_placeholder(self, match: Match) -> str:
         if placeholder := match.group("placeholder"):
             return os.path.join(
                 self.file.placeholder, self.placeholders[Identifier.parse(placeholder)]
             )
-        else:
-            return self.file.placeholder
+        return self.file.placeholder
 
     def expand_placeholders(self, value: str) -> str:
         return re.sub(
             rf"#{{{re.escape(self.id.value)}(?::(?P<placeholder>[^{{}}:]+))?}}",
-            self.expand_placeholder,
+            self._expand_placeholder,
             value,
         )
 
