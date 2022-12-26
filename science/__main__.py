@@ -11,7 +11,7 @@ from pathlib import Path
 
 import click
 
-from science import __version__, jump, lift, ptex
+from science import __version__, a_scie, lift
 from science.config import parse_config_file
 from science.model import File
 from science.platform import Platform
@@ -78,13 +78,13 @@ def build(config: Path, file_mappings: list[FileMapping], dest_dir: Path) -> Non
     for platform in application.platforms:
         with tempfile.TemporaryDirectory() as td:
             temp_dir = Path(td)
-            jump_path = jump.load(platform)
+            jump_path = a_scie.jump(platform=platform)
 
             files: list[File] = []
             fetch = any("fetch" == file.source for file in application.files)
             fetch |= any(interpreter.lazy for interpreter in application.interpreters)
             if fetch:
-                files.append(ptex.load(temp_dir, platform))
+                files.append(a_scie.ptex(temp_dir, platform=platform))
             for interpreter in application.interpreters:
                 distribution = interpreter.provider.distribution(platform)
                 if distribution:
