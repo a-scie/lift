@@ -21,6 +21,13 @@ class Digest:
 
 
 class FileType(Enum):
+    @classmethod
+    def for_extension(cls, extension: str) -> FileType:
+        for member in cls:
+            if extension == member.value:
+                return member
+        raise ValueError(f"No file type matches extension {extension}")
+
     Blob = "blob"
     Directory = "directory"
     Zip = "zip"

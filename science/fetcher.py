@@ -2,13 +2,42 @@
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 import hashlib
+import json
 from pathlib import Path
+from typing import Any
 
 import click
 import httpx
 from tqdm import tqdm
 
 from science.cache import Missing, download_cache
+
+
+def fetch_text(url: str) -> str:
+    with download_cache().get_or_create(url) as cache_result:
+        match cache_result:
+            case Missing(work=work):
+                with httpx.stream("GET", url, follow_redirects=True) as response, work.open(
+                    "wb"
+                ) as cache_fp:
+                    for data in response.iter_bytes():
+                        cache_fp.write(data)
+
+    return cache_result.path.read_text()
+
+
+def fetch_json(url: str) -> dict[str, Any]:
+    with download_cache().get_or_create(url) as cache_result:
+        match cache_result:
+            case Missing(work=work):
+                with httpx.stream("GET", url, follow_redirects=True) as response, work.open(
+                    "wb"
+                ) as cache_fp:
+                    for data in response.iter_bytes():
+                        cache_fp.write(data)
+
+    with cache_result.path.open() as fp:
+        return json.load(fp)
 
 
 def fetch_and_verify(
@@ -55,4 +84,4 @@ def fetch_and_verify(
                     if executable:
                         work.chmod(0o755)
 
-        return cache_result.path
+    return cache_result.path

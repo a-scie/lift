@@ -3,23 +3,104 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
-from science.model import Distribution, Provider
+from science.fetcher import fetch_json, fetch_text
+from science.model import Digest, Distribution, FileType, Provider
 from science.platform import Platform
+
+
+@dataclass(frozen=True)
+class FingerprintedAsset:
+    url: str
+    digest: Digest
+    version: str
+    target_triple: str
+    file_type: FileType
+
+
+@dataclass(frozen=True)
+class Asset:
+    url: str
+    size: int
+    version: str
+    target_triple: str
+    extension: str
+
+    def with_fingerprint(self, fingerprint: str) -> FingerprintedAsset:
+        return FingerprintedAsset(
+            url=self.url,
+            digest=Digest(size=self.size, fingerprint=fingerprint),
+            version=self.version,
+            target_triple=self.target_triple,
+            file_type=FileType.for_extension(self.extension),
+        )
 
 
 @dataclass(frozen=True)
 class PBS(Provider):
     @classmethod
     def create(cls, **kwargs) -> PBS:
-        # TODO(John Sirois): XXX: Validate this data against GH releases API / maybe allow version
-        # to be just major / minor and figure out the patch.
-        return cls(release=kwargs["release"], version=kwargs["version"], flavor=kwargs["flavor"])
+        api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
+        release = kwargs["release"]
+        release_url = f"{api_url}/tags/{release}"
+        release_data = fetch_json(release_url)
+
+        version = kwargs["version"]
+        flavor = kwargs["flavor"]
+
+        # Names are like:
+        #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
+        name_re = re.compile(
+            rf"^cpython-(?P<exact_version>{re.escape(version)}\.\d+)"
+            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{re.escape(flavor)}\.(?P<extension>.+)$"
+        )
+
+        sha256sums_url: str | None = None
+        asset_mapping = {}
+        for asset in release_data["assets"]:
+            name = asset["name"]
+            if "SHA256SUMS" == name:
+                sha256sums_url = asset["browser_download_url"]
+            elif name.endswith(".sha256"):
+                continue
+            elif match := name_re.match(name):
+                url = asset["browser_download_url"]
+                size = asset["size"]
+                exact_version = match["exact_version"]
+                target_triple = match["target_triple"]
+                extension = match["extension"]
+                asset_mapping[name] = Asset(
+                    url=url,
+                    size=size,
+                    version=exact_version,
+                    target_triple=target_triple,
+                    extension=extension,
+                )
+
+        if not sha256sums_url:
+            raise ValueError(f"Did not find expected SHA256SUMS asset for release {release}.")
+
+        sha256sums = {}
+        for line in fetch_text(sha256sums_url).splitlines():
+            if line := line.strip():
+                fingerprint, name = re.split(r"\s+", line)
+                sha256sums[name] = fingerprint
+
+        fingerprinted_assets = []
+        for name, asset in asset_mapping.items():
+            fingerprint = sha256sums[name]
+            fingerprinted_assets.append(asset.with_fingerprint(fingerprint))
+
+        return cls(
+            release=release, version=version, flavor=flavor, assets=tuple(fingerprinted_assets)
+        )
 
     release: str
     version: str
     flavor: str
+    assets: tuple[FingerprintedAsset, ...]
 
     def distribution(self, platform: Platform) -> Distribution | None:
         return None

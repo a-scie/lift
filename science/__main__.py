@@ -69,7 +69,7 @@ class FileMapping:
 
 @main.command()
 @click.option("--config", type=Path)
-@click.option("--file", "file_mappings", type=FileMapping, multiple=True, default=[])
+@click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 def build(config: Path, file_mappings: list[FileMapping], dest_dir: Path) -> None:
     application = parse_config_file(config)
