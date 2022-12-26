@@ -46,7 +46,3 @@ class Platform(Enum):
 
     def qualified_binary_name(self, binary_name: str) -> str:
         return f"{binary_name}-{self.value}{self.extension}"
-
-    def compatibility(self, target_triple: str) -> int | None:
-        # TODO(John Sirois): XXX: IMplement
-        return None

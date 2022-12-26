@@ -47,6 +47,41 @@ class Asset:
 
 @dataclass(frozen=True)
 class PBS(Provider):
+    @staticmethod
+    def rank_compatibility(platform: Platform, target_triple: str) -> int | None:
+        match platform:
+            case Platform.Linux_aarch64:
+                match target_triple:
+                    case "aarch64-unknown-linux-gnu":
+                        return 0
+            case Platform.Linux_x86_64:
+                match target_triple:
+                    case "x86_64-unknown-linux-gnu":
+                        return 0
+                    case "x86_64_v2-unknown-linux-gnu":
+                        return 1
+                    case "x86_64_v3-unknown-linux-gnu":
+                        return 2
+                    case "x86_64-unknown-linux-musl":
+                        return 3
+                    case "x86_64_v4-unknown-linux-gnu":
+                        return 4
+            case Platform.Macos_aarch64:
+                match target_triple:
+                    case "aarch64-apple-darwin":
+                        return 0
+            case Platform.Macos_x86_64:
+                match target_triple:
+                    case "x86_64-apple-darwin":
+                        return 0
+            case Platform.Windows_x86_64:
+                match target_triple:
+                    case "x86_64-pc-windows-msvc-shared":
+                        return 0
+                    case "x86_64-pc-windows-msvc-static":
+                        return 1
+        return None
+
     @classmethod
     def create(cls, identifier: Identifier, **kwargs) -> PBS:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
@@ -133,8 +168,8 @@ class PBS(Provider):
         selected_asset: FingerprintedAsset | None = None
         asset_rank: int | None = None
         for asset in self.assets:
-            if (rank := platform.compatibility(asset.target_triple)) is not None and (
-                asset_rank is None or rank > asset_rank
+            if (rank := self.rank_compatibility(platform, asset.target_triple)) is not None and (
+                asset_rank is None or rank < asset_rank
             ):
                 selected_asset = asset
         if selected_asset is None:
