@@ -119,7 +119,7 @@ class Distribution:
 
 class Provider(Protocol):
     @classmethod
-    def create(cls, **kwargs) -> Provider:
+    def create(cls, identifier: Identifier, **kwargs) -> Provider:
         ...
 
     def distribution(self, platform: Platform) -> Distribution | None:

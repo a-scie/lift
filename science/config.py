@@ -77,7 +77,9 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
         interpreters.append(
             Interpreter(
                 id=identifier,
-                provider=provider.create(**interpreter.get("configuration", {})),
+                provider=provider.create(
+                    identifier=identifier, **interpreter.get("configuration", {})
+                ),
                 lazy=lazy,
             )
         )

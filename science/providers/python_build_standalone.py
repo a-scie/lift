@@ -3,19 +3,22 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 
+from frozendict import frozendict
 from packaging.version import Version
 
 from science.fetcher import fetch_json, fetch_text
-from science.model import Digest, Distribution, FileType, Provider
+from science.model import Digest, Distribution, File, FileType, Identifier, Provider
 from science.platform import Platform
 
 
 @dataclass(frozen=True)
 class FingerprintedAsset:
     url: str
+    name: str
     digest: Digest
     version: Version
     target_triple: str
@@ -25,6 +28,7 @@ class FingerprintedAsset:
 @dataclass(frozen=True)
 class Asset:
     url: str
+    name: str
     size: int
     version: str
     target_triple: str
@@ -33,6 +37,7 @@ class Asset:
     def with_fingerprint(self, fingerprint: str) -> FingerprintedAsset:
         return FingerprintedAsset(
             url=self.url,
+            name=self.name,
             digest=Digest(size=self.size, fingerprint=fingerprint),
             version=Version(self.version),
             target_triple=self.target_triple,
@@ -43,7 +48,7 @@ class Asset:
 @dataclass(frozen=True)
 class PBS(Provider):
     @classmethod
-    def create(cls, **kwargs) -> PBS:
+    def create(cls, identifier: Identifier, **kwargs) -> PBS:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
         release_url = (
             f"{api_url}/tags/{release}"
@@ -83,6 +88,7 @@ class PBS(Provider):
                 extension = match["extension"]
                 asset_mapping[name] = Asset(
                     url=url,
+                    name=name,
                     size=size,
                     version=exact_version,
                     target_triple=target_triple,
@@ -110,13 +116,41 @@ class PBS(Provider):
             )
 
         return cls(
-            release=release, version=version, flavor=flavor, assets=tuple(fingerprinted_assets)
+            id=identifier,
+            release=release,
+            version=version,
+            flavor=flavor,
+            assets=tuple(fingerprinted_assets),
         )
 
+    id: Identifier
     release: str
     version: Version
     flavor: str
     assets: tuple[FingerprintedAsset, ...]
 
     def distribution(self, platform: Platform) -> Distribution | None:
-        return None
+        selected_asset: FingerprintedAsset | None = None
+        asset_rank: int | None = None
+        for asset in self.assets:
+            if (rank := platform.compatibility(asset.target_triple)) is not None and (
+                asset_rank is None or rank > asset_rank
+            ):
+                selected_asset = asset
+        if selected_asset is None:
+            raise ValueError(
+                f"No compatible distribution was found for {platform} from amongst:\n"
+                f"{os.linesep.join(asset.name for asset in self.assets)}"
+            )
+
+        key = f"cpython-{selected_asset.version.major}.{selected_asset.version.minor}"
+        file = File(
+            name=selected_asset.name,
+            key=key,
+            digest=selected_asset.digest,
+            type=selected_asset.file_type,
+            is_executable=False,
+            eager_extract=False,
+            source="fetch",  # TODO(John Sirois): XXX: Implement lazy vs. no.
+        )
+        return Distribution(id=self.id, file=file, placeholders=frozendict({}))
