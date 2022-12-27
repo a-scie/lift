@@ -1,6 +1,9 @@
 [science]
 name = "science"
 description = "Ship your interpreted executables using science."
+
+# TODO(John Sirois): Enable "cross-builds". Currently the scie-jump does not allow specifying a
+#  foreign platform scie-jump executable as the head of the scie, preventing this.
 #platforms = [
 #    "linux-aarch64",
 #    "linux-x86_64",
@@ -13,17 +16,21 @@ description = "Ship your interpreted executables using science."
 id = "cpython"
 # Providers can generate a lift manifest JSON file entry given a platform.
 provider = "science.providers.PBS"
+# TODO(John Sirois): XXX: Handle lazy = false and fetch, verify and link the url into the build
+#  sandbox
 lazy = true
 
 # Providers can define an optional configuration object (table) of arbitrary shape to be handed to
 # them by the science infra.
 [science.interpreters.configuration]
 # Optional, defaults to the latest PBS release.
-#release = "20221220"
+# release = "20221220"
+
 # Can be exact, e.g.: 3.10.9; otherwise finds matching artifacts.
 version = "3.10"
+
 # Optional, defaults to the "install_only" flavor.
-#flavor = "install_only"
+# flavor = "install_only"
 
 [[science.files]]
 name = "science.pex"
