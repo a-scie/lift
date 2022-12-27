@@ -14,10 +14,10 @@ from science.model import (
     Digest,
     Env,
     File,
+    FileSource,
     FileType,
     Identifier,
     Interpreter,
-    Source,
 )
 from science.platform import Platform
 from science.provider import get_provider
@@ -94,7 +94,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
         )
         file_type = FileType(file_type_name) if (file_type_name := file.get("type")) else None
 
-        source: Source = None
+        source: FileSource = None
         if source_name := file.get("source"):
             match source_name:
                 case "fetch":

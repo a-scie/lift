@@ -7,17 +7,22 @@ import os.path
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, Literal, Match, Protocol, TypeAlias
+from pathlib import Path
+from typing import Iterable, Literal, Match, NewType, Protocol, TypeAlias
 
 from frozendict import frozendict
 
 from science.platform import Platform
 
 
+class Fingerprint(str):
+    pass
+
+
 @dataclass(frozen=True)
 class Digest:
     size: int
-    fingerprint: str
+    fingerprint: Fingerprint
 
 
 class FileType(Enum):
@@ -44,7 +49,7 @@ class Binding:
     name: str
 
 
-Source: TypeAlias = Binding | Literal["fetch"] | None
+FileSource: TypeAlias = Binding | Literal["fetch"] | None
 
 
 @dataclass(frozen=True)
@@ -55,7 +60,7 @@ class File:
     type: FileType | None = None
     is_executable: bool = False
     eager_extract: bool = False
-    source: Source = None
+    source: FileSource = None
 
     @property
     def id(self) -> str:
@@ -96,11 +101,18 @@ class Identifier:
     value: str
 
 
+class Url(str):
+    pass
+
+
+DistributionSource: TypeAlias = Url | Path
+
+
 @dataclass(frozen=True)
 class Distribution:
     id: Identifier
     file: File
-    url: str
+    source: DistributionSource
     placeholders: frozendict[Identifier, str]
 
     def _expand_placeholder(self, match: Match) -> str:

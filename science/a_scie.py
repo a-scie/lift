@@ -6,7 +6,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from science.fetcher import fetch_and_verify
-from science.model import File
+from science.model import File, Url
 from science.platform import Platform
 
 
@@ -31,7 +31,7 @@ def _load_project_release(
         version_path = "latest/download"
         ttl = timedelta(days=5)
     path = fetch_and_verify(
-        url=f"{base_url}/{version_path}/{qualified_binary_name}", executable=True, ttl=ttl
+        url=Url(f"{base_url}/{version_path}/{qualified_binary_name}"), executable=True, ttl=ttl
     )
     return _LoadResult(path=path, binary_name=qualified_binary_name)
 

@@ -15,7 +15,7 @@ import click
 
 from science import __version__, a_scie, lift
 from science.config import parse_config_file
-from science.model import Command, Distribution, File
+from science.model import Command, Distribution, File, Url
 from science.platform import Platform
 
 
@@ -117,7 +117,11 @@ def build(
                 if distribution:
                     distributions.append(distribution)
                     files.append(distribution.file)
-                    fetch_urls[distribution.file.name] = distribution.url
+                    match distribution.source:
+                        case Url(url):
+                            fetch_urls[distribution.file.name] = url
+                        case path:
+                            file_paths_by_id[distribution.file.id] = path
             files.extend(application.files)
 
             for file in files:

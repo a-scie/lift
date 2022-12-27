@@ -5,21 +5,30 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 from dataclasses import dataclass
 from datetime import timedelta
 
 from frozendict import frozendict
 from packaging.version import Version
 
-from science.fetcher import fetch_json, fetch_text
-from science.model import Digest, Distribution, File, FileType, Identifier, Provider
+from science.fetcher import fetch_and_verify, fetch_json, fetch_text
+from science.model import (
+    Digest,
+    Distribution,
+    DistributionSource,
+    File,
+    FileType,
+    Fingerprint,
+    Identifier,
+    Provider,
+    Url,
+)
 from science.platform import Platform
 
 
 @dataclass(frozen=True)
 class FingerprintedAsset:
-    url: str
+    url: Url
     name: str
     digest: Digest
     version: Version
@@ -29,14 +38,14 @@ class FingerprintedAsset:
 
 @dataclass(frozen=True)
 class Asset:
-    url: str
+    url: Url
     name: str
     size: int
     version: str
     target_triple: str
     extension: str
 
-    def with_fingerprint(self, fingerprint: str) -> FingerprintedAsset:
+    def with_fingerprint(self, fingerprint: Fingerprint) -> FingerprintedAsset:
         return FingerprintedAsset(
             url=self.url,
             name=self.name,
@@ -88,10 +97,10 @@ class PBS(Provider):
     def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> PBS:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
         if release := kwargs.get("release"):
-            release_url = f"{api_url}/tags/{release}"
+            release_url = Url(f"{api_url}/tags/{release}")
             ttl = None
         else:
-            release_url = f"{api_url}/latest"
+            release_url = Url(f"{api_url}/latest")
             ttl = timedelta(days=5)
         release_data = fetch_json(release_url, ttl=ttl)
 
@@ -110,12 +119,12 @@ class PBS(Provider):
         # 1. The release archive.
         # 2. The release archive .sah256 file with its individual checksum.
         # 3. The SHA256SUMS file with all the release archive checksums.
-        sha256sums_url: str | None = None
+        sha256sums_url: Url | None = None
         asset_mapping = {}
         for asset in release_data["assets"]:
             name = asset["name"]
             if "SHA256SUMS" == name:
-                sha256sums_url = asset["browser_download_url"]
+                sha256sums_url = Url(asset["browser_download_url"])
             elif name.endswith(".sha256"):
                 continue
             elif match := name_re.match(name):
@@ -125,7 +134,7 @@ class PBS(Provider):
                 target_triple = match["target_triple"]
                 extension = match["extension"]
                 asset_mapping[name] = Asset(
-                    url=url,
+                    url=Url(url),
                     name=name,
                     size=size,
                     version=exact_version,
@@ -140,7 +149,7 @@ class PBS(Provider):
         for line in fetch_text(sha256sums_url).splitlines():
             if line := line.strip():
                 fingerprint, name = re.split(r"\s+", line)
-                sha256sums[name] = fingerprint
+                sha256sums[name] = Fingerprint(fingerprint)
 
         fingerprinted_assets = []
         for name, asset in asset_mapping.items():
@@ -208,6 +217,13 @@ class PBS(Provider):
                     "PBS currently only understands the 'install_only' flavor of distribution, "
                     f"given: {flavor}"
                 )
+        source: DistributionSource = (
+            selected_asset.url
+            if self.lazy
+            else fetch_and_verify(
+                url=selected_asset.url, fingerprint=selected_asset.digest.fingerprint
+            )
+        )
         return Distribution(
-            id=self.id, file=file, url=selected_asset.url, placeholders=frozendict(placeholders)
+            id=self.id, file=file, source=source, placeholders=frozendict(placeholders)
         )

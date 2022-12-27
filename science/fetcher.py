@@ -12,9 +12,10 @@ import httpx
 from tqdm import tqdm
 
 from science.cache import Missing, download_cache
+from science.model import Fingerprint, Url
 
 
-def fetch_text(url: str, ttl: timedelta | None = None) -> str:
+def fetch_text(url: Url, ttl: timedelta | None = None) -> str:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
@@ -27,7 +28,7 @@ def fetch_text(url: str, ttl: timedelta | None = None) -> str:
     return cache_result.path.read_text()
 
 
-def fetch_json(url: str, ttl: timedelta | None = None) -> dict[str, Any]:
+def fetch_json(url: Url, ttl: timedelta | None = None) -> dict[str, Any]:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
@@ -42,8 +43,8 @@ def fetch_json(url: str, ttl: timedelta | None = None) -> dict[str, Any]:
 
 
 def fetch_and_verify(
-    url: str,
-    digest_url: str | None = None,
+    url: Url,
+    fingerprint: Fingerprint | Url | None = None,
     digest_algorithm: str = "sha256",
     executable: bool = False,
     ttl: timedelta | None = None,
@@ -53,9 +54,17 @@ def fetch_and_verify(
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")
                 with httpx.Client(follow_redirects=True) as client:
-                    expected_fingerprint = (
-                        client.get(digest_url or f"{url}.sha256").text.split(" ", 1)[0].strip()
-                    )
+                    match fingerprint:
+                        case Fingerprint(_):
+                            expected_fingerprint = fingerprint
+                        case Url(url):
+                            expected_fingerprint = Fingerprint(
+                                client.get(url).text.split(" ", 1)[0].strip()
+                            )
+                        case None:
+                            expected_fingerprint = Fingerprint(
+                                client.get(f"{url}.sha256").text.split(" ", 1)[0].strip()
+                            )
                     digest = hashlib.new(digest_algorithm)
                     with client.stream("GET", url) as response, work.open("wb") as cache_fp:
                         total = (

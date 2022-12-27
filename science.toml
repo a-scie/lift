@@ -16,8 +16,6 @@ description = "Ship your interpreted executables using science."
 id = "cpython"
 # Providers can generate a lift manifest JSON file entry given a platform.
 provider = "science.providers.PBS"
-# TODO(John Sirois): XXX: Handle lazy = false and fetch, verify and link the url into the build
-#  sandbox
 lazy = true
 
 # Providers can define an optional configuration object (table) of arbitrary shape to be handed to

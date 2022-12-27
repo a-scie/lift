@@ -3,7 +3,7 @@
 
 from frozendict import frozendict
 
-from science.model import Distribution, File, Identifier
+from science.model import Distribution, File, Identifier, Url
 
 
 def test_distribution() -> None:
@@ -13,7 +13,7 @@ def test_distribution() -> None:
             name="cpython-3.10.9+20221220-x86_64_v4-unknown-linux-gnu-install_only.tar.gz",
             key="cpython310",
         ),
-        url=(
+        source=Url(
             "https://github.com/indygreg/python-build-standalone/releases/download/20221220/"
             "cpython-3.10.9%2B20221220-x86_64_v4-unknown-linux-gnu-install_only.tar.gz"
         ),
