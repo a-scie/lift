@@ -100,6 +100,7 @@ class Identifier:
 class Distribution:
     id: Identifier
     file: File
+    url: str
     placeholders: frozendict[Identifier, str]
 
     def _expand_placeholder(self, match: Match) -> str:
@@ -119,7 +120,7 @@ class Distribution:
 
 class Provider(Protocol):
     @classmethod
-    def create(cls, identifier: Identifier, **kwargs) -> Provider:
+    def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> Provider:
         ...
 
     def distribution(self, platform: Platform) -> Distribution | None:

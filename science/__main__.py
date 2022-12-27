@@ -6,14 +6,16 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterator
 
 import click
 
 from science import __version__, a_scie, lift
 from science.config import parse_config_file
-from science.model import File
+from science.model import Command, Distribution, File
 from science.platform import Platform
 
 
@@ -55,7 +57,7 @@ def init(platforms: tuple[Platform, ...]) -> None:
 class FileMapping:
     @classmethod
     def parse(cls, value: str) -> FileMapping:
-        components = value.split(" ", 1)
+        components = value.split("=", 1)
         if len(components) != 2:
             raise ValueError(
                 "Invalid file mapping. A file mapping must be of the form "
@@ -67,41 +69,78 @@ class FileMapping:
     path: Path
 
 
+@contextmanager
+def _temporary_directory(cleanup: bool) -> Iterator[Path]:
+    if cleanup:
+        with tempfile.TemporaryDirectory() as td:
+            yield Path(td)
+    else:
+        yield Path(tempfile.mkdtemp())
+
+
 @main.command()
 @click.option("--config", type=Path)
 @click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
 @click.option("--dest-dir", type=Path, default=Path.cwd())
-def build(config: Path, file_mappings: list[FileMapping], dest_dir: Path) -> None:
+@click.option("--preserve-sandbox", is_flag=True)
+def build(
+    config: Path, file_mappings: list[FileMapping], dest_dir: Path, preserve_sandbox: bool
+) -> None:
     application = parse_config_file(config)
 
     use_platform_suffix = application.platforms != frozenset([Platform.current()])
     for platform in application.platforms:
-        with tempfile.TemporaryDirectory() as td:
+        with _temporary_directory(cleanup=not preserve_sandbox) as td:
             temp_dir = Path(td)
             jump_path = a_scie.jump(platform=platform)
 
+            bindings: list[Command] = []
+            distributions: list[Distribution] = []
             files: list[File] = []
+            file_paths_by_id = {
+                file_mapping.id: file_mapping.path.resolve() for file_mapping in file_mappings
+            }
+            fetch_urls: dict[str, str] = {}
             fetch = any("fetch" == file.source for file in application.files)
             fetch |= any(interpreter.lazy for interpreter in application.interpreters)
             if fetch:
-                files.append(a_scie.ptex(temp_dir, platform=platform))
+                ptex = a_scie.ptex(temp_dir, platform=platform)
+                file_paths_by_id[ptex.id] = temp_dir / ptex.name
+                files.append(ptex)
+                bindings.append(
+                    Command(name="fetch", exe=ptex.placeholder, args=tuple(["{scie.lift}"]))
+                )
+            bindings.extend(application.bindings)
+
             for interpreter in application.interpreters:
                 distribution = interpreter.provider.distribution(platform)
                 if distribution:
+                    distributions.append(distribution)
                     files.append(distribution.file)
+                    fetch_urls[distribution.file.name] = distribution.url
             files.extend(application.files)
 
-            file_paths_by_id = {
-                file_mapping.id: file_mapping.path for file_mapping in file_mappings
-            }
             for file in files:
-                path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
-                if not path.exists():
-                    raise ValueError(f"The file for {file.id} is not mapped or cannot be found.")
-                path.symlink_to(temp_dir / file.name)
+                if file.source is None:
+                    path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
+                    if not path.exists():
+                        raise ValueError(
+                            f"The file for {file.id} is not mapped or cannot be found."
+                        )
+                    target = temp_dir / file.name
+                    if not target.exists():
+                        target.symlink_to(path)
 
             lift_path = lift.emit_manifest(
-                temp_dir, files, application.commands, application.bindings
+                temp_dir,
+                name=application.name,
+                description=application.description,
+                load_dotenv=application.load_dotenv,
+                distributions=distributions,
+                files=files,
+                commands=application.commands,
+                bindings=bindings,
+                fetch_urls=fetch_urls,
             )
             subprocess.run(args=[str(jump_path), str(lift_path)], cwd=td, check=True)
             src_binary_name = platform.binary_name(application.name)

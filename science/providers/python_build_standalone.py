@@ -85,7 +85,7 @@ class PBS(Provider):
         return None
 
     @classmethod
-    def create(cls, identifier: Identifier, **kwargs) -> PBS:
+    def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> PBS:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
         if release := kwargs.get("release"):
             release_url = f"{api_url}/tags/{release}"
@@ -155,6 +155,7 @@ class PBS(Provider):
 
         return cls(
             id=identifier,
+            lazy=lazy,
             release=release,
             version=version,
             flavor=flavor,
@@ -162,6 +163,7 @@ class PBS(Provider):
         )
 
     id: Identifier
+    lazy: bool
     release: str
     version: Version
     flavor: str
@@ -189,6 +191,23 @@ class PBS(Provider):
             type=selected_asset.file_type,
             is_executable=False,
             eager_extract=False,
-            source="fetch",  # TODO(John Sirois): XXX: Implement lazy vs. no.
+            source="fetch" if self.lazy else None,
         )
-        return Distribution(id=self.id, file=file, placeholders=frozendict({}))
+        placeholders = {}
+        match self.flavor:
+            case "install_only":
+                match platform:
+                    case Platform.Windows_x86_64:
+                        placeholders[Identifier.parse("python")] = "python\\python.exe"
+                    case _:
+                        version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
+                        placeholders[Identifier.parse("python")] = f"python/bin/python{version}"
+                        placeholders[Identifier.parse("pip")] = f"python/bin/pip{version}"
+            case flavor:
+                raise ValueError(
+                    "PBS currently only understands the 'install_only' flavor of distribution, "
+                    f"given: {flavor}"
+                )
+        return Distribution(
+            id=self.id, file=file, url=selected_asset.url, placeholders=frozendict(placeholders)
+        )

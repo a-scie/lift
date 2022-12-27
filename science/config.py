@@ -54,7 +54,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
     # TODO(John Sirois): wrap up [] accesses to provide useful information on KeyError.
 
     science = data["science"]
-    name = science["name"]
+    application_name = science["name"]
     description = science.get("description")
     load_dotenv = science.get("load_dotenv", False)
 
@@ -78,7 +78,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
             Interpreter(
                 id=identifier,
                 provider=provider.create(
-                    identifier=identifier, **interpreter.get("configuration", {})
+                    identifier=identifier, lazy=lazy, **interpreter.get("configuration", {})
                 ),
                 lazy=lazy,
             )
@@ -86,7 +86,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
 
     files = []
     for file in science.get("files", ()):
-        name = file["name"]
+        file_name = file["name"]
         digest = (
             Digest(size=digest_data["size"], fingerprint=digest_data["fingerprint"])
             if (digest_data := file.get("digest"))
@@ -99,12 +99,12 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
             match source_name:
                 case "fetch":
                     source = "fetch"
-                case name:
-                    source = Binding(name)
+                case file_name:
+                    source = Binding(file_name)
 
         files.append(
             File(
-                name=name,
+                name=file_name,
                 key=file.get("key"),
                 digest=digest,
                 type=file_type,
@@ -121,7 +121,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
     bindings = [parse_command(command) for command in science.get("bindings", ())]
 
     return Application(
-        name=name,
+        name=application_name,
         description=description,
         load_dotenv=load_dotenv,
         platforms=platforms,

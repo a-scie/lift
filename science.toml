@@ -1,13 +1,13 @@
 [science]
 name = "science"
 description = "Ship your interpreted executables using science."
-platforms = [
-    "linux-aarch64",
-    "linux-x86_64",
-    "macos-aarch64",
-    "macos-x86_64",
-    "windows-x86_64",
-]
+#platforms = [
+#    "linux-aarch64",
+#    "linux-x86_64",
+#    "macos-aarch64",
+#    "macos-x86_64",
+#    "windows-x86_64",
+#]
 
 [[science.interpreters]]
 id = "cpython"

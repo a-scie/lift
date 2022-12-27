@@ -11,7 +11,7 @@ from science.platform import Platform
 
 
 @dataclass(frozen=True)
-class LoadResult:
+class _LoadResult:
     path: Path
     binary_name: str
 
@@ -21,7 +21,7 @@ def _load_project_release(
     binary_name: str,
     version: str | None = None,
     platform: Platform = Platform.current(),
-) -> LoadResult:
+) -> _LoadResult:
     qualified_binary_name = platform.qualified_binary_name(binary_name)
     base_url = f"https://github.com/a-scie/{project_name}/releases"
     if version:
@@ -33,7 +33,7 @@ def _load_project_release(
     path = fetch_and_verify(
         url=f"{base_url}/{version_path}/{qualified_binary_name}", executable=True, ttl=ttl
     )
-    return LoadResult(path=path, binary_name=qualified_binary_name)
+    return _LoadResult(path=path, binary_name=qualified_binary_name)
 
 
 def jump(version: str | None = None, platform: Platform = Platform.current()) -> Path:
