@@ -10,7 +10,7 @@ V = TypeVar("V", covariant=True)
 class FrozenDict(Generic[K, V], Mapping[K, V]):
     def __init__(self, data: Mapping[K, V] | None = None) -> None:
         super().__init__()
-        self._data: Mapping[K, V] = data or {}
+        self._data: Mapping[K, V] = dict(data) if data else {}
         self._hash: int | None = None
 
     def __getitem__(self, key: K) -> V:
