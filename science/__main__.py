@@ -89,6 +89,9 @@ def build(
     application = parse_config_file(config)
 
     use_platform_suffix = application.platforms != frozenset([Platform.current()])
+    # N.B.: The scie-jump 0.9.0 or later is needed to support cross-building against foreign
+    # platform scie-jumps with "-sj".
+    native_jump_path = a_scie.jump(platform=Platform.current())
     for platform in application.platforms:
         with _temporary_directory(cleanup=not preserve_sandbox) as td:
             temp_dir = Path(td)
@@ -146,7 +149,11 @@ def build(
                 bindings=bindings,
                 fetch_urls=fetch_urls,
             )
-            subprocess.run(args=[str(jump_path), str(lift_path)], cwd=td, check=True)
+            subprocess.run(
+                args=[str(native_jump_path), "-sj", str(jump_path), str(lift_path)],
+                cwd=td,
+                check=True,
+            )
             src_binary_name = platform.binary_name(application.name)
             dst_binary_name = (
                 platform.qualified_binary_name(application.name)

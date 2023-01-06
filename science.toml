@@ -2,15 +2,13 @@
 name = "science"
 description = "Ship your interpreted executables using science."
 
-# TODO(John Sirois): Enable "cross-builds". Currently the scie-jump does not allow specifying a
-#  foreign platform scie-jump executable as the head of the scie, preventing this.
-#platforms = [
-#    "linux-aarch64",
-#    "linux-x86_64",
-#    "macos-aarch64",
-#    "macos-x86_64",
+platforms = [
+    "linux-aarch64",
+    "linux-x86_64",
+    "macos-aarch64",
+    "macos-x86_64",
 #    "windows-x86_64",
-#]
+]
 
 [[science.interpreters]]
 id = "cpython"
