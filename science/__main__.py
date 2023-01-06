@@ -160,6 +160,7 @@ def build(
                 if use_platform_suffix
                 else platform.binary_name(application.name)
             )
+            dest_dir.mkdir(parents=True, exist_ok=True)
             shutil.move(src=temp_dir / src_binary_name, dst=dest_dir / dst_binary_name)
 
 
