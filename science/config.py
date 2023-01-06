@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any, Mapping
 
 import tomli
-from frozendict import frozendict
 
+from science.frozendict import FrozenDict
 from science.model import (
     Application,
     Binding,
@@ -35,10 +35,10 @@ def parse_config_str(config: str) -> Application:
 def parse_command(data: Mapping[str, Any]) -> Command:
     env = Env()
     if env_data := data.get("env"):
-        remove_exact = frozenset(env_data.get("remove", ()))
-        remove_re = frozenset(env_data.get("remove_re", ()))
-        replace = frozendict(env_data.get("replace", {}))
-        default = frozendict(env_data.get("default", {}))
+        remove_exact = frozenset[str](env_data.get("remove", ()))
+        remove_re = frozenset[str](env_data.get("remove_re", ()))
+        replace = FrozenDict[str, str](env_data.get("replace", {}))
+        default = FrozenDict[str, str](env_data.get("default", {}))
         env = Env(default=default, replace=replace, remove_exact=remove_exact, remove_re=remove_re)
 
     return Command(

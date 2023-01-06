@@ -5,12 +5,11 @@ from __future__ import annotations
 
 from typing import Type
 
-from frozendict import frozendict
-
+from science.frozendict import FrozenDict
 from science.model import Provider
 from science.providers.python_build_standalone import PBS
 
-_PROVIDERS = frozendict({"science.providers.PBS": PBS})
+_PROVIDERS = FrozenDict({"science.providers.PBS": PBS})
 
 
 def get_provider(name: str) -> Type[Provider] | None:

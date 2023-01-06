@@ -8,10 +8,10 @@ import re
 from dataclasses import dataclass
 from datetime import timedelta
 
-from frozendict import frozendict
 from packaging.version import Version
 
 from science.fetcher import fetch_and_verify, fetch_json, fetch_text
+from science.frozendict import FrozenDict
 from science.model import (
     Digest,
     Distribution,
@@ -225,5 +225,5 @@ class PBS(Provider):
             )
         )
         return Distribution(
-            id=self.id, file=file, source=source, placeholders=frozendict(placeholders)
+            id=self.id, file=file, source=source, placeholders=FrozenDict(placeholders)
         )

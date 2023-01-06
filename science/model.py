@@ -8,10 +8,9 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Iterable, Literal, Match, NewType, Protocol, TypeAlias
+from typing import Iterable, Literal, Match, Protocol, TypeAlias
 
-from frozendict import frozendict
-
+from science.frozendict import FrozenDict
 from science.platform import Platform
 
 
@@ -73,8 +72,8 @@ class File:
 
 @dataclass(frozen=True)
 class Env:
-    default: frozendict[str, str] = frozendict()
-    replace: frozendict[str, str] = frozendict()
+    default: FrozenDict[str, str] = FrozenDict()
+    replace: FrozenDict[str, str] = FrozenDict()
     remove_exact: frozenset[str] = frozenset()
     remove_re: frozenset[str] = frozenset()
 
@@ -113,7 +112,7 @@ class Distribution:
     id: Identifier
     file: File
     source: DistributionSource
-    placeholders: frozendict[Identifier, str]
+    placeholders: FrozenDict[Identifier, str]
 
     def _expand_placeholder(self, match: Match) -> str:
         if placeholder := match.group("placeholder"):

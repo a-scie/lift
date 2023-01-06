@@ -12,14 +12,12 @@
 //     "appdirs",
 //     "click",
 //     "filelock",
-//     "frozendict",
 //     "httpx",
 //     "packaging",
 //     "pytest==7.2.0",
 //     "tomli",
 //     "tqdm",
 //     "types-appdirs",
-//     "types-frozendict",
 //     "types-tqdm"
 //   ],
 //   "manylinux": "manylinux2014",
@@ -202,20 +200,20 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "8df285554452285f79c035efb0c861eb33a4bcfa5b7a137016e32e6a90f9792c",
-              "url": "https://files.pythonhosted.org/packages/7c/37/4fed6f28d8010c791437b808a94f37c4ae58ee3998b653d2c0286a8cc190/filelock-3.8.2-py3-none-any.whl"
+              "hash": "f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d",
+              "url": "https://files.pythonhosted.org/packages/14/4c/b201d0292ca4e0950f0741212935eac9996f69cd66b92a3587e594999163/filelock-3.9.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "7565f628ea56bfcd8e54e42bdc55da899c85c1abfe1b5bcfd147e9188cebb3b2",
-              "url": "https://files.pythonhosted.org/packages/d8/73/292d9ea2370840a163e6dd2d2816a571244e9335e2f6ad957bf0527c492f/filelock-3.8.2.tar.gz"
+              "hash": "7b319f24340b51f55a2bf7a12ac0755a9b03e718311dac567a0f4f7fabd2f5de",
+              "url": "https://files.pythonhosted.org/packages/0b/dc/eac02350f06c6ed78a655ceb04047df01b02c6b7ea3fc02d4df24ca87d24/filelock-3.9.0.tar.gz"
             }
           ],
           "project_name": "filelock",
           "requires_dists": [
             "covdefaults>=2.2.2; extra == \"testing\"",
-            "coverage>=6.5; extra == \"testing\"",
-            "furo>=2022.9.29; extra == \"docs\"",
+            "coverage>=7.0.1; extra == \"testing\"",
+            "furo>=2022.12.7; extra == \"docs\"",
             "pytest-cov>=4; extra == \"testing\"",
             "pytest-timeout>=2.1; extra == \"testing\"",
             "pytest>=7.2; extra == \"testing\"",
@@ -223,35 +221,7 @@
             "sphinx>=5.3; extra == \"docs\""
           ],
           "requires_python": ">=3.7",
-          "version": "3.8.2"
-        },
-        {
-          "artifacts": [
-            {
-              "algorithm": "sha256",
-              "hash": "d722f3d89db6ae35ef35ecc243c40c800eb344848c83dba4798353312cd37b15",
-              "url": "https://files.pythonhosted.org/packages/33/dc/9948e7cf82103aab0a4d9f31a955b8646330e4b10d29b97fa00e47419ed9/frozendict-2.3.4-py3-none-any.whl"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "15b4b18346259392b0d27598f240e9390fafbff882137a9c48a1e0104fb17f78",
-              "url": "https://files.pythonhosted.org/packages/2d/ad/96e39d15df0c825d55dc0481016a7c743ad646d7fd4c11caf9306c606f93/frozendict-2.3.4.tar.gz"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "84c9887179a245a66a50f52afa08d4d92ae0f269839fab82285c70a0fa0dd782",
-              "url": "https://files.pythonhosted.org/packages/3a/f5/ea26dc01044e8ab28287f399822c72827d8188c3ab9b05c0820349d8b48e/frozendict-2.3.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "4a3b32d47282ae0098b9239a6d53ec539da720258bd762d62191b46f2f87c5fc",
-              "url": "https://files.pythonhosted.org/packages/ec/c9/28be056852c784e85393cf4bc9af57daf80882533917305d29987d3e1ab2/frozendict-2.3.4-cp310-cp310-macosx_10_9_x86_64.whl"
-            }
-          ],
-          "project_name": "frozendict",
-          "requires_dists": [],
-          "requires_python": ">=3.6",
-          "version": "2.3.4"
+          "version": "3.9.0"
         },
         {
           "artifacts": [
@@ -302,13 +272,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "0b9b1f0ee18b9978d637b0776bfd7f54e2ca278e063e3586d8f01cda89e042a8",
-              "url": "https://files.pythonhosted.org/packages/e1/74/cdce73069e021ad5913451b86c2707b027975cf302016ca557686d87eb41/httpx-0.23.1-py3-none-any.whl"
+              "hash": "a211fcce9b1254ea24f0cd6af9869b3d29aba40154e947d2a07bb499b3e310d6",
+              "url": "https://files.pythonhosted.org/packages/ac/a2/0260c0f5d73bdf06e8d3fc1013a82b9f0633dc21750c9e3f3cb1dba7bb8c/httpx-0.23.3-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "202ae15319be24efe9a8bd4ed4360e68fde7b38bcc2ce87088d416f026667d19",
-              "url": "https://files.pythonhosted.org/packages/8a/df/a3e8b91dfb452e645ef110985a30f0915276a1a2144004c7671c07bb203c/httpx-0.23.1.tar.gz"
+              "hash": "9818458eb565bb54898ccb9b8b251a28785dd4a55afbc23d0eb410754fe7d0f9",
+              "url": "https://files.pythonhosted.org/packages/f5/50/04d5e8ee398a10c767a341a25f59ff8711ae3adf0143c7f8b45fc560d72d/httpx-0.23.3.tar.gz"
             }
           ],
           "project_name": "httpx",
@@ -326,7 +296,7 @@
             "socksio==1.*; extra == \"socks\""
           ],
           "requires_python": ">=3.7",
-          "version": "0.23.1"
+          "version": "0.23.3"
         },
         {
           "artifacts": [
@@ -545,24 +515,6 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "d4292ef14f87ddec575ab1d968102dcba2c8f1e490acc67945eee1fc7de24d08",
-              "url": "https://files.pythonhosted.org/packages/f7/ce/b82dc24a102905e86e45502e23ee60bbc57703ba1b82a65f12a43486b4f2/types_frozendict-2.0.9-py3-none-any.whl"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "446b5f33125566c9885c31363e065d6416f8da6c81252af1e459a4e67a15487b",
-              "url": "https://files.pythonhosted.org/packages/47/f6/e0cad2befd140af466063594afdaba23313580ab74e099e48c61f051df80/types-frozendict-2.0.9.tar.gz"
-            }
-          ],
-          "project_name": "types-frozendict",
-          "requires_dists": [],
-          "requires_python": null,
-          "version": "2.0.9"
-        },
-        {
-          "artifacts": [
-            {
-              "algorithm": "sha256",
               "hash": "8871999c7f4a8cd24655dcb44cfcca03efd931a9b49e62530a8880bd909c5474",
               "url": "https://files.pythonhosted.org/packages/5f/1f/08e461659f939d656b104b0dcfe89279cf26801b4c11f23d5a6b63e9ce52/types_tqdm-4.64.7.9-py3-none-any.whl"
             },
@@ -589,14 +541,12 @@
     "appdirs",
     "click",
     "filelock",
-    "frozendict",
     "httpx",
     "packaging",
     "pytest==7.2.0",
     "tomli",
     "tqdm",
     "types-appdirs",
-    "types-frozendict",
     "types-tqdm"
   ],
   "requires_python": [
