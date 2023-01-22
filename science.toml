@@ -23,7 +23,7 @@ lazy = true
 # release = "20221220"
 
 # Can be exact, e.g.: 3.10.9; otherwise finds matching artifacts.
-version = "3.10"
+version = "3.11"
 
 # Optional, defaults to the "install_only" flavor.
 # flavor = "install_only"

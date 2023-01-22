@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.15.0rc0"
+pants_version = "2.15.0rc2"
 
 backend_packages = [
     "pants.backend.python",
@@ -31,25 +31,30 @@ config = "pyproject.toml"
 lockfile = "pants-support/tool-locks/mypy.lock"
 
 [pex-cli]
-version = "v2.1.119"
+version = "v2.1.121"
 known_versions = [
-    "v2.1.119|linux_arm64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
-    "v2.1.119|linux_x86_64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
-    "v2.1.119|macos_arm64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
-    "v2.1.119|macos_x86_64|ffcb6d4feef57100462930c57b3e0521c1757ee30587c0edf74c762a3d32b953|4069627",
+    "v2.1.121|linux_arm64|55cc5edd65be46758ed58d466f2ed88b70c2c22f144f0ecf9ac372b451ad304c|4072726",
+    "v2.1.121|linux_x86_64|55cc5edd65be46758ed58d466f2ed88b70c2c22f144f0ecf9ac372b451ad304c|4072726",
+    "v2.1.121|macos_arm64|55cc5edd65be46758ed58d466f2ed88b70c2c22f144f0ecf9ac372b451ad304c|4072726",
+    "v2.1.121|macos_x86_64|55cc5edd65be46758ed58d466f2ed88b70c2c22f144f0ecf9ac372b451ad304c|4072726",
 ]
 
 [pytest]
 # N.B.: Keep aligned with requirements.txt.
-version = "pytest==7.2.0"
+version = "pytest==7.2.1"
 lockfile = "pants-support/tool-locks/pytest.lock"
 
 [python]
 enable_resolves = true
-interpreter_constraints = ["==3.10.*"]
+interpreter_constraints = ["==3.11.*"]
 
 [python.resolves]
 python-default = "lock.json"
+
+[python.resolves_to_interpreter_constraints]
+# This non-DRY re-declaration of the default IC above is bugged here:
+#  https://github.com/pantsbuild/pants/issues/17978
+python-default = ["==3.11.*"]
 
 [source]
 root_patterns = [

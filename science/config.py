@@ -1,10 +1,11 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+# This `no-infer-dep` will not be needed once we upgrade ti a version of Pants that fixes:
+#  https://github.com/pantsbuild/pants/issues/18055
+import tomllib  # pants: no-infer-dep
 from pathlib import Path
 from typing import Any, Mapping
-
-import tomli
 
 from science.frozendict import FrozenDict
 from science.model import (
@@ -25,11 +26,11 @@ from science.provider import get_provider
 
 def parse_config_file(path: Path) -> Application:
     with path.open(mode="rb") as fp:
-        return parse_config_data(tomli.load(fp))
+        return parse_config_data(tomllib.load(fp))
 
 
 def parse_config_str(config: str) -> Application:
-    return parse_config_data(tomli.loads(config))
+    return parse_config_data(tomllib.loads(config))
 
 
 def parse_command(data: Mapping[str, Any]) -> Command:
