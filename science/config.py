@@ -70,17 +70,15 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
 
     interpreters = []
     for interpreter in science.get("interpreters", ()):
-        identifier = Identifier.parse(interpreter["id"])
-        lazy = interpreter.get("lazy", False)
-        provider_name = interpreter["provider"]
+        identifier = Identifier.parse(interpreter.pop("id"))
+        lazy = interpreter.pop("lazy", False)
+        provider_name = interpreter.pop("provider")
         if not (provider := get_provider(provider_name)):
             raise ValueError(f"The provider '{provider_name}' is not registered.")
         interpreters.append(
             Interpreter(
                 id=identifier,
-                provider=provider.create(
-                    identifier=identifier, lazy=lazy, **interpreter.get("configuration", {})
-                ),
+                provider=provider.create(identifier=identifier, lazy=lazy, **interpreter),
                 lazy=lazy,
             )
         )

@@ -16,9 +16,6 @@ id = "cpython"
 provider = "science.providers.PBS"
 lazy = true
 
-# Providers can define an optional configuration object (table) of arbitrary shape to be handed to
-# them by the science infra.
-[science.interpreters.configuration]
 # Optional, defaults to the latest PBS release.
 # release = "20221220"
 
