@@ -2,6 +2,9 @@
 name = "science"
 description = "Ship your interpreted executables using science."
 
+# It's possible to "cross-build" scies when all files are available for all needed platforms.
+# Here the CPython interpreter is available for all these platforms and the science.pex is
+# cross-platform; so we can leverage this.
 platforms = [
     "linux-aarch64",
     "linux-x86_64",
