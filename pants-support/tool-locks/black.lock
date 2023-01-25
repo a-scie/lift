@@ -109,19 +109,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "3c95343af8b756205e2aba76e843ba9520a24dd84f68c22b9f93251507509dd6",
-              "url": "https://files.pythonhosted.org/packages/3c/29/c07c3a976dbe37c56e381e058c11e8738cb3a0416fc842a310461f8bb695/pathspec-0.10.3-py3-none-any.whl"
+              "hash": "3a66eb970cbac598f9e5ccb5b2cf58930cd8e3ed86d393d541eaf2d8b1705229",
+              "url": "https://files.pythonhosted.org/packages/e6/be/1a973593d7ce7ac9d1a793b81eb265c152a62f34825169fbd7c4e4548e34/pathspec-0.11.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "56200de4077d9d0791465aa9095a01d421861e405b5096955051deefd697d6f6",
-              "url": "https://files.pythonhosted.org/packages/32/1a/6baf904503c3e943cae9605c9c88a43b964dea5b59785cf956091b341b08/pathspec-0.10.3.tar.gz"
+              "hash": "64d338d4e0914e91c1792321e6907b5a593f1ab1851de7fc269557a21b30ebbc",
+              "url": "https://files.pythonhosted.org/packages/f4/8e/f91cffb32740b251cff04cad1e7cdd2c710582c735a01f56307316c148f2/pathspec-0.11.0.tar.gz"
             }
           ],
           "project_name": "pathspec",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "0.10.3"
+          "version": "0.11.0"
         },
         {
           "artifacts": [
