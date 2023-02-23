@@ -1,1 +1,1 @@
-BUILD_ROOT="$(git rev-parse --show-toplevel)"
+export BUILD_ROOT="$(git rev-parse --show-toplevel)"
