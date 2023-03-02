@@ -31,7 +31,6 @@ def _render_file(file: File) -> dict[str, Any]:
 def _render_command(
     command: Command, distributions: Iterable[Distribution]
 ) -> tuple[str, dict[str, Any]]:
-
     exe = command.exe
     for distribution in distributions:
         exe = distribution.expand_placeholders(exe)

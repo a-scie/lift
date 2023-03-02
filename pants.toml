@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.15.0rc7"
+pants_version = "2.15.0"
 
 backend_packages = [
     "pants.backend.python",
@@ -31,12 +31,12 @@ config = "pyproject.toml"
 lockfile = "pants-support/tool-locks/mypy.lock"
 
 [pex-cli]
-version = "v2.1.123"
+version = "v2.1.125"
 known_versions = [
-    "v2.1.123|linux_arm64|3a2cba02946eb8859393906673bb56ecf6ebee72961bc8f3ca1ae754493733c6|4076395",
-    "v2.1.123|linux_x86_64|3a2cba02946eb8859393906673bb56ecf6ebee72961bc8f3ca1ae754493733c6|4076395",
-    "v2.1.123|macos_arm64|3a2cba02946eb8859393906673bb56ecf6ebee72961bc8f3ca1ae754493733c6|4076395",
-    "v2.1.123|macos_x86_64|3a2cba02946eb8859393906673bb56ecf6ebee72961bc8f3ca1ae754493733c6|4076395",
+    "v2.1.125|macos_arm64|1da1ef933429f15b218c98c6b960f30adfd0221fc5284c1d8facac09923692f8|4080732",
+    "v2.1.125|macos_x86_64|1da1ef933429f15b218c98c6b960f30adfd0221fc5284c1d8facac09923692f8|4080732",
+    "v2.1.125|linux_x86_64|1da1ef933429f15b218c98c6b960f30adfd0221fc5284c1d8facac09923692f8|4080732",
+    "v2.1.125|linux_arm64|1da1ef933429f15b218c98c6b960f30adfd0221fc5284c1d8facac09923692f8|4080732"
 ]
 
 [pytest]
