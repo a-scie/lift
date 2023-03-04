@@ -11,7 +11,7 @@
 //   "generated_with_requirements": [
 //     "pytest-cov!=2.12.1,<3.1,>=2.12",
 //     "pytest-xdist<3,>=2.5",
-//     "pytest==7.2.1"
+//     "pytest==7.2.2"
 //   ],
 //   "manylinux": "manylinux2014",
 //   "requirement_constraints": [],
@@ -232,13 +232,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "c7c6ca206e93355074ae32f7403e8ea12163b1163c976fee7d4d84027c162be5",
-              "url": "https://files.pythonhosted.org/packages/cc/02/8f59bf194c9a1ceac6330850715e9ec11e21e2408a30a596c65d54cf4d2a/pytest-7.2.1-py3-none-any.whl"
+              "hash": "130328f552dcfac0b1cec75c12e3f005619dc5f874f0a06e8ff7263f0ee6225e",
+              "url": "https://files.pythonhosted.org/packages/b2/68/5321b5793bd506961bd40bdbdd0674e7de4fb873ee7cab33dd27283ad513/pytest-7.2.2-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "d45e0952f3727241918b8fd0f376f5ff6b301cc0777c6f9a556935c92d8a7d42",
-              "url": "https://files.pythonhosted.org/packages/e5/6c/f3a15217ac72912c28c5d7a7a8e87ff6d6475c9530595ae9f0f8dedd8dd8/pytest-7.2.1.tar.gz"
+              "hash": "c99ab0c73aceb050f68929bc93af19ab6db0558791c6a0715723abe9d0ade9d4",
+              "url": "https://files.pythonhosted.org/packages/b9/29/311895d9cd3f003dd58e8fdea36dd895ba2da5c0c90601836f7de79f76fe/pytest-7.2.2.tar.gz"
             }
           ],
           "project_name": "pytest",
@@ -260,7 +260,7 @@
             "xmlschema; extra == \"testing\""
           ],
           "requires_python": ">=3.7",
-          "version": "7.2.1"
+          "version": "7.2.2"
         },
         {
           "artifacts": [
@@ -340,13 +340,13 @@
     }
   ],
   "path_mappings": {},
-  "pex_version": "2.1.125",
+  "pex_version": "2.1.126",
   "pip_version": "20.3.4-patched",
   "prefer_older_binary": false,
   "requirements": [
     "pytest-cov!=2.12.1,<3.1,>=2.12",
     "pytest-xdist<3,>=2.5",
-    "pytest==7.2.1"
+    "pytest==7.2.2"
   ],
   "requires_python": [
     "==3.11.*"
