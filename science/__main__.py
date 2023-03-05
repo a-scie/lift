@@ -9,13 +9,13 @@ import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
+from typing import BinaryIO, Iterator
 
 import click
 
 from science import __version__, a_scie, lift
-from science.config import parse_config_file
-from science.model import Command, Distribution, File, Url
+from science.config import parse_config
+from science.model import Application, Command, Distribution, File, Url
 from science.platform import Platform
 
 
@@ -37,20 +37,6 @@ def main() -> None:  # TODO(John Sirois): XXX:
     #  Also, when the reference is platform specific, then this seems to fall apart.
     # --exe --args --env
     pass
-
-
-@main.command()
-@click.option(
-    "-p",
-    "--platform",
-    "platforms",
-    type=Platform.parse,
-    multiple=True,
-    default=[Platform.current()],
-)
-def init(platforms: tuple[Platform, ...]) -> None:
-    click.echo(f"Science init!:")
-    click.echo(f"{platforms=}")
 
 
 @dataclass(frozen=True)
@@ -78,69 +64,58 @@ def _temporary_directory(cleanup: bool) -> Iterator[Path]:
         yield Path(tempfile.mkdtemp())
 
 
-@main.command()
-@click.option("--config", type=Path)
-@click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
-@click.option("--dest-dir", type=Path, default=Path.cwd())
-@click.option("--preserve-sandbox", is_flag=True)
-def build(
-    config: Path, file_mappings: list[FileMapping], dest_dir: Path, preserve_sandbox: bool
-) -> None:
-    application = parse_config_file(config)
-
-    current_platform = Platform.current()
-    use_platform_suffix = application.platforms != frozenset([current_platform])
-    # N.B.: The scie-jump 0.9.0 or later is needed to support cross-building against foreign
-    # platform scie-jumps with "-sj".
-    native_jump_path = a_scie.jump(platform=current_platform)
+def _export(
+    application: Application, file_mappings: list[FileMapping], dest_dir: Path, force: bool = False
+) -> Iterator[tuple[Platform, Path]]:
     for platform in application.platforms:
-        with _temporary_directory(cleanup=not preserve_sandbox) as td:
-            temp_dir = Path(td)
-            jump_path = a_scie.jump(platform=platform)
+        chroot = dest_dir / platform.value
+        if force:
+            shutil.rmtree(chroot, ignore_errors=True)
+        chroot.mkdir(parents=True, exist_ok=False)
 
-            bindings: list[Command] = []
-            distributions: list[Distribution] = []
-            files: list[File] = []
-            file_paths_by_id = {
-                file_mapping.id: file_mapping.path.resolve() for file_mapping in file_mappings
-            }
-            fetch_urls: dict[str, str] = {}
-            fetch = any("fetch" == file.source for file in application.files)
-            fetch |= any(interpreter.lazy for interpreter in application.interpreters)
-            if fetch:
-                ptex = a_scie.ptex(temp_dir, platform=platform)
-                file_paths_by_id[ptex.id] = temp_dir / ptex.name
-                files.append(ptex)
-                bindings.append(
-                    Command(name="fetch", exe=ptex.placeholder, args=tuple(["{scie.lift}"]))
-                )
-            bindings.extend(application.bindings)
+        bindings: list[Command] = []
+        distributions: list[Distribution] = []
+        files: list[File] = []
+        file_paths_by_id = {
+            file_mapping.id: file_mapping.path.resolve() for file_mapping in file_mappings
+        }
+        fetch_urls: dict[str, str] = {}
+        fetch = any("fetch" == file.source for file in application.files)
+        fetch |= any(interpreter.lazy for interpreter in application.interpreters)
+        if fetch:
+            ptex = a_scie.ptex(chroot, platform=platform)
+            file_paths_by_id[ptex.id] = chroot / ptex.name
+            files.append(ptex)
+            bindings.append(
+                Command(name="fetch", exe=ptex.placeholder, args=tuple(["{scie.lift}"]))
+            )
+        bindings.extend(application.bindings)
 
-            for interpreter in application.interpreters:
-                distribution = interpreter.provider.distribution(platform)
-                if distribution:
-                    distributions.append(distribution)
-                    files.append(distribution.file)
-                    match distribution.source:
-                        case Url(url):
-                            fetch_urls[distribution.file.name] = url
-                        case path:
-                            file_paths_by_id[distribution.file.id] = path
-            files.extend(application.files)
+        for interpreter in application.interpreters:
+            distribution = interpreter.provider.distribution(platform)
+            if distribution:
+                distributions.append(distribution)
+                files.append(distribution.file)
+                match distribution.source:
+                    case Url(url):
+                        fetch_urls[distribution.file.name] = url
+                    case path:
+                        file_paths_by_id[distribution.file.id] = path
+        files.extend(application.files)
 
-            for file in files:
-                if file.source is None:
-                    path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
-                    if not path.exists():
-                        raise ValueError(
-                            f"The file for {file.id} is not mapped or cannot be found."
-                        )
-                    target = temp_dir / file.name
-                    if not target.exists():
-                        target.symlink_to(path)
+        for file in files:
+            if file.source is None:
+                path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
+                if not path.exists():
+                    raise ValueError(f"The file for {file.id} is not mapped or cannot be found.")
+                target = chroot / file.name
+                if not target.exists():
+                    target.symlink_to(path)
 
-            lift_path = lift.emit_manifest(
-                temp_dir,
+        lift_manifest = chroot / "lift.json"
+        with open(lift_manifest, "w") as lift_manifest_output:
+            lift.emit_manifest(
+                lift_manifest_output,
                 name=application.name,
                 description=application.description,
                 load_dotenv=application.load_dotenv,
@@ -150,9 +125,43 @@ def build(
                 bindings=bindings,
                 fetch_urls=fetch_urls,
             )
+        yield platform, lift_manifest
+
+
+@main.command()
+@click.argument("config", type=click.File("rb"))
+@click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
+@click.option("--dest-dir", type=Path, default=Path.cwd())
+@click.option("--force", is_flag=True)
+def export(config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, force: bool) -> None:
+    application = parse_config(config)
+    for _, lift_manifest in _export(application, file_mappings, dest_dir, force):
+        click.echo(lift_manifest)
+
+
+@main.command()
+@click.argument("config", type=click.File("rb"))
+@click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
+@click.option("--dest-dir", type=Path, default=Path.cwd())
+@click.option("--preserve-sandbox", is_flag=True)
+def build(
+    config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, preserve_sandbox: bool
+) -> None:
+    application = parse_config(config)
+
+    current_platform = Platform.current()
+    use_platform_suffix = application.platforms != frozenset([current_platform])
+    # N.B.: The scie-jump 0.9.0 or later is needed to support cross-building against foreign
+    # platform scie-jumps with "-sj".
+    native_jump_path = a_scie.jump(platform=current_platform)
+    with _temporary_directory(cleanup=not preserve_sandbox) as td:
+        for platform, lift_manifest in _export(application, file_mappings, td):
+            jump_path = a_scie.jump(platform=platform)
+            platform_export_dir = lift_manifest.parent
             subprocess.run(
-                args=[str(native_jump_path), "-sj", str(jump_path), str(lift_path)],
-                cwd=td,
+                args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],
+                cwd=platform_export_dir,
+                stdout=subprocess.DEVNULL,
                 check=True,
             )
             src_binary_name = current_platform.binary_name(application.name)
@@ -162,7 +171,9 @@ def build(
                 else platform.binary_name(application.name)
             )
             dest_dir.mkdir(parents=True, exist_ok=True)
-            shutil.move(src=temp_dir / src_binary_name, dst=dest_dir / dst_binary_name)
+            dst_binary = dest_dir / dst_binary_name
+            shutil.move(src=platform_export_dir / src_binary_name, dst=dst_binary)
+            click.echo(dst_binary)
 
 
 if __name__ == "__main__":

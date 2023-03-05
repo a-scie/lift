@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, TextIO
 
 from science.model import Binding, Command, Distribution, File
 
@@ -64,7 +63,7 @@ def _render_command(
 
 
 def emit_manifest(
-    temp_dir: Path,
+    output: TextIO,
     name: str,
     description: str | None,
     load_dotenv: bool,
@@ -73,7 +72,7 @@ def emit_manifest(
     commands: Iterable[Command],
     bindings: Iterable[Command],
     fetch_urls: dict[str, str],
-) -> Path:
+) -> None:
     lift = {
         "name": name,
         "description": description,
@@ -89,7 +88,4 @@ def emit_manifest(
     if fetch_urls:
         data["ptex"] = fetch_urls
 
-    manifest = temp_dir / "lift.json"
-    with manifest.open("w") as fp:
-        json.dump(data, fp, indent=2, sort_keys=True)
-    return manifest
+    json.dump(data, output, indent=2, sort_keys=True)
