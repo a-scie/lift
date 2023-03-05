@@ -8,6 +8,9 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, BinaryIO, Mapping
 
+from packaging import version
+from packaging.version import Version
+
 from science.frozendict import FrozenDict
 from science.model import (
     Application,
@@ -20,6 +23,8 @@ from science.model import (
     FileType,
     Identifier,
     Interpreter,
+    Ptex,
+    ScieJump,
 )
 from science.platform import Platform
 from science.provider import get_provider
@@ -56,6 +61,18 @@ def parse_command(data: Mapping[str, Any]) -> Command:
     )
 
 
+def parse_version_field(data: Mapping[str, Any]) -> Version | None:
+    return version.parse(version_str) if (version_str := data.get("version")) else None
+
+
+def parse_digest_field(data: Mapping[str, Any]) -> Digest | None:
+    return (
+        Digest(size=digest_data["size"], fingerprint=digest_data["fingerprint"])
+        if (digest_data := data.get("digest"))
+        else None
+    )
+
+
 def parse_config_data(data: Mapping[str, Any]) -> Application:
     # TODO(John Sirois): wrap up [] accesses to provide useful information on KeyError.
 
@@ -72,6 +89,24 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
             "There must be at least one platform defined for a science application. Leave "
             "un-configured to request just the current platform."
         )
+
+    scie_jump = (
+        ScieJump(
+            version=parse_version_field(scie_jump_table), digest=parse_digest_field(scie_jump_table)
+        )
+        if (scie_jump_table := science.get("scie-jump"))
+        else ScieJump()
+    )
+
+    ptex = (
+        Ptex(
+            id=ptex_table.get("id", "ptex"),
+            version=parse_version_field(ptex_table),
+            digest=parse_digest_field(ptex_table),
+        )
+        if (ptex_table := science.get("ptex"))
+        else None
+    )
 
     interpreters = []
     for interpreter in science.get("interpreters", ()):
@@ -91,11 +126,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
     files = []
     for file in science.get("files", ()):
         file_name = file["name"]
-        digest = (
-            Digest(size=digest_data["size"], fingerprint=digest_data["fingerprint"])
-            if (digest_data := file.get("digest"))
-            else None
-        )
+        digest = parse_digest_field(file)
         file_type = FileType(file_type_name) if (file_type_name := file.get("type")) else None
 
         source: FileSource = None
@@ -129,6 +160,8 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
         description=description,
         load_dotenv=load_dotenv,
         platforms=platforms,
+        scie_jump=scie_jump,
+        ptex=ptex,
         interpreters=tuple(interpreters),
         files=tuple(files),
         commands=frozenset(commands),

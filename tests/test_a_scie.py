@@ -4,8 +4,10 @@
 import subprocess
 
 from _pytest.tmpdir import TempPathFactory
+from packaging import version
 
 from science import a_scie
+from science.model import Ptex
 
 
 def test_ptex_latest(tmp_path_factory: TempPathFactory) -> None:
@@ -16,7 +18,7 @@ def test_ptex_latest(tmp_path_factory: TempPathFactory) -> None:
 
 def test_ptex_version(tmp_path_factory: TempPathFactory) -> None:
     dest_dir = tmp_path_factory.mktemp("staging")
-    latest = a_scie.ptex(dest_dir=dest_dir, version="0.6.0")
+    latest = a_scie.ptex(dest_dir=dest_dir, specification=Ptex(version=version.parse("0.6.0")))
     assert (
         "0.6.0"
         == subprocess.run(

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from pathlib import Path
 from typing import BinaryIO, Iterator
 
 import click
+from packaging import version
 
 from science import __version__, a_scie, lift
 from science.config import parse_config
@@ -83,7 +85,8 @@ def _export(
         fetch = any("fetch" == file.source for file in application.files)
         fetch |= any(interpreter.lazy for interpreter in application.interpreters)
         if fetch:
-            ptex = a_scie.ptex(chroot, platform=platform)
+            # TODO(John Sirois): Check digest if provided.
+            ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
             file_paths_by_id[ptex.id] = chroot / ptex.name
             files.append(ptex)
             bindings.append(
@@ -119,6 +122,7 @@ def _export(
                 name=application.name,
                 description=application.description,
                 load_dotenv=application.load_dotenv,
+                scie_jump=application.scie_jump,
                 distributions=distributions,
                 files=files,
                 commands=application.commands,
@@ -151,12 +155,19 @@ def build(
 
     current_platform = Platform.current()
     use_platform_suffix = application.platforms != frozenset([current_platform])
-    # N.B.: The scie-jump 0.9.0 or later is needed to support cross-building against foreign
-    # platform scie-jumps with "-sj".
+    scie_jump_version = application.scie_jump.version if application.scie_jump else None
+    if scie_jump_version and scie_jump_version < version.parse("0.9.0"):
+        # N.B.: The scie-jump 0.9.0 or later is needed to support cross-building against foreign
+        # platform scie-jumps with "-sj".
+        sys.exit(
+            f"A scie-jump version of {scie_jump_version} was requested but {sys.argv[0]} requires "
+            "at least 0.9.0."
+        )
+
     native_jump_path = a_scie.jump(platform=current_platform)
     with _temporary_directory(cleanup=not preserve_sandbox) as td:
         for platform, lift_manifest in _export(application, file_mappings, td):
-            jump_path = a_scie.jump(platform=platform)
+            jump_path = a_scie.jump(version=scie_jump_version, platform=platform)
             platform_export_dir = lift_manifest.parent
             subprocess.run(
                 args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],

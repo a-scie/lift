@@ -4,9 +4,10 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import Any, Iterable, TextIO
 
-from science.model import Binding, Command, Distribution, File
+from science.model import Binding, Command, Distribution, File, ScieJump
 
 
 def _render_file(file: File) -> dict[str, Any]:
@@ -67,6 +68,7 @@ def emit_manifest(
     name: str,
     description: str | None,
     load_dotenv: bool,
+    scie_jump: ScieJump,
     distributions: Iterable[Distribution],
     files: Iterable[File],
     commands: Iterable[Command],
@@ -84,8 +86,16 @@ def emit_manifest(
         },
     }
 
-    data: dict[str, Any] = {"scie": {"lift": lift}}
+    scie_data = {"lift": lift}
+    data: dict[str, Any] = {"scie": scie_data}
     if fetch_urls:
         data["ptex"] = fetch_urls
+
+    scie_jump_data: dict[str, Any] = {}
+    if (scie_jump_version := scie_jump.version) and (scie_jump_digest := scie_jump.digest):
+        scie_jump_data["version"] = str(scie_jump_version)
+        scie_jump_data["size"] = scie_jump_digest.size
+    if scie_jump_data:
+        scie_data["jump"] = scie_jump_data
 
     json.dump(data, output, indent=2, sort_keys=True)

@@ -10,6 +10,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Iterable, Literal, Match, Protocol, TypeAlias
 
+from packaging.version import Version
+
 from science.frozendict import FrozenDict
 from science.platform import Platform
 
@@ -64,6 +66,23 @@ class File:
     @property
     def id(self) -> str:
         return self.key or self.name
+
+    @property
+    def placeholder(self) -> str:
+        return f"{{{self.id}}}"
+
+
+@dataclass(frozen=True)
+class ScieJump:
+    version: Version | None = None
+    digest: Digest | None = None
+
+
+@dataclass(frozen=True)
+class Ptex:
+    id: str | None = None
+    version: Version | None = None
+    digest: Digest | None = None
 
     @property
     def placeholder(self) -> str:
@@ -151,6 +170,8 @@ class Application:
     commands: frozenset[Command]
     description: str | None
     load_dotenv: bool = False
+    scie_jump: ScieJump = ScieJump()
+    ptex: Ptex | None = None
     platforms: frozenset[Platform] = frozenset([Platform.current()])
     interpreters: Iterable[Interpreter] = ()
     files: Iterable[File] = ()
