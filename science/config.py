@@ -27,7 +27,7 @@ from science.model import (
     ScieJump,
 )
 from science.platform import Platform
-from science.provider import get_provider
+from science.providers import get_provider
 
 
 def parse_config(content: BinaryIO) -> Application:

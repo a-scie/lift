@@ -16,7 +16,7 @@ platforms = [
 [[science.interpreters]]
 id = "cpython"
 # Providers can generate a lift manifest JSON file entry given a platform.
-provider = "science.providers.PBS"
+provider = "PythonBuildStandalone"
 lazy = true
 
 # Optional, defaults to the latest PBS release.

@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Iterable, Literal, Match, Protocol, TypeAlias
+from typing import Iterable, Literal, Match, Protocol, TypeAlias, runtime_checkable
 
 from packaging.version import Version
 
@@ -80,7 +80,7 @@ class ScieJump:
 
 @dataclass(frozen=True)
 class Ptex:
-    id: str | None = None
+    id: Identifier | None = None
     version: Version | None = None
     digest: Digest | None = None
 
@@ -148,6 +148,7 @@ class Distribution:
         )
 
 
+@runtime_checkable
 class Provider(Protocol):
     @classmethod
     def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> Provider:

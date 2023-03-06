@@ -52,5 +52,5 @@ def ptex(
         project_name="ptex", binary_name="ptex", version=ptex_version, platform=platform
     )
     (dest_dir / result.binary_name).symlink_to(result.path)
-    ptex_key = specification.id if specification and specification.id else "ptex"
+    ptex_key = specification.id.value if specification and specification.id else "ptex"
     return File(name=result.binary_name, key=ptex_key, is_executable=True)

@@ -57,7 +57,7 @@ class Asset:
 
 
 @dataclass(frozen=True)
-class PBS(Provider):
+class PythonBuildStandalone(Provider):
     @staticmethod
     def rank_compatibility(platform: Platform, target_triple: str) -> int | None:
         match platform:
@@ -94,7 +94,7 @@ class PBS(Provider):
         return None
 
     @classmethod
-    def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> PBS:
+    def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> PythonBuildStandalone:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
         if release := kwargs.get("release"):
             release_url = Url(f"{api_url}/tags/{release}")
