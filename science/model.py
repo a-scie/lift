@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os.path
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -79,8 +80,22 @@ class ScieJump:
 
 
 @dataclass(frozen=True)
+class Identifier:
+    @classmethod
+    def parse(cls, value) -> Identifier:
+        if any(char in value for char in ("{", "}", ":")):
+            raise ValueError(
+                f"An identifier can not contain any of '{', '}' or ':', given: {value}"
+            )
+        return cls(value)
+
+    value: str
+
+
+@dataclass(frozen=True)
 class Ptex:
-    id: Identifier | None = None
+    id: Identifier = Identifier.parse("ptex")
+    argv1: str = "{scie.lift}"
     version: Version | None = None
     digest: Digest | None = None
 
@@ -104,19 +119,6 @@ class Command:
     env: Env = Env()
     name: str | None = None
     description: str | None = None
-
-
-@dataclass(frozen=True)
-class Identifier:
-    @classmethod
-    def parse(cls, value) -> Identifier:
-        if any(char in value for char in ("{", "}", ":")):
-            raise ValueError(
-                f"An identifier can not contain any of '{', '}' or ':', given: {value}"
-            )
-        return cls(value)
-
-    value: str
 
 
 class Url(str):
@@ -166,6 +168,29 @@ class Interpreter:
 
 
 @dataclass(frozen=True)
+class InterpreterGroup:
+    @classmethod
+    def create(cls, id_: Identifier, selector: str, interpreters: Iterable[Interpreter]):
+        interpreters_by_provider = defaultdict[Provider, list[Interpreter]](list)
+        for interpreter in interpreters:
+            interpreters_by_provider[interpreter.provider].append(interpreter)
+        if not interpreters_by_provider:
+            raise ValueError(
+                "At least two interpreters must be specified to form a group and none were."
+            )
+        if len(interpreters_by_provider) > 1:
+            given = [f"{provider}" for provider, member in interpreters_by_provider.items()]
+            raise ValueError(
+                f"All specified interpreters must have the same provider. Given:\n{given}"
+            )
+        return cls(id=id_, selector=selector, members=frozenset(interpreters))
+
+    id: Identifier
+    selector: str
+    members: frozenset[Interpreter]
+
+
+@dataclass(frozen=True)
 class Application:
     name: str
     commands: frozenset[Command]
@@ -175,5 +200,6 @@ class Application:
     ptex: Ptex | None = None
     platforms: frozenset[Platform] = frozenset([Platform.current()])
     interpreters: Iterable[Interpreter] = ()
+    interpreter_groups: Iterable[InterpreterGroup] = ()
     files: Iterable[File] = ()
     bindings: frozenset[Command] = frozenset()

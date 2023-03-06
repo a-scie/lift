@@ -89,9 +89,12 @@ def _export(
             ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
             file_paths_by_id[ptex.id] = chroot / ptex.name
             files.append(ptex)
-            bindings.append(
-                Command(name="fetch", exe=ptex.placeholder, args=tuple(["{scie.lift}"]))
+            argv1 = (
+                application.ptex.argv1
+                if application.ptex and application.ptex.argv1
+                else "{scie.lift}"
             )
+            bindings.append(Command(name="fetch", exe=ptex.placeholder, args=tuple([argv1])))
         bindings.extend(application.bindings)
 
         for interpreter in application.interpreters:

@@ -101,6 +101,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
     ptex = (
         Ptex(
             id=ptex_table.get("id", "ptex"),
+            argv1=ptex_table.get("lazy_argv1", "{scie.lift}"),
             version=parse_version_field(ptex_table),
             digest=parse_digest_field(ptex_table),
         )
