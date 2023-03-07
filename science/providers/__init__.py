@@ -14,7 +14,8 @@ _BUILTIN_PROVIDER_TYPES = (PythonBuildStandalone,)
 
 
 def _builtin_names(provider_type: type[Provider]) -> Iterator[str]:
-    # Name builtins as `science.providers.<type name>`, e.g.: `science.providers.PBS`.
+    # Name builtins as `science.providers.<type name>`, e.g.:
+    # `science.providers.PythonBuildStandalone`.
     yield provider_type.__name__
     yield f"{__name__}.{provider_type.__name__}"
 

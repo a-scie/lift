@@ -183,7 +183,14 @@ class InterpreterGroup:
             raise ValueError(
                 f"All specified interpreters must have the same provider. Given:\n{given}"
             )
-        return cls(id=id_, selector=selector, members=frozenset(interpreters))
+        members = frozenset(interpreters)
+        if len(members) < 2:
+            member = next(iter(members))
+            raise ValueError(
+                f"At least two interpreters must be specified to form a group but only given "
+                f"{member.id!r}."
+            )
+        return cls(id=id_, selector=selector, members=members)
 
     id: Identifier
     selector: str

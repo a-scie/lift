@@ -115,7 +115,7 @@ class PythonBuildStandalone(Provider):
             rf"\+{re.escape(release)}-(?P<target_triple>.+)-{re.escape(flavor)}\.(?P<extension>.+)$"
         )
 
-        # N.B.: There are 3 types of files in PBS releases:
+        # N.B.: There are 3 types of files in PythonBuildStandalone releases:
         # 1. The release archive.
         # 2. The release archive .sah256 file with its individual checksum.
         # 3. The SHA256SUMS file with all the release archive checksums.
@@ -214,8 +214,8 @@ class PythonBuildStandalone(Provider):
                         placeholders[Identifier.parse("pip")] = f"python/bin/pip{version}"
             case flavor:
                 raise ValueError(
-                    "PBS currently only understands the 'install_only' flavor of distribution, "
-                    f"given: {flavor}"
+                    "PythonBuildStandalone currently only understands the 'install_only' flavor of "
+                    f"distribution, given: {flavor}"
                 )
         source: DistributionSource = (
             selected_asset.url

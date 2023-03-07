@@ -19,7 +19,7 @@ id = "cpython"
 provider = "PythonBuildStandalone"
 lazy = true
 
-# Optional, defaults to the latest PBS release.
+# Optional, defaults to the latest PythonBuildStandalone release.
 # release = "20221220"
 
 # Can be exact, e.g.: 3.10.9; otherwise finds matching artifacts.
@@ -37,7 +37,7 @@ name = "science.pex"
 # The sharp substitution requires ids do not contain '{', '}' or ':'.
 # A provider can define just 1 exported file, in which case #{provider-id} accesses it.
 # A provider can define several exported files, in which case #{provider-id:file-id} accesses each.
-# PBS proably will export `python`, and `pip`
+# PythonBuildStandalone exports `python` on all platforms and `pip` on all except Windows.
 exe = "#{cpython:python}"
 args = [
     "{science.pex}",

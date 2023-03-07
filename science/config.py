@@ -23,6 +23,7 @@ from science.model import (
     FileType,
     Identifier,
     Interpreter,
+    InterpreterGroup,
     Ptex,
     ScieJump,
 )
@@ -124,6 +125,21 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
             )
         )
 
+    interpreter_groups = []
+    for interpreter_group in science.get("interpreter_groups", ()):
+        identifier = Identifier.parse(interpreter_group.pop("id"))
+        selector = interpreter_group.pop("selector")
+        members = interpreter_group.pop("members")
+        if len(members) < 2:
+            raise ValueError(
+                f"At least two interpreter group members are needed to form an interpreter group. "
+                f"Given {f'just {next(iter(members))!r}' if members else 'none'} for interpreter "
+                f"group {identifier}."
+            )
+        interpreter_groups.append(
+            InterpreterGroup(id=identifier, selector=selector, members=members)
+        )
+
     files = []
     for file in science.get("files", ()):
         file_name = file["name"]
@@ -164,6 +180,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
         scie_jump=scie_jump,
         ptex=ptex,
         interpreters=tuple(interpreters),
+        interpreter_groups=tuple(interpreter_groups),
         files=tuple(files),
         commands=frozenset(commands),
         bindings=frozenset(bindings),
