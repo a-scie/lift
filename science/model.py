@@ -196,6 +196,10 @@ class InterpreterGroup:
     selector: str
     members: frozenset[Interpreter]
 
+    def expand_placeholders(self, value: str) -> tuple[str, dict[str, str]]:
+        # TODO(John Sirois): XXX
+        return value, {}
+
 
 @dataclass(frozen=True)
 class Application:

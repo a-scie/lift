@@ -10,7 +10,7 @@ import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Iterator
+from typing import BinaryIO, Iterable, Iterator
 
 import click
 from packaging import version
@@ -68,9 +68,14 @@ def _temporary_directory(cleanup: bool) -> Iterator[Path]:
 
 
 def _export(
-    application: Application, file_mappings: list[FileMapping], dest_dir: Path, force: bool = False
+    application: Application,
+    file_mappings: list[FileMapping],
+    dest_dir: Path,
+    *,
+    force: bool = False,
+    platforms: Iterable[Platform] | None = None,
 ) -> Iterator[tuple[Platform, Path]]:
-    for platform in application.platforms:
+    for platform in platforms or application.platforms:
         chroot = dest_dir / platform.value
         if force:
             shutil.rmtree(chroot, ignore_errors=True)
@@ -128,6 +133,7 @@ def _export(
                 load_dotenv=application.load_dotenv,
                 scie_jump=application.scie_jump,
                 distributions=distributions,
+                interpreter_groups=application.interpreter_groups,
                 files=files,
                 commands=application.commands,
                 bindings=bindings,
@@ -143,7 +149,7 @@ def _export(
 @click.option("--force", is_flag=True)
 def export(config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, force: bool) -> None:
     application = parse_config(config)
-    for _, lift_manifest in _export(application, file_mappings, dest_dir, force):
+    for _, lift_manifest in _export(application, file_mappings, dest_dir, force=force):
         click.echo(lift_manifest)
 
 
@@ -152,26 +158,55 @@ def export(config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, f
 @click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 @click.option("--preserve-sandbox", is_flag=True)
+@click.option("--use-jump", type=Path)
 def build(
-    config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, preserve_sandbox: bool
+    config: BinaryIO,
+    file_mappings: list[FileMapping],
+    dest_dir: Path,
+    preserve_sandbox: bool,
+    use_jump: Path | None,
 ) -> None:
     application = parse_config(config)
 
     current_platform = Platform.current()
-    use_platform_suffix = application.platforms != frozenset([current_platform])
+    platforms = application.platforms
+    use_platform_suffix = platforms != frozenset([current_platform])
+    if use_jump and use_platform_suffix:
+        click.secho(
+            f"Cannot use a custom scie jump build with a multi-platform configuration.", fg="yellow"
+        )
+        click.secho(
+            "Restricting requested platforms of "
+            f"{', '.join(platform.value for platform in platforms)} to "
+            f"{current_platform.value}",
+            fg="yellow",
+        )
+        platforms = frozenset([current_platform])
+        use_platform_suffix = False
+
     scie_jump_version = application.scie_jump.version if application.scie_jump else None
     if scie_jump_version and scie_jump_version < version.parse("0.9.0"):
         # N.B.: The scie-jump 0.9.0 or later is needed to support cross-building against foreign
         # platform scie-jumps with "-sj".
         sys.exit(
-            f"A scie-jump version of {scie_jump_version} was requested but {sys.argv[0]} requires "
-            "at least 0.9.0."
+            f"A scie-jump version of {scie_jump_version} was requested but {sys.argv[0]} "
+            f"requires at least 0.9.0."
         )
 
-    native_jump_path = a_scie.jump(platform=current_platform)
+    native_jump_path = (
+        a_scie.custom_jump(repo_path=use_jump)
+        if use_jump
+        else a_scie.jump(platform=current_platform)
+    )
     with _temporary_directory(cleanup=not preserve_sandbox) as td:
-        for platform, lift_manifest in _export(application, file_mappings, td):
-            jump_path = a_scie.jump(version=scie_jump_version, platform=platform)
+        for platform, lift_manifest in _export(
+            application, file_mappings, dest_dir=td, platforms=platforms
+        ):
+            jump_path = (
+                a_scie.custom_jump(repo_path=use_jump)
+                if use_jump
+                else a_scie.jump(version=scie_jump_version, platform=platform)
+            )
             platform_export_dir = lift_manifest.parent
             subprocess.run(
                 args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],

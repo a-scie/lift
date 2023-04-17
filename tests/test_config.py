@@ -1,6 +1,7 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+from importlib import resources
 from pathlib import Path
 
 from science.config import parse_config_file
@@ -23,3 +24,9 @@ def test_parse(build_root: Path) -> None:
     assert (
         Identifier.parse("python") in distribution.placeholders
     ), "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."
+
+
+def test_interpreter_groups() -> None:
+    with resources.path("data", "interpreter-groups.toml") as config:
+        app = parse_config_file(config)
+    assert app is not None, "TODO(John Sirois): XXX: Real tests."

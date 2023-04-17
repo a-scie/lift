@@ -1,0 +1,33 @@
+[science]
+name = "igs"
+description = "Test interpreter group selection."
+
+[[science.interpreters]]
+id = "cpython310"
+provider = "PythonBuildStandalone"
+lazy = true
+version = "3.10"
+
+[[science.interpreters]]
+id = "cpython311"
+provider = "PythonBuildStandalone"
+lazy = true
+version = "3.11"
+
+[[science.interpreter_groups]]
+id = "cpython"
+selector = "{scie.env.PYTHON}"
+members = [
+    "cpython310",
+    "cpython311",
+]
+
+[[science.commands]]
+exe = "#{cpython:python}"
+args = [
+    "-c",
+    "import sys; print('.'.join(map(str, sys.version_info[:2])))"
+]
+# TODO(John Sirois): These will be inserted by science when it sees #{<IG>:<file>}
+[science.commands.env.replace]
+SCIENCE_IG_CPYTHON_cpython310_python="{}"  # ??

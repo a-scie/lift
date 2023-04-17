@@ -4,10 +4,16 @@
 from __future__ import annotations
 
 import json
-import sys
 from typing import Any, Iterable, TextIO
 
-from science.model import Binding, Command, Distribution, File, ScieJump
+from science.model import (
+    Binding,
+    Command,
+    Distribution,
+    File,
+    InterpreterGroup,
+    ScieJump,
+)
 
 
 def _render_file(file: File) -> dict[str, Any]:
@@ -29,30 +35,30 @@ def _render_file(file: File) -> dict[str, Any]:
 
 
 def _render_command(
-    command: Command, distributions: Iterable[Distribution]
+    command: Command,
+    distributions: Iterable[Distribution],
+    interpreter_groups: Iterable[InterpreterGroup],
 ) -> tuple[str, dict[str, Any]]:
-    exe = command.exe
-    for distribution in distributions:
-        exe = distribution.expand_placeholders(exe)
-    cmd: dict[str, Any] = {"exe": exe}
+    env: dict[str, str | None] = {}
 
-    args = []
-    for arg in command.args:
+    def expand_placeholders(text: str) -> str:
         for distribution in distributions:
-            arg = distribution.expand_placeholders(arg)
-        args.append(arg)
+            text = distribution.expand_placeholders(text)
+        for interpreter_group in interpreter_groups:
+            text, ig_env = interpreter_group.expand_placeholders(text)
+            env.update(ig_env)
+        return text
+
+    cmd: dict[str, Any] = {"exe": expand_placeholders(command.exe)}
+
+    args = [expand_placeholders(arg) for arg in command.args]
     if args:
         cmd["args"] = args
 
-    env: dict[str, str | None] = {}
     for name, value in command.env.default.items():
-        for distribution in distributions:
-            value = distribution.expand_placeholders(value)
-        env[name] = value
+        env[name] = expand_placeholders(value)
     for name, value in command.env.replace.items():
-        for distribution in distributions:
-            value = distribution.expand_placeholders(value)
-        env[f"={name}"] = value
+        env[f"={name}"] = expand_placeholders(value)
     for name in command.env.remove_exact:
         env[f"={name}"] = None
     for re in command.env.remove_re:
@@ -70,23 +76,30 @@ def emit_manifest(
     load_dotenv: bool,
     scie_jump: ScieJump,
     distributions: Iterable[Distribution],
+    interpreter_groups: Iterable[InterpreterGroup],
     files: Iterable[File],
     commands: Iterable[Command],
     bindings: Iterable[Command],
     fetch_urls: dict[str, str],
 ) -> None:
-    lift = {
-        "name": name,
-        "description": description,
-        "load_dotenv": load_dotenv,
-        "files": [_render_file(file) for file in files],
-        "boot": {
-            "commands": dict(_render_command(command, distributions) for command in commands),
-            "bindings": dict(_render_command(command, distributions) for command in bindings),
-        },
-    }
+    def render_files() -> list[dict[str, Any]]:
+        return [_render_file(file) for file in files]
 
-    scie_data = {"lift": lift}
+    def render_commands(cmds: Iterable[Command]) -> dict[str, dict[str, Any]]:
+        return dict(_render_command(cmd, distributions, interpreter_groups) for cmd in cmds)
+
+    scie_data = {
+        "lift": {
+            "name": name,
+            "description": description,
+            "load_dotenv": load_dotenv,
+            "files": render_files(),
+            "boot": {
+                "commands": render_commands(commands),
+                "bindings": render_commands(bindings),
+            },
+        }
+    }
     data: dict[str, Any] = {"scie": scie_data}
     if fetch_urls:
         data["ptex"] = fetch_urls

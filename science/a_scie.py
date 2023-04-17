@@ -1,6 +1,9 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
-
+import atexit
+import shutil
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -42,6 +45,15 @@ def jump(version: Version | None = None, platform: Platform = Platform.current()
     return _load_project_release(
         project_name="jump", binary_name="scie-jump", version=version, platform=platform
     ).path
+
+
+def custom_jump(repo_path: Path) -> Path:
+    dist_dir = tempfile.mkdtemp()
+    atexit.register(shutil.rmtree, dist_dir, ignore_errors=True)
+    subprocess.run(
+        args=["cargo", "run", "-p", "package", "--", dist_dir], cwd=repo_path, check=True
+    )
+    return Path(dist_dir) / Platform.current().qualified_binary_name("scie-jump")
 
 
 def ptex(
