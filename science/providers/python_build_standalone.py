@@ -192,10 +192,9 @@ class PythonBuildStandalone(Provider):
                 f"{os.linesep.join(asset.name for asset in self.assets)}"
             )
 
-        key = f"cpython-{selected_asset.version.major}.{selected_asset.version.minor}"
         file = File(
             name=selected_asset.name,
-            key=key,
+            key=self.id.value,
             digest=selected_asset.digest,
             type=selected_asset.file_type,
             is_executable=False,

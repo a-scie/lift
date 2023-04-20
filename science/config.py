@@ -1,9 +1,12 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import os
+
 # This `no-infer-dep` will not be needed once we upgrade t0 a version of Pants that fixes:
 #  https://github.com/pantsbuild/pants/issues/18055
 import tomllib  # pants: no-infer-dep
+from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
 from typing import Any, BinaryIO, Mapping
@@ -101,7 +104,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
 
     ptex = (
         Ptex(
-            id=ptex_table.get("id", "ptex"),
+            id=Identifier.parse(ptex_table.get("id", "ptex")),
             argv1=ptex_table.get("lazy_argv1", "{scie.lift}"),
             version=parse_version_field(ptex_table),
             digest=parse_digest_field(ptex_table),
@@ -110,19 +113,17 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
         else None
     )
 
-    interpreters = []
+    interpreters_by_id = OrderedDict[str, Interpreter]()
     for interpreter in science.get("interpreters", ()):
         identifier = Identifier.parse(interpreter.pop("id"))
         lazy = interpreter.pop("lazy", False)
         provider_name = interpreter.pop("provider")
         if not (provider := get_provider(provider_name)):
             raise ValueError(f"The provider '{provider_name}' is not registered.")
-        interpreters.append(
-            Interpreter(
-                id=identifier,
-                provider=provider.create(identifier=identifier, lazy=lazy, **interpreter),
-                lazy=lazy,
-            )
+        interpreters_by_id[identifier.value] = Interpreter(
+            id=identifier,
+            provider=provider.create(identifier=identifier, lazy=lazy, **interpreter),
+            lazy=lazy,
         )
 
     interpreter_groups = []
@@ -137,7 +138,18 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
                 f"group {identifier}."
             )
         interpreter_groups.append(
-            InterpreterGroup(id=identifier, selector=selector, members=members)
+            InterpreterGroup.create(
+                id_=identifier,
+                selector=selector,
+                interpreters=[interpreters_by_id[member] for member in members],
+            )
+        )
+
+    if interpreter_groups and scie_jump.version and scie_jump.version < Version("0.11.0"):
+        raise ValueError(
+            f"Cannot use scie-jump {scie_jump.version}.{os.linesep}"
+            f"This configuration uses interpreter groups and these require scie-jump v0.11.0 or "
+            f"greater."
         )
 
     files = []
@@ -179,7 +191,7 @@ def parse_config_data(data: Mapping[str, Any]) -> Application:
         platforms=platforms,
         scie_jump=scie_jump,
         ptex=ptex,
-        interpreters=tuple(interpreters),
+        interpreters=tuple(interpreters_by_id.values()),
         interpreter_groups=tuple(interpreter_groups),
         files=tuple(files),
         commands=frozenset(commands),

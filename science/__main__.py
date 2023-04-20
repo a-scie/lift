@@ -132,6 +132,7 @@ def _export(
                 description=application.description,
                 load_dotenv=application.load_dotenv,
                 scie_jump=application.scie_jump,
+                platform=platform,
                 distributions=distributions,
                 interpreter_groups=application.interpreter_groups,
                 files=files,

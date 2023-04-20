@@ -171,9 +171,9 @@ class Interpreter:
 class InterpreterGroup:
     @classmethod
     def create(cls, id_: Identifier, selector: str, interpreters: Iterable[Interpreter]):
-        interpreters_by_provider = defaultdict[Provider, list[Interpreter]](list)
+        interpreters_by_provider = defaultdict[type[Provider], list[Interpreter]](list)
         for interpreter in interpreters:
-            interpreters_by_provider[interpreter.provider].append(interpreter)
+            interpreters_by_provider[type(interpreter.provider)].append(interpreter)
         if not interpreters_by_provider:
             raise ValueError(
                 "At least two interpreters must be specified to form a group and none were."
@@ -196,9 +196,36 @@ class InterpreterGroup:
     selector: str
     members: frozenset[Interpreter]
 
-    def expand_placeholders(self, value: str) -> tuple[str, dict[str, str]]:
-        # TODO(John Sirois): XXX
-        return value, {}
+    def _expand_placeholder(self, platform: Platform, match: Match) -> tuple[str, dict[str, str]]:
+        if placeholder := match.group("placeholder"):
+            env = {}
+            ph = Identifier.parse(placeholder)
+            env_var_prefix = f"_SCIENCE_IG_{self.id.value}_{placeholder}_"
+            for member in self.members:
+                distribution = member.provider.distribution(platform)
+                if distribution:
+                    ph_value = distribution.placeholders[ph]
+                    env[f"={env_var_prefix}{distribution.id.value}"] = ph_value
+            path = os.path.join(
+                f"{{scie.files.{self.selector}}}", f"{{scie.env.{env_var_prefix}{self.selector}}}"
+            )
+            return path, env
+        return self.selector, {}
+
+    def expand_placeholders(self, platform: Platform, value: str) -> tuple[str, dict[str, str]]:
+        env = {}
+
+        def expand_placeholder(match: Match) -> str:
+            expansion, ig_env = self._expand_placeholder(platform, match)
+            env.update(ig_env)
+            return expansion
+
+        value = re.sub(
+            rf"#{{{re.escape(self.id.value)}(?::(?P<placeholder>[^{{}}:]+))?}}",
+            expand_placeholder,
+            value,
+        )
+        return value, env
 
 
 @dataclass(frozen=True)

@@ -10,6 +10,7 @@ platforms = [
     "linux-x86_64",
     "macos-aarch64",
     "macos-x86_64",
+    # TODO(John Sirois): XXX: Use shiv or drop platform until Pex supports Windows.
     "windows-x86_64",
 ]
 
@@ -45,6 +46,8 @@ args = [
 env.remove_re = [
     "PEX_.*",
 ]
+
 [science.commands.env.replace]
 PEX_ROOT = "{scie.bindings}/pex_root"
 PEX_PYTHON_PATH = "#{cpython:python}"
+PEX_IGNORE_RCFILES = "1"

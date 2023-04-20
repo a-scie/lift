@@ -14,6 +14,7 @@ from science.model import (
     InterpreterGroup,
     ScieJump,
 )
+from science.platform import Platform
 
 
 def _render_file(file: File) -> dict[str, Any]:
@@ -36,6 +37,7 @@ def _render_file(file: File) -> dict[str, Any]:
 
 def _render_command(
     command: Command,
+    platform: Platform,
     distributions: Iterable[Distribution],
     interpreter_groups: Iterable[InterpreterGroup],
 ) -> tuple[str, dict[str, Any]]:
@@ -45,7 +47,7 @@ def _render_command(
         for distribution in distributions:
             text = distribution.expand_placeholders(text)
         for interpreter_group in interpreter_groups:
-            text, ig_env = interpreter_group.expand_placeholders(text)
+            text, ig_env = interpreter_group.expand_placeholders(platform, text)
             env.update(ig_env)
         return text
 
@@ -75,6 +77,7 @@ def emit_manifest(
     description: str | None,
     load_dotenv: bool,
     scie_jump: ScieJump,
+    platform: Platform,
     distributions: Iterable[Distribution],
     interpreter_groups: Iterable[InterpreterGroup],
     files: Iterable[File],
@@ -86,7 +89,9 @@ def emit_manifest(
         return [_render_file(file) for file in files]
 
     def render_commands(cmds: Iterable[Command]) -> dict[str, dict[str, Any]]:
-        return dict(_render_command(cmd, distributions, interpreter_groups) for cmd in cmds)
+        return dict(
+            _render_command(cmd, platform, distributions, interpreter_groups) for cmd in cmds
+        )
 
     scie_data = {
         "lift": {

@@ -1,6 +1,9 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import os.path
+import subprocess
+import sys
 from importlib import resources
 from pathlib import Path
 
@@ -26,7 +29,20 @@ def test_parse(build_root: Path) -> None:
     ), "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."
 
 
-def test_interpreter_groups() -> None:
+def test_interpreter_groups(tmpdir) -> None:
     with resources.path("data", "interpreter-groups.toml") as config:
         app = parse_config_file(config)
-    assert app is not None, "TODO(John Sirois): XXX: Real tests."
+        assert app is not None, "TODO(John Sirois): XXX: Proper config test instead of IT below."
+
+        subprocess.run(
+            args=[sys.executable, "science.pex", "build", "--dest-dir", str(tmpdir), config],
+            check=True,
+        )
+
+        exe_path = os.path.join(str(tmpdir), "igs")
+        subprocess.run(args=[exe_path], env={**os.environ, "SCIE": "inspect"}, check=True)
+        subprocess.run(
+            args=[exe_path],
+            env={**os.environ, "PYTHON": "cpython311", "RUST_LOG": "trace"},
+            check=True,
+        )
