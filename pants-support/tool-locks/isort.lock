@@ -57,8 +57,8 @@
     }
   ],
   "path_mappings": {},
-  "pex_version": "2.1.126",
-  "pip_version": "20.3.4-patched",
+  "pex_version": "2.1.133",
+  "pip_version": "23.0.1",
   "prefer_older_binary": false,
   "requirements": [
     "isort"
