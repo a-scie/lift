@@ -1,0 +1,4 @@
+mypy
+nox
+types-appdirs
+types-tqdm

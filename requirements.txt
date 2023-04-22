@@ -3,10 +3,4 @@ click
 filelock
 httpx
 packaging
-
-# N.B.: Keep this aligned with pants.toml
-pytest==7.3.1
-
 tqdm
-types-appdirs
-types-tqdm

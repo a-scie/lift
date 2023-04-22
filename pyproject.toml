@@ -1,3 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "science"
+authors = [
+    {name = "John Sirois", email = "john.sirois@gmail.com"},
+]
+description = "A high level tool to build scies with."
+readme = "README.md"
+requires-python = "==3.11.*"
+license = {file = "LICENSE"}
+dynamic = ["version", "dependencies"]
+
+[project.scripts]
+science = "science.exe:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "science.__version__"}
+dependencies = {file = "requirements.txt"}
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]

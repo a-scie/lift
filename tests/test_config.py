@@ -29,13 +29,13 @@ def test_parse(build_root: Path) -> None:
     ), "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."
 
 
-def test_interpreter_groups(tmpdir) -> None:
+def test_interpreter_groups(tmpdir, science_pyz: Path) -> None:
     with resources.path("data", "interpreter-groups.toml") as config:
         app = parse_config_file(config)
         assert app is not None, "TODO(John Sirois): XXX: Proper config test instead of IT below."
 
         subprocess.run(
-            args=[sys.executable, "science.pex", "build", "--dest-dir", str(tmpdir), config],
+            args=[sys.executable, str(science_pyz), "build", "--dest-dir", str(tmpdir), config],
             check=True,
         )
 
