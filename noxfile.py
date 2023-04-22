@@ -108,4 +108,14 @@ def test(session: Session) -> None:
 
 @python_session()
 def package(session: Session) -> None:
-    create_zipapp(session)
+    science_pyz = create_zipapp(session)
+    session.run(
+        "python",
+        str(science_pyz),
+        "build",
+        "--file",
+        f"science.pyz={science_pyz}",
+        "--dest-dir",
+        str(DIST_DIR),
+        str(BUILD_ROOT / "science.toml"),
+    )

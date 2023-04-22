@@ -10,7 +10,6 @@ platforms = [
     "linux-x86_64",
     "macos-aarch64",
     "macos-x86_64",
-    # TODO(John Sirois): XXX: Use shiv or drop platform until Pex supports Windows.
     "windows-x86_64",
 ]
 
@@ -30,7 +29,7 @@ version = "3.11"
 # flavor = "install_only"
 
 [[science.files]]
-name = "science.pex"
+name = "science.pyz"
 
 [[science.commands]]
 # Sharp substitution always references an id and is the only substitution science performs. The
@@ -41,7 +40,7 @@ name = "science.pex"
 # PythonBuildStandalone exports `python` on all platforms and `pip` on all except Windows.
 exe = "#{cpython:python}"
 args = [
-    "{science.pex}",
+    "{science.pyz}",
 ]
 env.remove_re = [
     "PEX_.*",
