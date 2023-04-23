@@ -3,7 +3,7 @@ name = "science"
 description = "Ship your interpreted executables using science."
 
 # It's possible to "cross-build" scies when all files are available for all needed platforms.
-# Here the CPython interpreter is available for all these platforms and the science.pex is
+# Here the CPython interpreter is available for all these platforms and the science.pyz is
 # cross-platform; so we can leverage this.
 platforms = [
     "linux-aarch64",
@@ -43,10 +43,8 @@ args = [
     "{science.pyz}",
 ]
 env.remove_re = [
-    "PEX_.*",
+    "SHIV_.*",
 ]
 
 [science.commands.env.replace]
-PEX_ROOT = "{scie.bindings}/pex_root"
-PEX_PYTHON_PATH = "#{cpython:python}"
-PEX_IGNORE_RCFILES = "1"
+SHIV_ROOT = "{scie.bindings}/shiv_root"
