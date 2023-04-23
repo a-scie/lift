@@ -2,10 +2,7 @@
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 import os
-
-# This `no-infer-dep` will not be needed once we upgrade t0 a version of Pants that fixes:
-#  https://github.com/pantsbuild/pants/issues/18055
-import tomllib  # pants: no-infer-dep
+import tomllib
 from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
