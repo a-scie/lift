@@ -1,0 +1,9 @@
+-r requirements.txt
+-r nox-support/check-reqs.txt
+-r nox-support/fmt-reqs.txt
+
+# N.B.: The lint reqs are just an include of the fmt reqs; so we omit them.
+# -r nox-support/lint-reqs.txt
+
+-r nox-support/package-reqs.txt
+-r nox-support/test-reqs.txt

@@ -3,19 +3,60 @@
 
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Iterable, TypeVar
+from typing import Callable, Collection, Iterable, TypeVar
 
 import nox
 from nox import Session
 
 nox.needs_version = ">=2022.11.21"
 
-BUILD_ROOT = Path().resolve()
-DIST_DIR = BUILD_ROOT / "dist"
-NOX_SUPPORT_DIR = BUILD_ROOT / "nox-support"
-
 REQUIRES_PYTHON_VERSION = "3.11"
-PATHS_TO_CHECK = ["science", "tests", "noxfile.py"]
+PEX_REQUIREMENT = "pex==2.1.134"
+
+BUILD_ROOT = Path().resolve()
+LOCK_IN = BUILD_ROOT / "lock.in"
+LOCK_FILE = BUILD_ROOT / "lock.json"
+
+
+def maybe_create_lock(session: Session) -> bool:
+    if LOCK_FILE.exists():
+        return False
+
+    session.install(PEX_REQUIREMENT)
+    session.run(
+        "pex3",
+        "lock",
+        "create",
+        "-r",
+        str(LOCK_IN),
+        "--interpreter-constraint",
+        f"=={REQUIRES_PYTHON_VERSION}.*",
+        "--style",
+        "universal",
+        "--pip-version",
+        "latest",
+        "--resolver-version",
+        "pip-2020-resolver",
+        "--indent",
+        "2",
+        "-o",
+        str(LOCK_FILE),
+    )
+    return True
+
+
+def install_locked_requirements(
+    session: Session, input_reqs: Iterable[Path], _locked_reqs: Path
+) -> None:
+    maybe_create_lock(session)
+    # TODO(John Sirois): Use a version of Pex that supports export sub-setting:
+    #    `pex3 export -r ... lock.json`
+    #  + If f"{func.__name__}-lock.txt" does not exist, create it with an export subset of the
+    #    input_reqs.
+    #  + Just do session.install("-r", str(locked_reqs))
+    for req in input_reqs:
+        session.install("-r", str(req))
+
 
 T = TypeVar("T")
 
@@ -24,23 +65,45 @@ def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
     return nox.session(python=[REQUIRES_PYTHON_VERSION], reuse_venv=True)
 
 
+@nox_session()
+def lock(session: Session) -> None:
+    if not maybe_create_lock(session):
+        session.warn("Not updating lock file. Remove it to force an update.")
+
+
+NOX_SUPPORT_DIR = BUILD_ROOT / "nox-support"
+
+
 def python_session(
     include_project: bool = False,
-    extra_reqs: Iterable[str] = (),
+    extra_reqs: Collection[str] = (),
 ) -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
     def wrapped(func: Callable[[Session], T]) -> Callable[[Session], T]:
         @wraps(func)
         def wrapper(session: Session) -> T:
+            requirements = []
             for req in (func.__name__, *extra_reqs):
-                session.install("-r", str(NOX_SUPPORT_DIR / f"{req}-reqs.txt"))
+                session_reqs = NOX_SUPPORT_DIR / f"{req}-reqs.txt"
+                if req in extra_reqs or session_reqs.is_file():
+                    requirements.append(session_reqs)
             if include_project:
-                session.install("-r", "requirements.txt")
-                session.install("-e", ".")
+                requirements.append(BUILD_ROOT / "requirements.txt")
+
+            install_locked_requirements(
+                session,
+                input_reqs=requirements,
+                _locked_reqs=NOX_SUPPORT_DIR / f"{func.__name__}-lock.txt",
+            )
+            if include_project:
+                session.install(".", "--no-deps")
             return func(session)
 
         return nox_session()(wrapper)
 
     return wrapped
+
+
+PATHS_TO_CHECK = ["science", "tests", "noxfile.py"]
 
 
 def run_black(session: Session, *args: str) -> None:
@@ -76,6 +139,7 @@ def check(session: Session) -> None:
     )
 
 
+DIST_DIR = BUILD_ROOT / "dist"
 PACKAGED: Path | None = None
 
 
@@ -99,7 +163,7 @@ def create_zipapp(session: Session) -> Path:
     return PACKAGED
 
 
-@nox_session()
+@python_session(include_project=True, extra_reqs=["package"])
 def test(session: Session) -> None:
     science_pyz = create_zipapp(session)
     test_env = {"BUILD_ROOT": str(BUILD_ROOT), "SCIENCE_TEST_PYZ_PATH": str(science_pyz)}
