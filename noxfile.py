@@ -1,6 +1,8 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import hashlib
+import itertools
 from functools import wraps
 from pathlib import Path
 from typing import Callable, Collection, Iterable, TypeVar
@@ -11,19 +13,32 @@ from nox import Session
 nox.needs_version = ">=2022.11.21"
 
 REQUIRES_PYTHON_VERSION = "3.11"
-PEX_REQUIREMENT = "pex==2.1.134"
+# PEX_REQUIREMENT = "pex==2.1.134"
+PEX_REQUIREMENT = (
+    "pex @ git+https://github.com/jsirois/pex@59b19235aa50424b9ac5e6ac298e4b5f4aeb4afb"
+)
+PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
 LOCK_IN = BUILD_ROOT / "lock.in"
 LOCK_FILE = BUILD_ROOT / "lock.json"
 
 
+def run_pex(session: Session, script, *args, **env) -> None:
+    pex_pex = session.cache_dir / PEX_PEX
+    if not pex_pex.exists():
+        session.install(PEX_REQUIREMENT)
+        session.run("pex", PEX_REQUIREMENT, "--venv", "--sh-boot", "-o", str(pex_pex))
+        session.run("python", "-m", "pip", "uninstall", "-y", "pex")
+    session.run("python", str(pex_pex), *args, env={"PEX_SCRIPT": script, **env})
+
+
 def maybe_create_lock(session: Session) -> bool:
     if LOCK_FILE.exists():
         return False
 
-    session.install(PEX_REQUIREMENT)
-    session.run(
+    run_pex(
+        session,
         "pex3",
         "lock",
         "create",
@@ -45,17 +60,20 @@ def maybe_create_lock(session: Session) -> bool:
     return True
 
 
-def install_locked_requirements(
-    session: Session, input_reqs: Iterable[Path], _locked_reqs: Path
-) -> None:
+def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) -> None:
     maybe_create_lock(session)
-    # TODO(John Sirois): Use a version of Pex that supports export sub-setting:
-    #    `pex3 export -r ... lock.json`
-    #  + If f"{func.__name__}-lock.txt" does not exist, create it with an export subset of the
-    #    input_reqs.
-    #  + Just do session.install("-r", str(locked_reqs))
-    for req in input_reqs:
-        session.install("-r", str(req))
+
+    run_pex(
+        session,
+        "pex3",
+        "lock",
+        "venv",
+        "-d",
+        session.virtualenv.location,
+        "--lock",
+        str(LOCK_FILE),
+        *itertools.chain.from_iterable(("-r", str(req_file)) for req_file in input_reqs),
+    )
 
 
 T = TypeVar("T")
@@ -68,7 +86,7 @@ def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
 @nox_session()
 def lock(session: Session) -> None:
     if not maybe_create_lock(session):
-        session.warn("Not updating lock file. Remove it to force an update.")
+        session.warn("Not updating lock files. Remove them to force updates.")
 
 
 NOX_SUPPORT_DIR = BUILD_ROOT / "nox-support"
@@ -89,13 +107,7 @@ def python_session(
             if include_project:
                 requirements.append(BUILD_ROOT / "requirements.txt")
 
-            install_locked_requirements(
-                session,
-                input_reqs=requirements,
-                _locked_reqs=NOX_SUPPORT_DIR / f"{func.__name__}-lock.txt",
-            )
-            if include_project:
-                session.install(".", "--no-deps")
+            install_locked_requirements(session, input_reqs=requirements)
             return func(session)
 
         return nox_session()(wrapper)
@@ -125,7 +137,7 @@ def fmt(session: Session) -> None:
     run_autoflake(session, "--remove-all-unused-imports", "--in-place")
 
 
-@python_session()
+@python_session(extra_reqs=["fmt"])
 def lint(session: Session) -> None:
     run_black(session, "--check")
     run_isort(session, "--check-only")
@@ -146,6 +158,27 @@ PACKAGED: Path | None = None
 def create_zipapp(session: Session) -> Path:
     global PACKAGED
     if PACKAGED is None:
+        venv_dir = Path(session.create_tmp()) / "science"
+        run_pex(
+            session,
+            "pex3",
+            "lock",
+            "venv",
+            "--force",
+            "-d",
+            str(venv_dir),
+            "-r",
+            str(BUILD_ROOT / "requirements.txt"),
+            "--lock",
+            str(LOCK_FILE),
+        )
+
+        site_packages = venv_dir / "lib" / f"python{REQUIRES_PYTHON_VERSION}" / "site-packages"
+        if not site_packages.is_dir():
+            session.error(f"Failed to find site-packages directory in venv at {venv_dir}")
+
+        session.run("python", "-m", "pip", "install", "--prefix", str(venv_dir), "--no-deps", ".")
+
         DIST_DIR.mkdir(parents=True, exist_ok=True)
         dest = DIST_DIR / "science.pyz"
         session.run(
@@ -154,7 +187,8 @@ def create_zipapp(session: Session) -> Path:
             f"/usr/bin/env python{REQUIRES_PYTHON_VERSION}",
             "-c",
             "science",
-            ".",
+            "--site-packages",
+            str(site_packages),
             "--reproducible",
             "-o",
             str(dest),

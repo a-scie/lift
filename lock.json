@@ -66,13 +66,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "798f28e11dc141f415879497599316a8a9126672a883064b851597a0d94be8a9",
-              "url": "https://files.pythonhosted.org/packages/8d/3a/b3602da0bcde7c76cd0e36e4865bef749e62f01b90be1f287a74e587e8a8/argcomplete-3.0.6-py3-none-any.whl"
+              "hash": "e36fd646839933cbec7941c662ecb65338248667358dd3d968405a4506a60d9b",
+              "url": "https://files.pythonhosted.org/packages/ab/ce/2141e1cabe39c90e01fde7feb44c07867fb49bf1c0c091d68fd8924fd6a2/argcomplete-3.0.8-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "9fe49c66ba963b81b64025f74bfbd0275619a6bde1c7370654dc365d4ecc9a0b",
-              "url": "https://files.pythonhosted.org/packages/6e/5b/9eae020dad132502efdb51408ba8a5b21afedcb738a98a307c6bfc21aaa8/argcomplete-3.0.6.tar.gz"
+              "hash": "b9ca96448e14fa459d7450a4ab5a22bbf9cee4ba7adddf03e65c398b5daeea28",
+              "url": "https://files.pythonhosted.org/packages/42/cd/fdb872d826b76b65b23147e83b1ca4c033445bbff59f8836a118657dd050/argcomplete-3.0.8.tar.gz"
             }
           ],
           "project_name": "argcomplete",
@@ -86,7 +86,7 @@
             "wheel; extra == \"test\""
           ],
           "requires_python": ">=3.6",
-          "version": "3.0.6"
+          "version": "3.0.8"
         },
         {
           "artifacts": [
