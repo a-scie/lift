@@ -3,9 +3,10 @@
 
 import hashlib
 import itertools
+import json
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Collection, Iterable, TypeVar
+from typing import Any, Callable, Collection, Iterable, TypeVar, cast
 
 import nox
 from nox import Session
@@ -13,10 +14,7 @@ from nox import Session
 nox.needs_version = ">=2022.11.21"
 
 REQUIRES_PYTHON_VERSION = "3.11"
-# PEX_REQUIREMENT = "pex==2.1.134"
-PEX_REQUIREMENT = (
-    "pex @ git+https://github.com/jsirois/pex@59b19235aa50424b9ac5e6ac298e4b5f4aeb4afb"
-)
+PEX_REQUIREMENT = "pex==2.1.135"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
@@ -24,13 +22,15 @@ LOCK_IN = BUILD_ROOT / "lock.in"
 LOCK_FILE = BUILD_ROOT / "lock.json"
 
 
-def run_pex(session: Session, script, *args, **env) -> None:
+def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
     pex_pex = session.cache_dir / PEX_PEX
     if not pex_pex.exists():
         session.install(PEX_REQUIREMENT)
         session.run("pex", PEX_REQUIREMENT, "--venv", "--sh-boot", "-o", str(pex_pex))
         session.run("python", "-m", "pip", "uninstall", "-y", "pex")
-    session.run("python", str(pex_pex), *args, env={"PEX_SCRIPT": script, **env})
+    return session.run(
+        "python", str(pex_pex), *args, env={"PEX_SCRIPT": script, **env}, silent=silent
+    )
 
 
 def maybe_create_lock(session: Session) -> bool:
@@ -66,8 +66,8 @@ def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) ->
     run_pex(
         session,
         "pex3",
-        "lock",
         "venv",
+        "create",
         "-d",
         session.virtualenv.location,
         "--lock",
@@ -162,8 +162,8 @@ def create_zipapp(session: Session) -> Path:
         run_pex(
             session,
             "pex3",
-            "lock",
             "venv",
+            "create",
             "--force",
             "-d",
             str(venv_dir),
@@ -173,9 +173,9 @@ def create_zipapp(session: Session) -> Path:
             str(LOCK_FILE),
         )
 
-        site_packages = venv_dir / "lib" / f"python{REQUIRES_PYTHON_VERSION}" / "site-packages"
-        if not site_packages.is_dir():
-            session.error(f"Failed to find site-packages directory in venv at {venv_dir}")
+        site_packages = json.loads(
+            cast(str, run_pex(session, "pex3", "venv", "inspect", str(venv_dir), silent=True))
+        )["site_packages"]
 
         session.run("python", "-m", "pip", "install", "--prefix", str(venv_dir), "--no-deps", ".")
 
