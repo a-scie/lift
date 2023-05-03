@@ -21,7 +21,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-11, macos-13-aarch64, windows-2022]
+        # TODO(John Sirois): add back windows-2022 with an alternate means to handle Pex locks.
+        # Perhaps export hashed requirement files.
+        os: [ubuntu-22.04, macos-11, macos-13-aarch64]
     steps:
       - name: Setup Python 3.11
         uses: actions/setup-python@v4
