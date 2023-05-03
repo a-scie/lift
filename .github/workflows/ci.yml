@@ -23,11 +23,12 @@ jobs:
       matrix:
         os: [ubuntu-22.04, macos-11, macos-13-aarch64, windows-2022]
     steps:
-      - name:
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
           cache: pip
+      - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift
         uses: actions/checkout@v3
