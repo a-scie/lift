@@ -25,6 +25,7 @@ jobs:
     steps:
       - name: Setup Python 3.11
         uses: actions/setup-python@v4
+        if: matrix.os != 'macos-13-aarch64'
         with:
           python-version: 3.11
       - name: Setup Nox
