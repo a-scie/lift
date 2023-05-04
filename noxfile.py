@@ -92,13 +92,14 @@ def maybe_create_lock(session: Session) -> bool:
 def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) -> None:
     maybe_create_lock(session)
 
-    all_reqs_args = list(
-        itertools.chain.from_iterable(("-r", str(req_file)) for req_file in input_reqs)
-    )
     if IS_WINDOWS:
         # N.B: We avoid this installation technique when not on Windows since it's a good deal
         # slower than using Pex.
-        session.install(*all_reqs_args)
+        session.install(
+            *itertools.chain.from_iterable(
+                ("-r", str(req_file.with_suffix(".lock.txt"))) for req_file in input_reqs
+            )
+        )
     else:
         run_pex(
             session,
@@ -109,7 +110,7 @@ def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) ->
             session.virtualenv.location,
             "--lock",
             str(LOCK_FILE),
-            *all_reqs_args,
+            *itertools.chain.from_iterable(("-r", str(req_file)) for req_file in input_reqs),
         )
 
 
@@ -221,7 +222,6 @@ def create_zipapp(session: Session) -> Path:
                 "--lock",
                 str(LOCK_FILE),
             )
-
             site_packages = json.loads(
                 cast(str, run_pex(session, "pex3", "venv", "inspect", str(venv_dir), silent=True))
             )["site_packages"]
