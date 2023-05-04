@@ -210,6 +210,7 @@ def create_zipapp(session: Session) -> Path:
                 "install",
                 "-r",
                 str(BUILD_ROOT / "requirements.windows-amd64.lock.txt"),
+                external=True
             )
             site_packages = str(venv_dir / "Lib" / "site-packages")
         else:
