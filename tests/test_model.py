@@ -1,6 +1,8 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import os.path
+
 from science.frozendict import FrozenDict
 from science.model import Distribution, File, Identifier, Url
 
@@ -30,5 +32,9 @@ def test_distribution() -> None:
     assert "{cpython310}/arbitrary/path" == distribution.expand_placeholders(
         "#{cpython}/arbitrary/path"
     )
-    assert "{cpython310}/python/bin/python" == distribution.expand_placeholders("#{cpython:python}")
-    assert "{cpython310}/python/bin/pip" == distribution.expand_placeholders("#{cpython:pip}")
+    assert os.path.join("{cpython310}", "python/bin/python") == distribution.expand_placeholders(
+        "#{cpython:python}"
+    )
+    assert os.path.join("{cpython310}", "python/bin/pip") == distribution.expand_placeholders(
+        "#{cpython:pip}"
+    )
