@@ -17,13 +17,12 @@ platforms = [
 id = "cpython"
 # Providers can generate a lift manifest JSON file entry given a platform.
 provider = "PythonBuildStandalone"
-lazy = true
-
 # Optional, defaults to the latest PythonBuildStandalone release.
-# release = "20221220"
-
-# Can be exact, e.g.: 3.10.9; otherwise finds matching artifacts.
-version = "3.11"
+release = "20230116"
+# Can be in-exact, e.g.: 3.11; in which case finds matching artifacts.
+version = "3.11.1"
+# Fetch on-demand at install-time using `ptex`.
+lazy = true
 
 # Optional, defaults to the "install_only" flavor.
 # flavor = "install_only"
