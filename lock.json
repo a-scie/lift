@@ -568,48 +568,48 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "3d8d72fa0714e93c9d3c2a0ede91e898c64596e0fa7d4523f72dd95728efc418",
-              "url": "https://files.pythonhosted.org/packages/f8/f8/17bd3f7c13515523d811ce4104410c16c03e3c6830f9276612e2f4b28382/pip-23.1.1-py3-none-any.whl"
+              "hash": "3ef6ac33239e4027d9a5598a381b9d30880a1477e50039db2eac6e8a8f6d1b18",
+              "url": "https://files.pythonhosted.org/packages/08/e3/57d4c24a050aa0bcca46b2920bff40847db79535dc78141eb83581a52eb8/pip-23.1.2-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "c95b53d309f903f33dfe5fd37e502a5c3a05ee3454d518e45df522a4f091b728",
-              "url": "https://files.pythonhosted.org/packages/43/7d/1f52f99a7f2eae870483b2c2a3064511487de87911bce146df8a154fbe81/pip-23.1.1.tar.gz"
+              "hash": "0e7c86f486935893c708287b30bd050a36ac827ec7fe5e43fe7cb198dd835fba",
+              "url": "https://files.pythonhosted.org/packages/fa/ee/74ff76da0ab649eec7581233daeb43d8aa35383d8f75317b2ab3b80c922f/pip-23.1.2.tar.gz"
             }
           ],
           "project_name": "pip",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "23.1.1"
+          "version": "23.1.2"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "ebe11c0d7a805086e99506aa331612429a72ca7cd52a1f0d277dc4adc20cb10e",
-              "url": "https://files.pythonhosted.org/packages/b2/f3/4fb5fae710fc9f22a42cd90dc0547da18ec83e2e139294ab94f04c449cf5/platformdirs-3.2.0-py3-none-any.whl"
+              "hash": "47692bc24c1958e8b0f13dd727307cff1db103fca36399f457da8e05f222fdc4",
+              "url": "https://files.pythonhosted.org/packages/ce/cf/279b73aae00f7ba9d5d7664156ef323ebbf16fb556285bb223ecc45031aa/platformdirs-3.5.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "d5b638ca397f25f979350ff789db335903d7ea010ab28903f57b27e1b16c2b08",
-              "url": "https://files.pythonhosted.org/packages/15/04/3f882b46b454ab374ea75425c6f931e499150ec1385a73e55b3f45af615a/platformdirs-3.2.0.tar.gz"
+              "hash": "7954a68d0ba23558d753f73437c55f89027cf8f5108c19844d4b82e5af396335",
+              "url": "https://files.pythonhosted.org/packages/91/17/3836ffe140abb245726d0e21c5b9b984e2569e7027c20d12e969ec69bd8a/platformdirs-3.5.0.tar.gz"
             }
           ],
           "project_name": "platformdirs",
           "requires_dists": [
             "appdirs==1.4.4; extra == \"test\"",
             "covdefaults>=2.3; extra == \"test\"",
-            "furo>=2022.12.7; extra == \"docs\"",
+            "furo>=2023.3.27; extra == \"docs\"",
             "proselint>=0.13; extra == \"docs\"",
             "pytest-cov>=4; extra == \"test\"",
             "pytest-mock>=3.10; extra == \"test\"",
-            "pytest>=7.2.2; extra == \"test\"",
-            "sphinx-autodoc-typehints!=1.23.4,>=1.22; extra == \"docs\"",
+            "pytest>=7.3.1; extra == \"test\"",
+            "sphinx-autodoc-typehints!=1.23.4,>=1.23; extra == \"docs\"",
             "sphinx>=6.1.3; extra == \"docs\"",
             "typing-extensions>=4.5; python_version < \"3.8\""
           ],
           "requires_python": ">=3.7",
-          "version": "3.2.0"
+          "version": "3.5.0"
         },
         {
           "artifacts": [
@@ -691,13 +691,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "6f0839fbdb7e3cfef1fc38d7954f5c1c26bf4eebb155a55c9bf8faf997b9fb67",
-              "url": "https://files.pythonhosted.org/packages/47/6a/dfaf9838b6dd1f04537c0a66cf880dd24acd829f8a39d468c11fc0b7d8c6/setuptools-67.7.1-py3-none-any.whl"
+              "hash": "23aaf86b85ca52ceb801d32703f12d77517b2556af839621c641fca11287952b",
+              "url": "https://files.pythonhosted.org/packages/2f/8c/f336a966d4097c7cef6fc699b2ecb83b5fb63fd698198c1b5c7905a74f0f/setuptools-67.7.2-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "bb16732e8eb928922eabaa022f881ae2b7cdcfaf9993ef1f5e841a96d32b8e0c",
-              "url": "https://files.pythonhosted.org/packages/01/18/73f7ca619f72b22300493451350214d3a035e7fa8f17ce31db2da24fe0c9/setuptools-67.7.1.tar.gz"
+              "hash": "f104fa03692a2602fa0fec6c6a9e63b6c8a968de13e17c026957dd1f53d80990",
+              "url": "https://files.pythonhosted.org/packages/fd/53/e5d7ae40d03e4ed20b7cba317cf9c0c97097c8debb39f9d72d182a6578a2/setuptools-67.7.2.tar.gz"
             }
           ],
           "project_name": "setuptools",
@@ -749,7 +749,7 @@
             "wheel; extra == \"testing-integration\""
           ],
           "requires_python": ">=3.7",
-          "version": "67.7.1"
+          "version": "67.7.2"
         },
         {
           "artifacts": [
@@ -876,13 +876,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "48fd3b907b5149c5aab7c23d9790bea4cac6bc6b150af8635febc4cfeab1275a",
-              "url": "https://files.pythonhosted.org/packages/b9/dc/44f55e57b8c106391987b17fe17db0ef3cc6364a935d1691b89df0e149a7/virtualenv-20.22.0-py3-none-any.whl"
+              "hash": "6abec7670e5802a528357fdc75b26b9f57d5d92f29c5462ba0fbe45feacc685e",
+              "url": "https://files.pythonhosted.org/packages/f1/0a/18755fa6aec794fd539b050beeaa905fa5c77c64356aa8bdecb62c01581a/virtualenv-20.23.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "278753c47aaef1a0f14e6db8a4c5e1e040e90aea654d0fc1dc7e0d8a42616cc3",
-              "url": "https://files.pythonhosted.org/packages/12/c5/9e9c1dca8838e1eca43b23e5d8a34a6ad5065f15d702ee703c91b7e64b79/virtualenv-20.22.0.tar.gz"
+              "hash": "a85caa554ced0c0afbd0d638e7e2d7b5f92d23478d05d17a76daeac8f279f924",
+              "url": "https://files.pythonhosted.org/packages/d6/37/3ff25b2ad0d51cfd752dc68ee0ad4387f058a5ceba4d89b47ac478de3f59/virtualenv-20.23.0.tar.gz"
             }
           ],
           "project_name": "virtualenv",
@@ -899,26 +899,28 @@
             "platformdirs<4,>=3.2",
             "proselint>=0.13; extra == \"docs\"",
             "pytest-env>=0.8.1; extra == \"test\"",
-            "pytest-freezegun>=0.4.2; extra == \"test\"",
+            "pytest-freezegun>=0.4.2; platform_python_implementation == \"PyPy\" and extra == \"test\"",
             "pytest-mock>=3.10; extra == \"test\"",
             "pytest-randomly>=3.12; extra == \"test\"",
             "pytest-timeout>=2.1; extra == \"test\"",
             "pytest>=7.3.1; extra == \"test\"",
+            "setuptools>=67.7.1; extra == \"test\"",
             "sphinx-argparse>=0.4; extra == \"docs\"",
             "sphinx>=6.1.3; extra == \"docs\"",
             "sphinxcontrib-towncrier>=0.2.1a0; extra == \"docs\"",
+            "time-machine>=2.9; platform_python_implementation == \"CPython\" and extra == \"test\"",
             "towncrier>=22.12; extra == \"docs\""
           ],
           "requires_python": ">=3.7",
-          "version": "20.22.0"
+          "version": "20.23.0"
         }
       ],
       "platform_tag": null
     }
   ],
   "path_mappings": {},
-  "pex_version": "2.1.134",
-  "pip_version": "23.1",
+  "pex_version": "2.1.135",
+  "pip_version": "23.1.2",
   "prefer_older_binary": false,
   "requirements": [
     "appdirs",

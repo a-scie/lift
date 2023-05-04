@@ -1,9 +1,11 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import glob
 import hashlib
 import itertools
 import json
+import os
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Collection, Iterable, TypeVar, cast
@@ -14,12 +16,19 @@ from nox import Session
 nox.needs_version = ">=2022.11.21"
 
 REQUIRES_PYTHON_VERSION = "3.11"
-PEX_REQUIREMENT = "pex==2.1.135"
+
+# TODO(John Sirois): Upgrade to a Pex stable release that includes `pex3 lock export-subset`
+#  support.
+# PEX_REQUIREMENT = "pex==2.1.135"
+PEX_REQUIREMENT = (
+    "pex @ git+https://github.com/jsirois/pex@5cf64f5ef6a3576604aca831380dcec059609b56"
+)
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
-LOCK_IN = BUILD_ROOT / "lock.in"
 LOCK_FILE = BUILD_ROOT / "lock.json"
+
+IS_WINDOWS = os.name == "nt"
 
 
 def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
@@ -34,46 +43,74 @@ def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
 
 
 def maybe_create_lock(session: Session) -> bool:
-    if LOCK_FILE.exists():
-        return False
+    all_requirements = [BUILD_ROOT / "requirements.txt"] + [
+        Path(p) for p in glob.glob(str(BUILD_ROOT / "nox-support" / "*-reqs.txt"))
+    ]
+    created_lock = False
+    if not LOCK_FILE.exists():
+        run_pex(
+            session,
+            "pex3",
+            "lock",
+            "create",
+            *itertools.chain.from_iterable(("-r", str(req)) for req in all_requirements),
+            "--interpreter-constraint",
+            f"=={REQUIRES_PYTHON_VERSION}.*",
+            "--style",
+            "universal",
+            "--pip-version",
+            "latest",
+            "--resolver-version",
+            "pip-2020-resolver",
+            "--indent",
+            "2",
+            "-o",
+            str(LOCK_FILE),
+        )
+        created_lock = True
 
-    run_pex(
-        session,
-        "pex3",
-        "lock",
-        "create",
-        "-r",
-        str(LOCK_IN),
-        "--interpreter-constraint",
-        f"=={REQUIRES_PYTHON_VERSION}.*",
-        "--style",
-        "universal",
-        "--pip-version",
-        "latest",
-        "--resolver-version",
-        "pip-2020-resolver",
-        "--indent",
-        "2",
-        "-o",
-        str(LOCK_FILE),
-    )
-    return True
+    for subset in all_requirements:
+        subset_lock = subset.with_suffix(".lock.txt")
+        if not created_lock and subset_lock.exists():
+            continue
+        run_pex(
+            session,
+            "pex3",
+            "lock",
+            "export-subset",
+            "--lock",
+            str(LOCK_FILE),
+            "-r",
+            str(subset),
+            "-o",
+            str(subset_lock),
+        )
+
+    return created_lock
 
 
 def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) -> None:
     maybe_create_lock(session)
 
-    run_pex(
-        session,
-        "pex3",
-        "venv",
-        "create",
-        "-d",
-        session.virtualenv.location,
-        "--lock",
-        str(LOCK_FILE),
-        *itertools.chain.from_iterable(("-r", str(req_file)) for req_file in input_reqs),
+    all_reqs_args = list(
+        itertools.chain.from_iterable(("-r", str(req_file)) for req_file in input_reqs)
     )
+    if IS_WINDOWS:
+        # N.B: We avoid this installation technique when not on Windows since it's a good deal
+        # slower than using Pex.
+        session.install(*all_reqs_args)
+    else:
+        run_pex(
+            session,
+            "pex3",
+            "venv",
+            "create",
+            "-d",
+            session.virtualenv.location,
+            "--lock",
+            str(LOCK_FILE),
+            *all_reqs_args,
+        )
 
 
 T = TypeVar("T")
@@ -159,23 +196,35 @@ def create_zipapp(session: Session) -> Path:
     global PACKAGED
     if PACKAGED is None:
         venv_dir = Path(session.create_tmp()) / "science"
-        run_pex(
-            session,
-            "pex3",
-            "venv",
-            "create",
-            "--force",
-            "-d",
-            str(venv_dir),
-            "-r",
-            str(BUILD_ROOT / "requirements.txt"),
-            "--lock",
-            str(LOCK_FILE),
-        )
+        if IS_WINDOWS:
+            session.run("python", "-m", "venv", str(venv_dir))
+            session.run(
+                str(venv_dir / "Scripts" / "python.exe"),
+                "-m",
+                "pip",
+                "install",
+                "-r",
+                str(BUILD_ROOT / "requirements.lock.txt"),
+            )
+            site_packages = str(venv_dir / "Lib" / "site-packages")
+        else:
+            run_pex(
+                session,
+                "pex3",
+                "venv",
+                "create",
+                "--force",
+                "-d",
+                str(venv_dir),
+                "-r",
+                str(BUILD_ROOT / "requirements.txt"),
+                "--lock",
+                str(LOCK_FILE),
+            )
 
-        site_packages = json.loads(
-            cast(str, run_pex(session, "pex3", "venv", "inspect", str(venv_dir), silent=True))
-        )["site_packages"]
+            site_packages = json.loads(
+                cast(str, run_pex(session, "pex3", "venv", "inspect", str(venv_dir), silent=True))
+            )["site_packages"]
 
         session.run("python", "-m", "pip", "install", "--prefix", str(venv_dir), "--no-deps", ".")
 

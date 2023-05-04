@@ -1,5 +1,0 @@
--r requirements.txt
--r nox-support/check-reqs.txt
--r nox-support/fmt-reqs.txt
--r nox-support/package-reqs.txt
--r nox-support/test-reqs.txt
