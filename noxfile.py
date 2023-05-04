@@ -26,6 +26,7 @@ PEX_REQUIREMENT = (
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
+WINDOWS_AMD64_COMPLETE_PLATFORM = BUILD_ROOT / "complete-platform.windows-amd64-py3.11.json"
 LOCK_FILE = BUILD_ROOT / "lock.json"
 
 IS_WINDOWS = os.name == "nt"
@@ -70,7 +71,7 @@ def maybe_create_lock(session: Session) -> bool:
         created_lock = True
 
     for subset in all_requirements:
-        subset_lock = subset.with_suffix(".lock.txt")
+        subset_lock = subset.with_suffix(".windows-amd64.lock.txt")
         if not created_lock and subset_lock.exists():
             continue
         run_pex(
@@ -82,6 +83,8 @@ def maybe_create_lock(session: Session) -> bool:
             str(LOCK_FILE),
             "-r",
             str(subset),
+            "--complete-platform",
+            str(WINDOWS_AMD64_COMPLETE_PLATFORM),
             "-o",
             str(subset_lock),
         )
@@ -97,7 +100,8 @@ def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) ->
         # slower than using Pex.
         session.install(
             *itertools.chain.from_iterable(
-                ("-r", str(req_file.with_suffix(".lock.txt"))) for req_file in input_reqs
+                ("-r", str(req_file.with_suffix(".windows-amd64.lock.txt")))
+                for req_file in input_reqs
             )
         )
     else:
@@ -205,7 +209,7 @@ def create_zipapp(session: Session) -> Path:
                 "pip",
                 "install",
                 "-r",
-                str(BUILD_ROOT / "requirements.lock.txt"),
+                str(BUILD_ROOT / "requirements.windows-amd64.lock.txt"),
             )
             site_packages = str(venv_dir / "Lib" / "site-packages")
         else:
