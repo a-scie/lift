@@ -17,12 +17,7 @@ nox.needs_version = ">=2022.11.21"
 
 REQUIRES_PYTHON_VERSION = "3.11"
 
-# TODO(John Sirois): Upgrade to a Pex stable release that includes `pex3 lock export-subset`
-#  support.
-# PEX_REQUIREMENT = "pex==2.1.135"
-PEX_REQUIREMENT = (
-    "pex @ git+https://github.com/jsirois/pex@5cf64f5ef6a3576604aca831380dcec059609b56"
-)
+PEX_REQUIREMENT = "pex==2.1.136"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
