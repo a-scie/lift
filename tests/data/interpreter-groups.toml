@@ -8,15 +8,13 @@ version = "0.11.0"
 [[science.interpreters]]
 id = "cpython310"
 provider = "PythonBuildStandalone"
-release = "20221220"
-version = "3.10.9"
+version = "3.10"
 lazy = true
 
 [[science.interpreters]]
 id = "cpython311"
 provider = "PythonBuildStandalone"
-release = "20230116"
-version = "3.11.1"
+version = "3.11"
 lazy = true
 
 [[science.interpreter_groups]]
@@ -38,4 +36,7 @@ import sys
 print('.'.join(map(str, sys.version_info[:2])))
 print("{scie.files:hash.#{cpython}}")
     """,
+]
+env.remove = [
+    "LD_LIBRARY_PATH",
 ]
