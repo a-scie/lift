@@ -3,6 +3,7 @@
 
 import hashlib
 import json
+import os
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -15,11 +16,20 @@ from science.cache import Missing, download_cache
 from science.model import Fingerprint, Url
 
 
+def configured_client(**headers: str) -> httpx.Client:
+    # TODO(John Sirois): XXX: Plumb auth config in a reasonable way from the CLI / dedicated science
+    #  config files.
+    github_api_bearer_token = os.environ.get("SCIENCE_GITHUB_API_BEARER_TOKEN")
+    if github_api_bearer_token:
+        headers.setdefault("Authorization", f"Bearer {github_api_bearer_token}")
+    return httpx.Client(follow_redirects=True, headers=headers)
+
+
 def fetch_text(url: Url, ttl: timedelta | None = None) -> str:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
-                with httpx.stream("GET", url, follow_redirects=True) as response, work.open(
+                with configured_client().stream("GET", url) as response, work.open(
                     "wb"
                 ) as cache_fp:
                     for data in response.iter_bytes():
@@ -32,7 +42,7 @@ def fetch_json(url: Url, ttl: timedelta | None = None) -> dict[str, Any]:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
-                with httpx.stream("GET", url, follow_redirects=True) as response, work.open(
+                with configured_client().stream("GET", url) as response, work.open(
                     "wb"
                 ) as cache_fp:
                     for data in response.iter_bytes():
@@ -53,7 +63,7 @@ def fetch_and_verify(
         match cache_result:
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")
-                with httpx.Client(follow_redirects=True) as client:
+                with configured_client() as client:
                     match fingerprint:
                         case Fingerprint(_):
                             expected_fingerprint = fingerprint
