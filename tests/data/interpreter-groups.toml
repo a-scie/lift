@@ -37,6 +37,3 @@ print('.'.join(map(str, sys.version_info[:2])))
 print("{scie.files:hash.#{cpython}}")
     """,
 ]
-env.remove = [
-    "LD_LIBRARY_PATH",
-]
