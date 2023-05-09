@@ -6,25 +6,25 @@ description = "Test interpreter group selection."
 version = "0.11.0"
 
 [[science.interpreters]]
+id = "cpython39"
+provider = "PythonBuildStandalone"
+release = "20230116"
+version = "3.9"
+lazy = true
+
+[[science.interpreters]]
 id = "cpython310"
 provider = "PythonBuildStandalone"
 release = "20230116"
 version = "3.10"
 lazy = true
 
-[[science.interpreters]]
-id = "cpython311"
-provider = "PythonBuildStandalone"
-release = "20230116"
-version = "3.11"
-lazy = true
-
 [[science.interpreter_groups]]
 id = "cpython"
 selector = "{scie.env.PYTHON}"
 members = [
+    "cpython39",
     "cpython310",
-    "cpython311",
 ]
 
 [[science.commands]]
