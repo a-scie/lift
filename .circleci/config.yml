@@ -16,18 +16,21 @@ jobs:
       - run:
           name: Setup Nox
           command: |
-            python3.11 -m venv nox.venv
-            nox.venv/bin/pip install nox
+            python3.11 -m venv ~/bin/nox.venv
+            ~/bin/nox.venv/bin/pip install nox
+            cd ~/bin
+            ln -s nox.venv/bin/nox
+            echo "export PATH=~/bin:${PATH}" >> "${BASH_ENV}"
       - checkout
       - run:
           name: Check Formatting & Lints
-          command: nox.venv/bin/nox -e lint
+          command: nox -e lint
       - run:
           name: Unit Tests
-          command: nox.venv/bin/nox -e test
+          command: nox -e test
       - run:
           name: Build & Package
-          command: nox.venv/bin/nox -e package
+          command: nox -e package
 
 workflows:
   ci:
