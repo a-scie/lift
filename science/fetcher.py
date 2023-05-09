@@ -6,7 +6,7 @@ import json
 import os
 from datetime import timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import click
 import httpx
@@ -16,39 +16,40 @@ from science.cache import Missing, download_cache
 from science.model import Fingerprint, Url
 
 
-def configured_client(**headers: str) -> httpx.Client:
+def configured_client(headers: Mapping[str, str] | None = None) -> httpx.Client:
     # TODO(John Sirois): XXX: Plumb auth config in a reasonable way from the CLI / dedicated science
     #  config files.
+    headers = dict(headers) if headers else {}
     github_api_bearer_token = os.environ.get("SCIENCE_GITHUB_API_BEARER_TOKEN")
     if github_api_bearer_token:
         headers.setdefault("Authorization", f"Bearer {github_api_bearer_token}")
     return httpx.Client(follow_redirects=True, headers=headers)
 
 
-def fetch_text(url: Url, ttl: timedelta | None = None) -> str:
+def _fetch_to_cache(
+    url: Url, ttl: timedelta | None = None, headers: Mapping[str, str] | None = None
+) -> Path:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
-                with configured_client().stream("GET", url) as response, work.open(
+                with configured_client(headers).stream("GET", url) as response, work.open(
                     "wb"
                 ) as cache_fp:
                     for data in response.iter_bytes():
                         cache_fp.write(data)
+    return cache_result.path
 
-    return cache_result.path.read_text()
+
+def fetch_text(
+    url: Url, ttl: timedelta | None = None, headers: Mapping[str, str] | None = None
+) -> str:
+    return _fetch_to_cache(url, ttl, headers).read_text()
 
 
-def fetch_json(url: Url, ttl: timedelta | None = None) -> dict[str, Any]:
-    with download_cache().get_or_create(url, ttl=ttl) as cache_result:
-        match cache_result:
-            case Missing(work=work):
-                with configured_client().stream("GET", url) as response, work.open(
-                    "wb"
-                ) as cache_fp:
-                    for data in response.iter_bytes():
-                        cache_fp.write(data)
-
-    with cache_result.path.open() as fp:
+def fetch_json(
+    url: Url, ttl: timedelta | None = None, headers: Mapping[str, str] | None = None
+) -> dict[str, Any]:
+    with _fetch_to_cache(url, ttl, headers).open() as fp:
         return json.load(fp)
 
 
@@ -58,12 +59,13 @@ def fetch_and_verify(
     digest_algorithm: str = "sha256",
     executable: bool = False,
     ttl: timedelta | None = None,
+    headers: Mapping[str, str] | None = None,
 ) -> Path:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")
-                with configured_client() as client:
+                with configured_client(headers) as client:
                     match fingerprint:
                         case Fingerprint(_):
                             expected_fingerprint = fingerprint
