@@ -1,0 +1,34 @@
+# See: https://circleci.com/docs/2.1/configuration-reference
+version: 2.1
+
+jobs:
+  test:
+    machine:
+      image: ubuntu-2004:current
+    resource_class: arm.medium
+    steps:
+      - run:
+        name: Install Python 3.11
+        command: |
+          sudo apt update
+          sudo apt install -y python3.11-dev python3.11-venv python3.11-distutils
+      - run:
+          name: Setup Nox
+          command: |
+            python3.11 -m venv nox.venv
+            nox.venv/bin/pip install nox
+      - checkout
+      - run:
+        name: Check Formatting & Lints
+        command: nox.venv/bin/nox -e lint
+      - run:
+        name: Unit Tests
+        command: nox.venv/bin/nox -e test
+      - run:
+        name: Build & Package
+        command: nox.venv/bin/nox -e package
+
+workflows:
+  ci:
+    jobs:
+      - test
