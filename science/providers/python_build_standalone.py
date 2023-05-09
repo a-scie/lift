@@ -185,6 +185,7 @@ class PythonBuildStandalone(Provider):
             if (rank := self.rank_compatibility(platform, asset.target_triple)) is not None and (
                 asset_rank is None or rank < asset_rank
             ):
+                asset_rank = rank
                 selected_asset = asset
         if selected_asset is None:
             raise ValueError(
