@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import atexit
+import errno
 import hashlib
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -67,7 +68,18 @@ class DownloadCache:
 
             work = cached_file.with_name(f"{cached_file.name}.work")
             work.unlink(missing_ok=True)
-            atexit.register(work.unlink, missing_ok=True)
+
+            def safe_unlink(path: str) -> None:
+                import os
+
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    if e.errno != errno.ENOENT:
+                        raise e
+
+            atexit.register(safe_unlink, str(work))
+
             yield Missing(path=cached_file, work=work)
             work.rename(cached_file)
             if ttl_file and ttl:

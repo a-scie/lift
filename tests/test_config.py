@@ -43,11 +43,11 @@ def test_interpreter_groups(tmpdir, science_pyz: Path) -> None:
         subprocess.run(args=[exe_path], env={**os.environ, "SCIE": "inspect"}, check=True)
         subprocess.run(
             args=[exe_path],
-            env={**os.environ, "PYTHON": "cpython39", "RUST_LOG": "trace"},
+            env={**os.environ, "PYTHON": "cpython310", "RUST_LOG": "trace"},
             check=True,
         )
         subprocess.run(
             args=[exe_path],
-            env={**os.environ, "PYTHON": "cpython310", "RUST_LOG": "trace"},
+            env={**os.environ, "PYTHON": "cpython311", "RUST_LOG": "trace"},
             check=True,
         )
