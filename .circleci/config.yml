@@ -8,10 +8,10 @@ jobs:
     resource_class: arm.medium
     steps:
       - run:
-        name: Install Python 3.11
-        command: |
-          sudo apt update
-          sudo apt install -y python3.11-dev python3.11-venv python3.11-distutils
+          name: Install Python 3.11
+          command: |
+            sudo apt update
+            sudo apt install -y python3.11-dev python3.11-venv python3.11-distutils
       - run:
           name: Setup Nox
           command: |
@@ -19,14 +19,14 @@ jobs:
             nox.venv/bin/pip install nox
       - checkout
       - run:
-        name: Check Formatting & Lints
-        command: nox.venv/bin/nox -e lint
+          name: Check Formatting & Lints
+          command: nox.venv/bin/nox -e lint
       - run:
-        name: Unit Tests
-        command: nox.venv/bin/nox -e test
+          name: Unit Tests
+          command: nox.venv/bin/nox -e test
       - run:
-        name: Build & Package
-        command: nox.venv/bin/nox -e package
+          name: Build & Package
+          command: nox.venv/bin/nox -e package
 
 workflows:
   ci:
