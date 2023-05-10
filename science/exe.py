@@ -21,7 +21,9 @@ from science.model import Application, Command, Distribution, File, Url
 from science.platform import Platform
 
 
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.group(
+    context_settings=dict(auto_envvar_prefix="SCIENCE", help_option_names=["-h", "--help"])
+)
 @click.version_option(__version__, "-V", "--version", message="%(version)s")
 def main() -> None:  # TODO(John Sirois): XXX:
     # Expose
@@ -145,7 +147,14 @@ def _export(
 
 @main.command()
 @click.argument("config", type=click.File("rb"))
-@click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
+@click.option(
+    "--file",
+    "file_mappings",
+    type=FileMapping.parse,
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_EXPORT_FILE",
+)
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 @click.option("--force", is_flag=True)
 def export(config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, force: bool) -> None:
@@ -156,7 +165,14 @@ def export(config: BinaryIO, file_mappings: list[FileMapping], dest_dir: Path, f
 
 @main.command()
 @click.argument("config", type=click.File("rb"))
-@click.option("--file", "file_mappings", type=FileMapping.parse, multiple=True, default=[])
+@click.option(
+    "--file",
+    "file_mappings",
+    type=FileMapping.parse,
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_BUILD_FILE",
+)
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 @click.option("--preserve-sandbox", is_flag=True)
 @click.option("--use-jump", type=Path)
