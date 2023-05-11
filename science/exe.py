@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import BinaryIO, Iterable, Iterator
 
 import click
+import click_log
 from packaging import version
 
 from science import __version__, a_scie, lift
@@ -41,7 +42,7 @@ def main() -> None:  # TODO(John Sirois): XXX:
     # TODO(John Sirois): XXX: How to reference files from above
     #  Also, when the reference is platform specific, then this seems to fall apart.
     # --exe --args --env
-    pass
+    click_log.basic_config()
 
 
 @dataclass(frozen=True)

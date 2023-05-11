@@ -170,19 +170,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18",
-              "url": "https://files.pythonhosted.org/packages/71/4c/3db2b8021bd6f2f0ceb0e088d6b2d49147671f25832fb17970e9b583d742/certifi-2022.12.7-py3-none-any.whl"
+              "hash": "c6c2e98f5c7869efca1f8916fed228dd91539f9f1b444c314c06eef02980c716",
+              "url": "https://files.pythonhosted.org/packages/9d/19/59961b522e6757f0c9097e4493fa906031b95b3ebe9360b2c3083561a6b4/certifi-2023.5.7-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "35824b4c3a97115964b408844d64aa14db1cc518f6562e8d7261699d1350a9e3",
-              "url": "https://files.pythonhosted.org/packages/37/f7/2b1b0ec44fdc30a3d31dfebe52226be9ddc40cd6c0f34ffc8923ba423b69/certifi-2022.12.7.tar.gz"
+              "hash": "0f0d56dc5a6ad56fd4ba36484d6cc34451e1c6548c61daad8c320169f91eddc7",
+              "url": "https://files.pythonhosted.org/packages/93/71/752f7a4dd4c20d6b12341ed1732368546bc0ca9866139fe812f6009d9ac7/certifi-2023.5.7.tar.gz"
             }
           ],
           "project_name": "certifi",
           "requires_dists": [],
           "requires_python": ">=3.6",
-          "version": "2022.12.7"
+          "version": "2023.5.7"
         },
         {
           "artifacts": [
@@ -204,6 +204,26 @@
           ],
           "requires_python": ">=3.7",
           "version": "8.1.3"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "a43e394b528d52112af599f2fc9e4b7cf3c15f94e53581f74fa6867e68c91756",
+              "url": "https://files.pythonhosted.org/packages/ae/5a/4f025bc751087833686892e17e7564828e409c43b632878afeae554870cd/click_log-0.4.0-py2.py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "3970f8570ac54491237bcdb3d8ab5e3eef6c057df29f8c3d1151a51a9c23b975",
+              "url": "https://files.pythonhosted.org/packages/32/32/228be4f971e4bd556c33d52a22682bfe318ffe57a1ddb7a546f347a90260/click-log-0.4.0.tar.gz"
+            }
+          ],
+          "project_name": "click-log",
+          "requires_dists": [
+            "click"
+          ],
+          "requires_python": null,
+          "version": "0.4.0"
         },
         {
           "artifacts": [
@@ -435,38 +455,38 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "d8e9187bfcd5ffedbe87403195e1fc340189a68463903c39e2b63307c9fa0394",
-              "url": "https://files.pythonhosted.org/packages/3b/e2/e191616ecd88ba45e9e662f0b87b390c76dd56affe8d18cffa44bf7ba91c/mypy-1.2.0-py3-none-any.whl"
+              "hash": "a8763e72d5d9574d45ce5881962bc8e9046bf7b375b0abf031f3e6811732a897",
+              "url": "https://files.pythonhosted.org/packages/e3/f7/1fed3b24abb75f244fa6bc60ea03cd9d3d8ad225a4cfda7533042fe6d831/mypy-1.3.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "695c45cea7e8abb6f088a34a6034b1d273122e5530aeebb9c09626cea6dca4cb",
-              "url": "https://files.pythonhosted.org/packages/1d/db/f0b4b1d7b6604806d14a5ee5a5f0ac03d6b81d4d6d134a191dfb3da9cb86/mypy-1.2.0-cp311-cp311-macosx_11_0_arm64.whl"
+              "hash": "6e33bb8b2613614a33dff70565f4c803f889ebd2f859466e42b46e1df76018dd",
+              "url": "https://files.pythonhosted.org/packages/25/c7/4735f81858a727e170279144600881fe3299aa7589ed585af6b788ea4556/mypy-1.3.0-cp311-cp311-macosx_10_9_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "f46af8d162f3d470d8ffc997aaf7a269996d205f9d746124a179d3abe05ac602",
-              "url": "https://files.pythonhosted.org/packages/24/69/795b82e3fba8e50e265dac3d387616706babd1ac23eeed3943bd8d074cc6/mypy-1.2.0-cp311-cp311-win_amd64.whl"
+              "hash": "7d23370d2a6b7a71dc65d1266f9a34e4cde9e8e21511322415db4b26f46f6b8c",
+              "url": "https://files.pythonhosted.org/packages/6a/d0/4681d84878cecfd911752016ab30566366f6de7296fdc977b746eb68bf45/mypy-1.3.0-cp311-cp311-macosx_11_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "8293a216e902ac12779eb7a08f2bc39ec6c878d7c6025aa59464e0c4c16f7eb9",
-              "url": "https://files.pythonhosted.org/packages/54/2b/4605b4197d169f22453b55eb48cc6d3237ddf3167c24398497148bfef99f/mypy-1.2.0-cp311-cp311-musllinux_1_1_x86_64.whl"
+              "hash": "6e42d29e324cdda61daaec2336c42512e59c7c375340bd202efa1fe0f7b8f8ca",
+              "url": "https://files.pythonhosted.org/packages/6a/d9/48de5203f4b6287a98fadcc47072b1bc69e3faaa39cba59a3a600b05a42c/mypy-1.3.0-cp311-cp311-musllinux_1_1_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "d0e9464a0af6715852267bf29c9553e4555b61f5904a4fc538547a4d67617937",
-              "url": "https://files.pythonhosted.org/packages/5b/50/b5ecf349e2bfc4fe31fb974457470d19d099d59daa92a9ff0f0e38bbfbe2/mypy-1.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+              "hash": "658fe7b674769a0770d4b26cb4d6f005e88a442fe82446f020be8e5f5efb2fae",
+              "url": "https://files.pythonhosted.org/packages/88/0e/646696eb8fe7658b752009a495054a0214ae8e659e9cbcde8181f16ae999/mypy-1.3.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "3efde4af6f2d3ccf58ae825495dbb8d74abd6d176ee686ce2ab19bd025273f41",
-              "url": "https://files.pythonhosted.org/packages/7b/36/5d90979fa86bcf5862186f540b9925538d0e5239049d7bb1d9ee3ca0f77a/mypy-1.2.0-cp311-cp311-macosx_10_9_x86_64.whl"
+              "hash": "d0b6c62206e04061e27009481cb0ec966f7d6172b5b936f3ead3d74f29fe3dcf",
+              "url": "https://files.pythonhosted.org/packages/cd/b9/6abe1cd8ac8e70f12f43eebe6427814f9d36142d331eae5cc5bba77585a2/mypy-1.3.0-cp311-cp311-win_amd64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "f70a40410d774ae23fcb4afbbeca652905a04de7948eaf0b1789c8d1426b72d1",
-              "url": "https://files.pythonhosted.org/packages/9a/d0/d96d26e7a6f5a2ed4add8c649f30bce26fc413f25a6ecc5d93ab22c270e1/mypy-1.2.0.tar.gz"
+              "hash": "e1f4d16e296f5135624b34e8fb741eb0eadedca90862405b1f1fde2040b9bd11",
+              "url": "https://files.pythonhosted.org/packages/f9/88/3bfe07521fb9e74b449cbc4367434067ec70bfd8a24c652fa3e0f9597389/mypy-1.3.0.tar.gz"
             }
           ],
           "project_name": "mypy",
@@ -481,7 +501,7 @@
             "typing-extensions>=3.10"
           ],
           "requires_python": ">=3.7",
-          "version": "1.2.0"
+          "version": "1.3.0"
         },
         {
           "artifacts": [
@@ -927,6 +947,7 @@
     "autoflake",
     "black",
     "click",
+    "click-log",
     "filelock",
     "httpx",
     "isort",

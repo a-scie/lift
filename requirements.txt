@@ -1,5 +1,6 @@
 appdirs
 click
+click-log
 filelock
 httpx
 packaging

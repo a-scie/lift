@@ -29,3 +29,7 @@ profile = "black"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[[tool.mypy.overrides]]
+module = "click_log"
+ignore_missing_imports = true
