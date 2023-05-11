@@ -33,7 +33,7 @@ def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> htt
     auth: httpx.Auth | tuple[str, str] | None = None
     if url.info.hostname and "Authorization" not in headers:
         normalized_hostname = url.info.hostname.upper().replace(".", "_").replace("-", "_")
-        env_auth_prefix = f"SCIENCE_AUTH_{normalized_hostname}_"
+        env_auth_prefix = f"SCIENCE_AUTH_{normalized_hostname}"
         env_auth = {
             key: value for key, value in os.environ.items() if key.startswith(env_auth_prefix)
         }
