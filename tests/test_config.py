@@ -30,7 +30,7 @@ def test_parse(build_root: Path) -> None:
 
 
 def test_interpreter_groups(tmpdir, science_pyz: Path) -> None:
-    with resources.path("data", "interpreter-groups.toml") as config:
+    with resources.as_file(resources.files("data") / "interpreter-groups.toml") as config:
         app = parse_config_file(config)
         assert app is not None, "TODO(John Sirois): XXX: Proper config test instead of IT below."
 
