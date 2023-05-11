@@ -3,8 +3,10 @@
 
 import hashlib
 import json
+import logging
 import os
 from datetime import timedelta
+from netrc import NetrcParseError
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -15,15 +17,67 @@ from tqdm import tqdm
 from science.cache import Missing, download_cache
 from science.model import Fingerprint, Url
 
+logger = logging.getLogger(__name__)
 
-def configured_client(headers: Mapping[str, str] | None = None) -> httpx.Client:
-    # TODO(John Sirois): XXX: Plumb auth config in a reasonable way from the CLI / dedicated science
-    #  config files.
+
+class AmbiguousAuthError(Exception):
+    """Indicates more than one form of authentication was configured for a given URL."""
+
+
+class InvalidAuthError(Exception):
+    """Indicates the configured authentication for a given URL is invalid."""
+
+
+def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> httpx.Client:
     headers = dict(headers) if headers else {}
-    github_api_bearer_token = os.environ.get("SCIENCE_GITHUB_API_BEARER_TOKEN")
-    if github_api_bearer_token:
-        headers.setdefault("Authorization", f"Bearer {github_api_bearer_token}")
-    return httpx.Client(follow_redirects=True, headers=headers)
+    auth: httpx.Auth | tuple[str, str] | None = None
+    if url.info.hostname and "Authorization" not in headers:
+        normalized_hostname = url.info.hostname.upper().replace(".", "_").replace("-", "_")
+        env_auth_prefix = f"SCIENCE_AUTH_{normalized_hostname}_"
+        env_auth = {
+            key: value for key, value in os.environ.items() if key.startswith(env_auth_prefix)
+        }
+
+        def check_ambiguous_auth(auth_type: str) -> None:
+            if env_auth:
+                raise AmbiguousAuthError(
+                    f"{auth_type.capitalize()} auth was configured for {url} via env var but so was: "
+                    f"{', '.join(env_auth)}"
+                )
+
+        def get_username(auth_type: str) -> str | None:
+            return env_auth.pop(f"{env_auth_prefix}_{auth_type.upper()}_USER", None)
+
+        def require_password(auth_type: str) -> str:
+            env_var = f"{env_auth_prefix}_{auth_type.upper()}_PASS"
+            passwd = env_auth.pop(env_var, None)
+            if not passwd:
+                raise InvalidAuthError(
+                    f"{auth_type.capitalize()} auth requires a password be configured via the "
+                    f"{env_var} env var."
+                )
+            return passwd
+
+        if bearer := env_auth.pop(f"{env_auth_prefix}_BEARER", None):
+            check_ambiguous_auth("bearer")
+            auth = "Authorization", f"Bearer {bearer}"
+        elif username := get_username("basic"):
+            password = require_password("basic")
+            check_ambiguous_auth("basic")
+            auth = httpx.BasicAuth(username=username, password=password)
+        elif username := get_username("digest"):
+            password = require_password("digest")
+            check_ambiguous_auth("digest")
+            auth = httpx.DigestAuth(username=username, password=password)
+        else:
+            try:
+                auth = httpx.NetRCAuth(None)
+            except FileNotFoundError:
+                pass
+            except NetrcParseError as e:
+                logger.warning(f"Not using netrc for auth, netrc file is invalid: {e}")
+
+    return httpx.Client(follow_redirects=True, headers=headers, auth=auth)
 
 
 def _fetch_to_cache(
@@ -32,7 +86,7 @@ def _fetch_to_cache(
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
-                with configured_client(headers).stream("GET", url) as response, work.open(
+                with configured_client(url, headers).stream("GET", url) as response, work.open(
                     "wb"
                 ) as cache_fp:
                     for data in response.iter_bytes():
@@ -65,7 +119,7 @@ def fetch_and_verify(
         match cache_result:
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")
-                with configured_client(headers) as client:
+                with configured_client(url, headers) as client:
                     match fingerprint:
                         case Fingerprint(_):
                             expected_fingerprint = fingerprint

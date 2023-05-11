@@ -23,6 +23,9 @@ jobs:
             echo "export PATH=~/bin:${PATH}" >> "${BASH_ENV}"
       - checkout
       - run:
+          name: Setup Auth for github.com
+          command: echo "export SCIENCE_AUTH_GITHUB_COM_BEARER=${GITHUB_TOKEN}" >> "${BASH_ENV}"
+      - run:
           name: Check Formatting & Lints
           command: nox -e lint
       - run:
@@ -35,4 +38,6 @@ jobs:
 workflows:
   ci:
     jobs:
-      - test
+      - test:
+          context:
+            - GITHUB_CREDS

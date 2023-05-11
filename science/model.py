@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import os.path
 import re
+import urllib.parse
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
+from functools import cached_property
 from pathlib import Path
 from typing import Iterable, Literal, Match, Protocol, TypeAlias, runtime_checkable
 
@@ -122,7 +124,9 @@ class Command:
 
 
 class Url(str):
-    pass
+    @cached_property
+    def info(self):
+        return urllib.parse.urlparse(self)
 
 
 DistributionSource: TypeAlias = Url | Path
