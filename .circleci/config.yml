@@ -24,7 +24,7 @@ jobs:
       - checkout
       - run:
           name: Setup Auth for github.com
-          command: echo "export SCIENCE_AUTH_GITHUB_COM_BEARER=${GITHUB_TOKEN}" >> "${BASH_ENV}"
+          command: echo "export SCIENCE_AUTH_API_GITHUB_COM_BEARER=${GITHUB_TOKEN}" >> "${BASH_ENV}"
       - run:
           name: Check Formatting & Lints
           command: nox -e lint

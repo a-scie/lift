@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, macos-11, macos-13-aarch64, windows-2022]
     env:
-      SCIENCE_AUTH_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
+      SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Setup Python 3.11
         uses: actions/setup-python@v4
