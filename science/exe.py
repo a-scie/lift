@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -26,7 +27,7 @@ from science.platform import Platform
     context_settings=dict(auto_envvar_prefix="SCIENCE", help_option_names=["-h", "--help"])
 )
 @click.version_option(__version__, "-V", "--version", message="%(version)s")
-def main() -> None:  # TODO(John Sirois): XXX:
+def _main() -> None:  # TODO(John Sirois): XXX:
     # Expose
     # // --platform ... selection
     #
@@ -160,7 +161,7 @@ def _export(
         yield platform, lift_manifest
 
 
-@main.command()
+@_main.command()
 @click.argument("config", type=click.File("rb"))
 @click.option(
     "--file",
@@ -187,7 +188,7 @@ def export(
         click.echo(lift_manifest)
 
 
-@main.command()
+@_main.command()
 @click.argument("config", type=click.File("rb"))
 @click.option(
     "--file",
@@ -271,3 +272,7 @@ def build(
             dst_binary = dest_dir / dst_binary_name
             shutil.move(src=platform_export_dir / src_binary_name, dst=dst_binary)
             click.echo(dst_binary)
+
+
+def main():
+    _main(prog_name=os.environ.get("SCIE_ARGV0"))
