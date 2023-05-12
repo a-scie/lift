@@ -20,7 +20,7 @@ class Platform(Enum):
 
     @classmethod
     def current(cls) -> Platform:
-        match (platform.system().lower(), platform.machine().lower()):
+        match (system := platform.system().lower(), machine := platform.machine().lower()):
             case ("linux", "aarch64" | "arm64"):
                 return cls.Linux_aarch64
             case ("linux", "amd64" | "x86_64"):
@@ -33,8 +33,8 @@ class Platform(Enum):
                 return cls.Windows_x86_64
             case _:
                 raise ValueError(
-                    "The current platform is not supported!: "
-                    f"{platform.system()} {platform.machine()}"
+                    "The current operating system / machine pair is not supported!: "
+                    f"{system} / {machine}"
                 )
 
     @property
