@@ -37,6 +37,6 @@ jobs:
       - name: Check Formatting & Lints
         run: nox -e lint
       - name: Unit Tests
-        run: nox -e test
+        run: nox -e test -- -vvs
       - name: Build & Package
         run: nox -e package

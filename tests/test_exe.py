@@ -64,7 +64,17 @@ def test_use_platform_suffix(
     assert not (tmp_path / Platform.current().binary_name("science")).exists()
 
 
-def test_hash(tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path) -> None:
+@pytest.fixture(scope="module")
+def shasum() -> str | None:
+    shasum = which("shasum")
+    # N.B.: We check to see if shasum actually works since GH Actions Windows 2022 boxes come with a
+    # shasum.BAT on the PATH that runs via a perl.exe not on the PATH leading to error.
+    return shasum if shasum and subprocess.run(args=[shasum, "--version"]).returncode == 0 else None
+
+
+def test_hash(
+    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, shasum: Path | None
+) -> None:
     expected_executable = tmp_path / Platform.current().binary_name("science")
     algorithms = "sha1", "sha256", "sha512"
     expected_checksum_paths = [
@@ -89,7 +99,7 @@ def test_hash(tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path
     )
 
     assert expected_executable.is_file()
-    if shasum := which("shasum"):
+    if shasum:
         subprocess.run(
             args=[shasum, "-c", *(checksum_file.name for checksum_file in expected_checksum_paths)],
             cwd=str(tmp_path),
