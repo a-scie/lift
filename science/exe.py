@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
 import os
 import shutil
 import subprocess
@@ -196,6 +198,15 @@ def export(
 @click.option("--preserve-sandbox", is_flag=True)
 @click.option("--use-jump", type=Path)
 @click.option("--include-provenance", is_flag=True)
+@click.option(
+    "--hash",
+    "hash_functions",
+    type=click.Choice(sorted(hashlib.algorithms_guaranteed)),
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_BUILD_HASH",
+)
+@click.option("--use-platform-suffix", is_flag=True)
 def build(
     config: BinaryIO,
     file_mappings: list[FileMapping],
@@ -203,13 +214,15 @@ def build(
     preserve_sandbox: bool,
     use_jump: Path | None,
     include_provenance: bool,
+    hash_functions: list[str],
+    use_platform_suffix: bool,
 ) -> None:
     """Build the application executable(s)."""
     application = parse_config(config)
 
     current_platform = Platform.current()
     platforms = application.platforms
-    use_platform_suffix = platforms != frozenset([current_platform])
+    use_platform_suffix = use_platform_suffix or platforms != frozenset([current_platform])
     if use_jump and use_platform_suffix:
         click.secho(
             f"Cannot use a custom scie jump build with a multi-platform configuration.", fg="yellow"
@@ -221,7 +234,6 @@ def build(
             fg="yellow",
         )
         platforms = frozenset([current_platform])
-        use_platform_suffix = False
 
     scie_jump_version = application.scie_jump.version if application.scie_jump else None
     if scie_jump_version and scie_jump_version < version.parse("0.9.0"):
@@ -266,6 +278,16 @@ def build(
             dest_dir.mkdir(parents=True, exist_ok=True)
             dst_binary = dest_dir / dst_binary_name
             shutil.move(src=platform_export_dir / src_binary_name, dst=dst_binary)
+            if hash_functions:
+                digests = tuple(hashlib.new(hash_function) for hash_function in hash_functions)
+                with dst_binary.open(mode="rb") as fp:
+                    for chunk in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
+                        for digest in digests:
+                            digest.update(chunk)
+                for digest in digests:
+                    dst_binary.with_name(f"{dst_binary.name}.{digest.name}").write_text(
+                        f"{digest.hexdigest()} *{dst_binary_name}{os.linesep}"
+                    )
             click.echo(dst_binary)
 
 
