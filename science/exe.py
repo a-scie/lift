@@ -34,7 +34,7 @@ def _main() -> None:
     scies and export scie lift manifests from these configuration files.
 
     For more information on the configuration file format, see:
-    https://github.com/a-scie/lift/docs/manifest.md
+    https://github.com/a-scie/lift/blob/main/docs/manifest.md
     """
     click_log.basic_config()
 
