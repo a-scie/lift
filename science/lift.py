@@ -84,6 +84,7 @@ def emit_manifest(
     commands: Iterable[Command],
     bindings: Iterable[Command],
     fetch_urls: dict[str, str],
+    build_info: dict[str, Any] | None = None,
 ) -> None:
     def render_files() -> list[dict[str, Any]]:
         return [_render_file(file) for file in files]
@@ -105,15 +106,16 @@ def emit_manifest(
             },
         }
     }
-    data: dict[str, Any] = {"scie": scie_data}
+    data = dict[str, Any](scie=scie_data)
+    if build_info:
+        data.update(science=build_info)
     if fetch_urls:
-        data["ptex"] = fetch_urls
+        data.update(ptex=fetch_urls)
 
-    scie_jump_data: dict[str, Any] = {}
+    scie_jump_data = dict[str, Any]()
     if (scie_jump_version := scie_jump.version) and (scie_jump_digest := scie_jump.digest):
-        scie_jump_data["version"] = str(scie_jump_version)
-        scie_jump_data["size"] = scie_jump_digest.size
+        scie_jump_data.update(version=str(scie_jump_version), size=scie_jump_digest.size)
     if scie_jump_data:
-        scie_data["jump"] = scie_jump_data
+        scie_data.update(jump=scie_jump_data)
 
     json.dump(data, output, indent=2, sort_keys=True)

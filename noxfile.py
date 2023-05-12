@@ -265,4 +265,5 @@ def package(session: Session) -> None:
         "--dest-dir",
         str(DIST_DIR),
         str(BUILD_ROOT / "science.toml"),
+        *session.posargs,
     )
