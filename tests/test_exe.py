@@ -73,7 +73,7 @@ def shasum() -> str | None:
 
 
 def test_hash(
-    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, shasum: Path | None
+    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, shasum: str | None
 ) -> None:
     expected_executable = tmp_path / Platform.current().binary_name("science")
     algorithms = "sha1", "sha256", "sha512"
