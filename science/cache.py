@@ -29,6 +29,9 @@ class Missing:
 CacheResult: TypeAlias = Complete | Missing
 
 
+_TTL_EXPIRY_FORMAT = "%m/%d/%y %H:%M:%S"
+
+
 @dataclass(frozen=True)
 class DownloadCache:
     base_dir: Path
@@ -43,13 +46,14 @@ class DownloadCache:
         """
         cached_file = self.base_dir / hashlib.sha256(url.encode()).hexdigest()
 
-        ttl_expiry_format = "%m/%d/%y %H:%M:%S"
         ttl_file = cached_file.with_suffix(".ttl") if ttl else None
         if ttl_file and not ttl_file.exists():
             cached_file.unlink(missing_ok=True)
         elif ttl_file:
             try:
-                datetime_object = datetime.strptime(ttl_file.read_text().strip(), ttl_expiry_format)
+                datetime_object = datetime.strptime(
+                    ttl_file.read_text().strip(), _TTL_EXPIRY_FORMAT
+                )
                 if datetime.now() > datetime_object:
                     cached_file.unlink(missing_ok=True)
             except ValueError:
@@ -71,7 +75,7 @@ class DownloadCache:
             yield Missing(path=cached_file, work=work)
             work.rename(cached_file)
             if ttl_file and ttl:
-                ttl_file.write_text((datetime.now() + ttl).strftime(ttl_expiry_format))
+                ttl_file.write_text((datetime.now() + ttl).strftime(_TTL_EXPIRY_FORMAT))
 
 
 def science_cache() -> Path:
