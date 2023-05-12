@@ -27,22 +27,15 @@ from science.platform import Platform
     context_settings=dict(auto_envvar_prefix="SCIENCE", help_option_names=["-h", "--help"])
 )
 @click.version_option(__version__, "-V", "--version", message="%(version)s")
-def _main() -> None:  # TODO(John Sirois): XXX:
-    # Expose
-    # // --platform ... selection
-    #
-    # --python ... selection (lazy)
-    # --python PythonBuildStandalone(release=X,version=Y,flavor=Z)
-    # --java ... selection (lazy)
-    # --js ... selection (lazy)
-    #
-    # Interpreter provider PythonBuildStandalone, needs 3 parameters to select a release and 1
-    # parameter to select platform. It the provides {python} which is mapped to scie-jump
-    # placeholder per-platform.
-    #
-    # TODO(John Sirois): XXX: How to reference files from above
-    #  Also, when the reference is platform specific, then this seems to fall apart.
-    # --exe --args --env
+def _main() -> None:
+    """Science helps you prepare scies for your application.
+
+    Science provides a high-level configuration file format for a scie application and can build
+    scies and export scie lift manifests from these configuration files.
+
+    For more information on the configuration file format, see:
+    https://github.com/a-scie/lift/docs/manifest.md
+    """
     click_log.basic_config()
 
 
@@ -181,6 +174,7 @@ def export(
     force: bool,
     include_provenance: bool,
 ) -> None:
+    """Export the application configuration as one or more scie lift manifests."""
     application = parse_config(config)
     for _, lift_manifest in _export(
         application, file_mappings, dest_dir, force=force, include_provenance=include_provenance
@@ -210,6 +204,7 @@ def build(
     use_jump: Path | None,
     include_provenance: bool,
 ) -> None:
+    """Build the application executable(s)."""
     application = parse_config(config)
 
     current_platform = Platform.current()
@@ -275,4 +270,9 @@ def build(
 
 
 def main():
+    # By default, click help messages expose the fact the app is written in Python. The resulting
+    # program name (`python -m module` or `__main__.py`) is both confusing and unusable for the end
+    # user since both the Python distribution and the code are hidden away in the nce cache. Since
+    # we know we run as a scie in normal circumstances, use the SCIE_ARGV0 exported by the
+    # scie-jump when present.
     _main(prog_name=os.environ.get("SCIE_ARGV0"))
