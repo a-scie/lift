@@ -2,41 +2,17 @@
 name = "science"
 description = "Ship your interpreted executables using science."
 
-# It's possible to "cross-build" scies when all files are available for all needed platforms.
-# Here the CPython interpreter is available for all these platforms and the science.pyz is
-# cross-platform; so we can leverage this.
-platforms = [
-    "linux-aarch64",
-    "linux-x86_64",
-    "macos-aarch64",
-    "macos-x86_64",
-    "windows-x86_64",
-]
-
 [[science.interpreters]]
 id = "cpython"
-# Providers can generate a lift manifest JSON file entry given a platform.
 provider = "PythonBuildStandalone"
-# Optional, defaults to the latest PythonBuildStandalone release.
 release = "20230116"
-# Can be in-exact, e.g.: 3.11; in which case finds matching artifacts.
 version = "3.11.1"
-# Fetch on-demand at install-time using `ptex`.
 lazy = true
-
-# Optional, defaults to the "install_only" flavor.
-# flavor = "install_only"
 
 [[science.files]]
 name = "science.pyz"
 
 [[science.commands]]
-# Sharp substitution always references an id and is the only substitution science performs. The
-# rest of {...} flow through to the generated lift manifest JSON.
-# The sharp substitution requires ids do not contain '{', '}' or ':'.
-# A provider can define just 1 exported file, in which case #{provider-id} accesses it.
-# A provider can define several exported files, in which case #{provider-id:file-id} accesses each.
-# PythonBuildStandalone exports `python` on all platforms and `pip` on all except Windows.
 exe = "#{cpython:python}"
 args = [
     "{science.pyz}",
