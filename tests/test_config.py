@@ -1,6 +1,6 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
-
+import json
 import os.path
 import subprocess
 import sys
@@ -31,23 +31,36 @@ def test_parse(build_root: Path) -> None:
 
 def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
     with resources.as_file(resources.files("data") / "interpreter-groups.toml") as config:
-        app = parse_config_file(config)
-        assert app is not None, "TODO(John Sirois): XXX: Proper config test instead of IT below."
-
         subprocess.run(
             args=[sys.executable, str(science_pyz), "build", "--dest-dir", str(tmp_path), config],
             check=True,
         )
 
-        exe_path = os.path.join(str(tmp_path), "igs")
+        exe_path = tmp_path / Platform.current().binary_name("igs")
         subprocess.run(args=[exe_path], env={**os.environ, "SCIE": "inspect"}, check=True)
-        subprocess.run(
-            args=[exe_path],
-            env={**os.environ, "PYTHON": "cpython310", "RUST_LOG": "trace"},
-            check=True,
+
+        scie_base = tmp_path / "scie-base"
+
+        data1 = json.loads(
+            subprocess.run(
+                args=[exe_path],
+                env={**os.environ, "PYTHON": "cpython310", "SCIE_BASE": str(scie_base)},
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
         )
-        subprocess.run(
-            args=[exe_path],
-            env={**os.environ, "PYTHON": "cpython311", "RUST_LOG": "trace"},
-            check=True,
+        assert [3, 10] == data1["version"]
+        assert (scie_base / data1["hash"]).is_dir()
+
+        data2 = json.loads(
+            subprocess.run(
+                args=[exe_path],
+                env={**os.environ, "PYTHON": "cpython311", "SCIE_BASE": str(scie_base)},
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
         )
+        assert [3, 11] == data2["version"]
+        assert (scie_base / data2["hash"]).is_dir()
+
+        assert data1["hash"] != data2["hash"]

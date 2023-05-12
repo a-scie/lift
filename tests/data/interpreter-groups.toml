@@ -32,10 +32,14 @@ exe = "#{cpython:python}"
 args = [
     "-c",
     """\
+import json
 import sys
 
 
-print('.'.join(map(str, sys.version_info[:2])))
-print("{scie.files:hash.#{cpython}}")
+data = {{
+    "version": sys.version_info[:2],
+    "hash": "{scie.files:hash.#{cpython}}"
+}
+json.dump(data, sys.stdout)
     """,
 ]
