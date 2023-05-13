@@ -177,7 +177,7 @@ def export(
     include_provenance: bool,
 ) -> None:
     """Export the application configuration as one or more scie lift manifests."""
-    application = parse_config(config)
+    application = parse_config(config, source=config.name)
     for _, lift_manifest in _export(
         application, file_mappings, dest_dir, force=force, include_provenance=include_provenance
     ):
@@ -218,7 +218,7 @@ def build(
     use_platform_suffix: bool,
 ) -> None:
     """Build the application executable(s)."""
-    application = parse_config(config)
+    application = parse_config(config, source=config.name)
 
     current_platform = Platform.current()
     platforms = application.platforms
