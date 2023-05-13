@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from io import BytesIO
 from pathlib import Path
-from typing import Any, BinaryIO, Mapping, TypeVar
+from typing import Any, BinaryIO, TypeVar
 
 from packaging import version
 from packaging.version import Version
@@ -41,7 +41,7 @@ _T = TypeVar("_T")
 @dataclass(frozen=True)
 class Data:
     source: str
-    data: Mapping[str, Any]
+    data: FrozenDict[str, Any]
     path: str = ""
 
     def config(self, key: str) -> str:
@@ -52,7 +52,11 @@ class Data:
 
     def get_data(self, key: str, default: dict[str, Any] | __Required = __Required.VALUE) -> Data:
         data = self.get_value(key, expected_type=dict, default=default)
-        return Data(source=self.source, data=data, path=f"{self.path}.{key}" if self.path else key)
+        return Data(
+            source=self.source,
+            data=FrozenDict(data),
+            path=f"{self.path}.{key}" if self.path else key,
+        )
 
     def get_str(self, key: str, default: str | __Required = __Required.VALUE) -> str:
         return self.get_value(key, expected_type=str, default=default)
@@ -96,7 +100,7 @@ class Data:
         return [
             Data(
                 source=self.source,
-                data=data,
+                data=FrozenDict(data),
                 path=f"{self.path}.{key}[{index}]" if self.path else key,
             )
             for index, data in enumerate(
@@ -128,7 +132,7 @@ class Data:
 
 
 def parse_config(content: BinaryIO, source: str) -> Application:
-    return parse_config_data(Data(source=source, data=tomllib.load(content)))
+    return parse_config_data(Data(source=source, data=FrozenDict(tomllib.load(content))))
 
 
 def parse_config_file(path: Path) -> Application:
@@ -178,8 +182,6 @@ def parse_digest_field(data: Data) -> Digest | None:
 
 
 def parse_config_data(data: Data) -> Application:
-    # TODO(John Sirois): wrap up [] accesses to provide useful information on KeyError.
-
     science = data.get_data("science")
     application_name = science.get_str("name")
     description = science.get_str("description", default="")
