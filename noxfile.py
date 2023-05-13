@@ -123,7 +123,9 @@ def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
 @nox_session()
 def lock(session: Session) -> None:
     if not maybe_create_lock(session):
-        session.warn("Not updating lock files. Remove them to force updates.")
+        session.warn(
+            f"Not updating lock file. Remove {LOCK_FILE.relative_to(BUILD_ROOT)} to force updates."
+        )
 
 
 NOX_SUPPORT_DIR = BUILD_ROOT / "nox-support"
