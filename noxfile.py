@@ -266,6 +266,5 @@ def package(session: Session) -> None:
         f"science.pyz={science_pyz}",
         "--dest-dir",
         str(DIST_DIR),
-        str(BUILD_ROOT / "science.toml"),
         *session.posargs,
     )

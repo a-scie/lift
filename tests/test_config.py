@@ -13,7 +13,7 @@ from science.platform import Platform
 
 
 def test_parse(build_root: Path) -> None:
-    app = parse_config_file(build_root / "science.toml")
+    app = parse_config_file(build_root / "lift.toml")
     interpreters = list(app.interpreters)
     assert 1 == len(interpreters), "Expected science to ship on a single fixed interpreter."
 
