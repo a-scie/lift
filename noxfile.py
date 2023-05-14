@@ -14,6 +14,7 @@ import nox
 from nox import Session
 
 nox.needs_version = ">=2022.11.21"
+nox.options.stop_on_first_error = True
 
 REQUIRES_PYTHON_VERSION = "3.11"
 

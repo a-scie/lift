@@ -156,10 +156,10 @@ def test_issue_2(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
 
     with config.open(mode="r") as fp:
         config_data = toml.load(fp)
-        science_pyz_file = config_data["science"]["files"][0]
+        science_pyz_file = config_data["lift"]["files"][0]
         science_pyz_file["key"] = science_pyz_file["name"]
         science_pyz_file["name"] = str(dest.relative_to(tmp_path))
-    test_config = tmp_path / "science.toml"
+    test_config = tmp_path / "lift.toml"
     with test_config.open("w") as fp:
         toml.dump(config_data, fp)
 
@@ -170,9 +170,7 @@ def test_issue_2(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
 
     dest1 = tmp_path / "dest1"
     subprocess.run(
-        args=[str(science_exe), "build", "--dest-dir", str(dest1), test_config],
-        check=True,
-        cwd=tmp_path,
+        args=[str(science_exe), "build", "--dest-dir", str(dest1)], check=True, cwd=tmp_path
     )
     science_exe1 = dest1 / science_exe.name
     assert science_exe1.is_file()
@@ -185,9 +183,7 @@ def test_issue_2(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
 
     dest2 = tmp_path / "dest2"
     subprocess.run(
-        args=[str(science_exe1), "build", "--dest-dir", str(dest2), test_config],
-        check=True,
-        cwd=tmp_path,
+        args=[str(science_exe1), "build", "--dest-dir", str(dest2)], check=True, cwd=tmp_path
     )
     science_exe2 = dest2 / science_exe.name
     assert science_exe2.is_file()
