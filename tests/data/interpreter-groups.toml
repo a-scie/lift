@@ -8,14 +8,12 @@ version = "0.11.0"
 [[lift.interpreters]]
 id = "cpython310"
 provider = "PythonBuildStandalone"
-release = "20230116"
 version = "3.10"
 lazy = true
 
 [[lift.interpreters]]
 id = "cpython311"
 provider = "PythonBuildStandalone"
-release = "20230116"
 version = "3.11"
 lazy = true
 

@@ -49,7 +49,9 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
                 check=True,
             ).stdout
         )
-        assert [3, 10] == data1["version"]
+        assert [3, 10] == (actual_version := data1["version"])[
+            :2
+        ], f"Actual version was {actual_version}"
         assert (scie_base / data1["hash"]).is_dir()
 
         data2 = json.loads(
@@ -60,7 +62,9 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
                 check=True,
             ).stdout
         )
-        assert [3, 11] == data2["version"]
+        assert [3, 11] == (actual_version := data2["version"])[
+            :2
+        ], f"Actual version was {actual_version}"
         assert (scie_base / data2["hash"]).is_dir()
 
         assert data1["hash"] != data2["hash"]
