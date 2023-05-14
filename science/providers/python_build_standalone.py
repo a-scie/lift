@@ -146,9 +146,14 @@ class PythonBuildStandalone(Provider):
             raise ValueError(f"Did not find expected SHA256SUMS asset for release {release}.")
 
         sha256sums = {}
-        for line in fetch_text(sha256sums_url).splitlines():
+        for line_no, line in enumerate(fetch_text(sha256sums_url).splitlines(), start=1):
             if line := line.strip():
-                fingerprint, name = re.split(r"\s+", line)
+                parts = re.split(r"\s+", line)
+                if len(parts) != 2:
+                    raise ValueError(
+                        f"Line {line_no} from {sha256sums_url} has unexpected content:\n{line}"
+                    )
+                fingerprint, name = parts
                 sha256sums[name] = Fingerprint(fingerprint)
 
         fingerprinted_assets = []
