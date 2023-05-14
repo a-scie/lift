@@ -5,8 +5,8 @@ description = "Ship your interpreted executables using science."
 [[lift.interpreters]]
 id = "cpython"
 provider = "PythonBuildStandalone"
-release = "20230507"
-version = "3.11.3"
+release = "20230116"
+version = "3.11.1"
 lazy = true
 
 [[lift.files]]
