@@ -155,7 +155,7 @@ def python_session(
     return wrapped
 
 
-PATHS_TO_CHECK = ["science", "tests", "noxfile.py"]
+PATHS_TO_CHECK = ["science", "tests", "test_support", "noxfile.py"]
 
 
 def run_black(session: Session, *args: str) -> None:
@@ -253,7 +253,7 @@ def create_zipapp(session: Session) -> Path:
 def test(session: Session) -> None:
     science_pyz = create_zipapp(session)
     test_env = {"BUILD_ROOT": str(BUILD_ROOT), "SCIENCE_TEST_PYZ_PATH": str(science_pyz)}
-    session.run("pytest", *session.posargs, env=test_env)
+    session.run("pytest", *(session.posargs or ["-v"]), env=test_env)
 
 
 @python_session()

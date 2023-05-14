@@ -20,6 +20,9 @@ science = "science.exe:main"
 version = {attr = "science.__version__"}
 dependencies = {file = "requirements.txt"}
 
+[tool.setuptools]
+packages = ["science"]
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]

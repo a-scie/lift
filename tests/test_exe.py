@@ -14,6 +14,7 @@ from shutil import which
 import pytest
 import toml
 from _pytest.tmpdir import TempPathFactory
+from testing import issue
 
 from science.config import parse_config_file
 from science.platform import Platform
@@ -147,7 +148,10 @@ def test_dogfood(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
     )
 
 
-def test_issue_2(tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path) -> None:
+@issue(2, ignore=True)
+def test_nested_filenames(
+    _, tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path
+) -> None:
     dist_dir = tmp_path / "dist"
     dist_dir.mkdir()
 
