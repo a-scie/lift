@@ -118,9 +118,13 @@ def _export(
             if file.source is None:
                 path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
                 if not path.exists():
-                    raise ValueError(f"The file for {file.id} is not mapped or cannot be found.")
+                    raise ValueError(
+                        f"The file for {file.id} is not mapped or cannot be found at "
+                        f"{path.relative_to(Path.cwd())} relative to the cwd of {Path.cwd()}."
+                    )
                 file.maybe_check_digest(path)
                 target = chroot / file.name
+                target.parent.mkdir(parents=True, exist_ok=True)
                 if not target.exists():
                     target.symlink_to(path)
 
