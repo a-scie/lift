@@ -1,4 +1,5 @@
 mypy
 nox
 types-appdirs
+types-toml
 types-tqdm

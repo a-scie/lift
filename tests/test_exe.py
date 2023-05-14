@@ -5,14 +5,17 @@ import filecmp
 import hashlib
 import io
 import itertools
+import os
 import subprocess
 import sys
 from pathlib import Path
 from shutil import which
 
 import pytest
+import toml
 from _pytest.tmpdir import TempPathFactory
 
+from science.config import parse_config_file
 from science.platform import Platform
 
 
@@ -140,5 +143,56 @@ def test_dogfood(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
     assert science_exe != dogfood_science_exe
     assert filecmp.cmp(science_exe, dogfood_science_exe, shallow=False), (
         "Expected the bootstrap science executable to be able to build itself and produce a "
+        "byte-wise identical science executable."
+    )
+
+
+def test_issue_2(tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path) -> None:
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+
+    dest = dist_dir / science_pyz.name
+    os.link(science_pyz, dest)
+
+    with config.open(mode="r") as fp:
+        config_data = toml.load(fp)
+        science_pyz_file = config_data["science"]["files"][0]
+        science_pyz_file["key"] = science_pyz_file["name"]
+        science_pyz_file["name"] = str(dest.relative_to(tmp_path))
+    test_config = tmp_path / "science.toml"
+    with test_config.open("w") as fp:
+        toml.dump(config_data, fp)
+
+    application = parse_config_file(test_config)
+    parsed_science_pyz_file = next(iter(application.files))
+    assert science_pyz.name == parsed_science_pyz_file.key
+    assert str(Path("dist") / science_pyz.name) == parsed_science_pyz_file.name
+
+    dest1 = tmp_path / "dest1"
+    subprocess.run(
+        args=[str(science_exe), "build", "--dest-dir", str(dest1), test_config],
+        check=True,
+        cwd=tmp_path,
+    )
+    science_exe1 = dest1 / science_exe.name
+    assert science_exe1.is_file()
+    assert science_exe != science_exe1
+    assert not filecmp.cmp(science_exe, science_exe1, shallow=False), (
+        "Expected the bootstrap science executable to have different contents from the new "
+        "science executable since its manifest changed and the resulting json lift manifest "
+        "embedded in the built scie also changed."
+    )
+
+    dest2 = tmp_path / "dest2"
+    subprocess.run(
+        args=[str(science_exe1), "build", "--dest-dir", str(dest2), test_config],
+        check=True,
+        cwd=tmp_path,
+    )
+    science_exe2 = dest2 / science_exe.name
+    assert science_exe2.is_file()
+    assert science_exe1 != science_exe2
+    assert filecmp.cmp(science_exe1, science_exe2, shallow=False), (
+        "Expected the new science executable to be able to build itself and produce a "
         "byte-wise identical science executable."
     )
