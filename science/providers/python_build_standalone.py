@@ -12,13 +12,13 @@ from packaging.version import Version
 
 from science.fetcher import fetch_and_verify, fetch_json, fetch_text
 from science.frozendict import FrozenDict
+from science.hashing import Fingerprint
 from science.model import (
     Digest,
     Distribution,
     DistributionSource,
     File,
     FileType,
-    Fingerprint,
     Identifier,
     Provider,
     Url,

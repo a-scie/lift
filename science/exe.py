@@ -91,7 +91,6 @@ def _export(
         fetch = any("fetch" == file.source for file in application.files)
         fetch |= any(interpreter.lazy for interpreter in application.interpreters)
         if fetch:
-            # TODO(John Sirois): Check digest if provided.
             ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
             file_paths_by_id[ptex.id] = chroot / ptex.name
             files.append(ptex)
@@ -120,6 +119,7 @@ def _export(
                 path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
                 if not path.exists():
                     raise ValueError(f"The file for {file.id} is not mapped or cannot be found.")
+                file.maybe_check_digest(path)
                 target = chroot / file.name
                 if not target.exists():
                     target.symlink_to(path)
@@ -260,7 +260,7 @@ def build(
             jump_path = (
                 a_scie.custom_jump(repo_path=use_jump)
                 if use_jump
-                else a_scie.jump(version=scie_jump_version, platform=platform)
+                else a_scie.jump(specification=application.scie_jump, platform=platform)
             )
             platform_export_dir = lift_manifest.parent
             subprocess.run(

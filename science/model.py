@@ -16,11 +16,8 @@ from typing import Iterable, Literal, Match, Protocol, TypeAlias, runtime_checka
 from packaging.version import Version
 
 from science.frozendict import FrozenDict
+from science.hashing import ExpectedDigest, Fingerprint
 from science.platform import Platform
-
-
-class Fingerprint(str):
-    pass
 
 
 @dataclass(frozen=True)
@@ -73,6 +70,12 @@ class File:
     @property
     def placeholder(self) -> str:
         return f"{{{self.id}}}"
+
+    def maybe_check_digest(self, path: Path):
+        if self.digest and not self.source:
+            ExpectedDigest(fingerprint=self.digest.fingerprint, size=self.digest.size).check_path(
+                path
+            )
 
 
 @dataclass(frozen=True)

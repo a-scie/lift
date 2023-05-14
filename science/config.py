@@ -16,6 +16,7 @@ from packaging import version
 from packaging.version import Version
 
 from science.frozendict import FrozenDict
+from science.hashing import Fingerprint
 from science.model import (
     Application,
     Binding,
@@ -25,7 +26,6 @@ from science.model import (
     File,
     FileSource,
     FileType,
-    Fingerprint,
     Identifier,
     Interpreter,
     InterpreterGroup,

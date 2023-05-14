@@ -12,7 +12,8 @@ from pathlib import Path
 from packaging.version import Version
 
 from science.fetcher import fetch_and_verify
-from science.model import File, Ptex, Url
+from science.hashing import Fingerprint
+from science.model import Digest, File, Ptex, ScieJump, Url
 from science.platform import Platform
 
 
@@ -26,6 +27,7 @@ def _load_project_release(
     project_name: str,
     binary_name: str,
     version: Version | None = None,
+    fingerprint: Digest | Fingerprint | None = None,
     platform: Platform = Platform.current(),
 ) -> _LoadResult:
     qualified_binary_name = platform.qualified_binary_name(binary_name)
@@ -37,14 +39,23 @@ def _load_project_release(
         version_path = "latest/download"
         ttl = timedelta(days=5)
     path = fetch_and_verify(
-        url=Url(f"{base_url}/{version_path}/{qualified_binary_name}"), executable=True, ttl=ttl
+        url=Url(f"{base_url}/{version_path}/{qualified_binary_name}"),
+        fingerprint=fingerprint,
+        executable=True,
+        ttl=ttl,
     )
     return _LoadResult(path=path, binary_name=qualified_binary_name)
 
 
-def jump(version: Version | None = None, platform: Platform = Platform.current()) -> Path:
+def jump(specification: ScieJump | None = None, platform: Platform = Platform.current()) -> Path:
+    version = specification.version if specification else None
+    fingerprint = specification.digest if specification and specification.digest else None
     return _load_project_release(
-        project_name="jump", binary_name="scie-jump", version=version, platform=platform
+        project_name="jump",
+        binary_name="scie-jump",
+        version=version,
+        fingerprint=fingerprint,
+        platform=platform,
     ).path
 
 
@@ -60,9 +71,14 @@ def custom_jump(repo_path: Path) -> Path:
 def ptex(
     dest_dir: Path, specification: Ptex | None = None, platform: Platform = Platform.current()
 ) -> File:
-    ptex_version = specification.version if specification else None
+    version = specification.version if specification else None
+    fingerprint = specification.digest if specification and specification.digest else None
     result = _load_project_release(
-        project_name="ptex", binary_name="ptex", version=ptex_version, platform=platform
+        project_name="ptex",
+        fingerprint=fingerprint,
+        binary_name="ptex",
+        version=version,
+        platform=platform,
     )
     (dest_dir / result.binary_name).symlink_to(result.path)
     ptex_key = specification.id.value if specification and specification.id else "ptex"
