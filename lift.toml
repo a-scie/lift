@@ -1,18 +1,18 @@
-[science]
+[lift]
 name = "science"
 description = "Ship your interpreted executables using science."
 
-[[science.interpreters]]
+[[lift.interpreters]]
 id = "cpython"
 provider = "PythonBuildStandalone"
 release = "20230116"
 version = "3.11.1"
 lazy = true
 
-[[science.files]]
+[[lift.files]]
 name = "science.pyz"
 
-[[science.commands]]
+[[lift.commands]]
 exe = "#{cpython:python}"
 args = [
     "{science.pyz}",
@@ -21,5 +21,5 @@ env.remove_re = [
     "SHIV_.*",
 ]
 
-[science.commands.env.replace]
+[lift.commands.env.replace]
 SHIV_ROOT = "{scie.bindings}/shiv_root"
