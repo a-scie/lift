@@ -290,6 +290,26 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142",
+              "url": "https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "8f694f3ba9cc92cab508b152dcfe322153975c29bda272e2fd7f3f00f36e47c5",
+              "url": "https://files.pythonhosted.org/packages/7a/3c/b5ac9fc61e1e559ced3e40bf5b518a4142536b34eb274aa50dff29cb89f5/execnet-1.9.0.tar.gz"
+            }
+          ],
+          "project_name": "execnet",
+          "requires_dists": [
+            "pre-commit; extra == \"testing\""
+          ],
+          "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7",
+          "version": "1.9.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "ad98852315c2ab702aeb628412cbf7e95b7ce8c3bf9565670b4eaecf1db370a9",
               "url": "https://files.pythonhosted.org/packages/ad/73/b094a662ae05cdc4ec95bc54e434e307986a5de5960166b8161b7c1373ee/filelock-3.12.0-py3-none-any.whl"
             },
@@ -711,6 +731,30 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "76f7683d4f993eaff91c9cb0882de0465c4af9c6dd3debc903833484041edc1a",
+              "url": "https://files.pythonhosted.org/packages/13/df/b20ccb09c72acb6bb2bdaa2f4f15014f9b9ef6f3addd49d40fc840372d49/pytest_xdist-3.3.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "d42c9efb388da35480878ef4b2993704c6cea800c8bafbe85a8cdc461baf0748",
+              "url": "https://files.pythonhosted.org/packages/eb/27/91ef12c3b2e334ae8803dd461eacdb8258760f241fbbf3a4f053456fed3a/pytest-xdist-3.3.0.tar.gz"
+            }
+          ],
+          "project_name": "pytest-xdist",
+          "requires_dists": [
+            "execnet>=1.1",
+            "filelock; extra == \"testing\"",
+            "psutil>=3.0; extra == \"psutil\"",
+            "pytest>=6.2.0",
+            "setproctitle; extra == \"setproctitle\""
+          ],
+          "requires_python": ">=3.7",
+          "version": "3.3.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "23aaf86b85ca52ceb801d32703f12d77517b2556af839621c641fca11287952b",
               "url": "https://files.pythonhosted.org/packages/2f/8c/f336a966d4097c7cef6fc699b2ecb83b5fb63fd698198c1b5c7905a74f0f/setuptools-67.7.2-py3-none-any.whl"
             },
@@ -991,6 +1035,7 @@
     "nox",
     "packaging",
     "pytest",
+    "pytest-xdist",
     "shiv",
     "toml",
     "tqdm",
