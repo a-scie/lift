@@ -182,14 +182,14 @@ def parse_digest_field(data: Data) -> Digest | None:
 
 
 def parse_config_data(data: Data) -> Application:
-    science = data.get_data("science")
-    application_name = science.get_str("name")
-    description = science.get_str("description", default="")
-    load_dotenv = science.get_bool("load_dotenv", default=False)
+    lift = data.get_data("lift")
+    application_name = lift.get_str("name")
+    description = lift.get_str("description", default="")
+    load_dotenv = lift.get_bool("load_dotenv", default=False)
 
     platforms = frozenset(
         Platform.parse(platform)
-        for platform in science.get_list("platforms", expected_item_type=str, default=["current"])
+        for platform in lift.get_list("platforms", expected_item_type=str, default=["current"])
     )
     if not platforms:
         raise ValueError(
@@ -201,7 +201,7 @@ def parse_config_data(data: Data) -> Application:
         ScieJump(
             version=parse_version_field(scie_jump_table), digest=parse_digest_field(scie_jump_table)
         )
-        if (scie_jump_table := science.get_data("scie-jump", default={}))
+        if (scie_jump_table := lift.get_data("scie-jump", default={}))
         else ScieJump()
     )
 
@@ -212,12 +212,12 @@ def parse_config_data(data: Data) -> Application:
             version=parse_version_field(ptex_table),
             digest=parse_digest_field(ptex_table),
         )
-        if (ptex_table := science.get_data("ptex", {}))
+        if (ptex_table := lift.get_data("ptex", {}))
         else None
     )
 
     interpreters_by_id = OrderedDict[str, Interpreter]()
-    for interpreter in science.get_data_list("interpreters", default=[]):
+    for interpreter in lift.get_data_list("interpreters", default=[]):
         identifier = Identifier.parse(interpreter.get_str("id"))
         lazy = interpreter.get_bool("lazy", default=False)
         provider_name = interpreter.get_str("provider")
@@ -235,7 +235,7 @@ def parse_config_data(data: Data) -> Application:
         )
 
     interpreter_groups = []
-    for interpreter_group in science.get_data_list("interpreter_groups", default=[]):
+    for interpreter_group in lift.get_data_list("interpreter_groups", default=[]):
         identifier = Identifier.parse(interpreter_group.get_str("id"))
         selector = interpreter_group.get_str("selector")
         members = interpreter_group.get_list("members", expected_item_type=str)
@@ -261,7 +261,7 @@ def parse_config_data(data: Data) -> Application:
         )
 
     files = []
-    for file in science.get_data_list("files", default=[]):
+    for file in lift.get_data_list("files", default=[]):
         file_name = file.get_str("name")
         digest = parse_digest_field(file)
         file_type = (
@@ -290,11 +290,11 @@ def parse_config_data(data: Data) -> Application:
             )
         )
 
-    commands = [parse_command(command) for command in science.get_data_list("commands")]
+    commands = [parse_command(command) for command in lift.get_data_list("commands")]
     if not commands:
         raise ValueError("There must be at least one command defined in a science application.")
 
-    bindings = [parse_command(command) for command in science.get_data_list("bindings", default=[])]
+    bindings = [parse_command(command) for command in lift.get_data_list("bindings", default=[])]
 
     return Application(
         name=application_name,

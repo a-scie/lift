@@ -161,7 +161,7 @@ def _export(
 
 
 @_main.command()
-@click.argument("config", type=click.File("rb"))
+@click.argument("config", type=click.File("rb"), default="lift.toml")
 @click.option(
     "--file",
     "file_mappings",
@@ -189,7 +189,7 @@ def export(
 
 
 @_main.command()
-@click.argument("config", type=click.File("rb"))
+@click.argument("config", type=click.File("rb"), default="lift.toml")
 @click.option(
     "--file",
     "file_mappings",

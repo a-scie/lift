@@ -21,11 +21,11 @@ from science.platform import Platform
 
 @pytest.fixture(scope="module")
 def config(build_root: Path) -> Path:
-    return build_root / "science.toml"
+    return build_root / "lift.toml"
 
 
 @pytest.fixture(scope="module")
-def science_exe(tmp_path_factory: TempPathFactory, config: Path, science_pyz: Path) -> Path:
+def science_exe(tmp_path_factory: TempPathFactory, build_root: Path, science_pyz: Path) -> Path:
     dest = tmp_path_factory.mktemp("dest")
     subprocess.run(
         args=[
@@ -36,9 +36,9 @@ def science_exe(tmp_path_factory: TempPathFactory, config: Path, science_pyz: Pa
             f"science.pyz={science_pyz}",
             "--dest-dir",
             str(dest),
-            config,
         ],
         check=True,
+        cwd=build_root,
     )
     science_exe = dest / Platform.current().binary_name("science")
     assert science_exe.is_file()

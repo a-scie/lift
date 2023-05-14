@@ -1,25 +1,25 @@
-[science]
+[lift]
 name = "igs"
 description = "Test interpreter group selection."
 
-[science.scie-jump]
+[lift.scie-jump]
 version = "0.11.0"
 
-[[science.interpreters]]
+[[lift.interpreters]]
 id = "cpython310"
 provider = "PythonBuildStandalone"
 release = "20230116"
 version = "3.10"
 lazy = true
 
-[[science.interpreters]]
+[[lift.interpreters]]
 id = "cpython311"
 provider = "PythonBuildStandalone"
 release = "20230116"
 version = "3.11"
 lazy = true
 
-[[science.interpreter_groups]]
+[[lift.interpreter_groups]]
 id = "cpython"
 selector = "{scie.env.PYTHON}"
 members = [
@@ -27,7 +27,7 @@ members = [
     "cpython311",
 ]
 
-[[science.commands]]
+[[lift.commands]]
 exe = "#{cpython:python}"
 args = [
     "-c",
