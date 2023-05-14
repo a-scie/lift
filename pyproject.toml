@@ -20,8 +20,9 @@ science = "science.exe:main"
 version = {attr = "science.__version__"}
 dependencies = {file = "requirements.txt"}
 
-[tool.setuptools]
-packages = ["science"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["science*"]
 
 [tool.black]
 line-length = 100
