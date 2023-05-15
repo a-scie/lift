@@ -198,12 +198,11 @@ def ensure_unique_names(
     non_unique = {name: count for name, count in Counter(iter_command_names()).items() if count > 1}
     if non_unique:
         max_width = max(len(name) for name in non_unique)
-        repeats = [
+        repeats = "\n".join(
             f"{name.rjust(max_width)}: {count} instances" for name, count in non_unique.items()
-        ]
+        )
         raise ValueError(
-            f"{subject} must have unique names. Found the following repeats:\n"
-            f"{os.linesep.join(repeats)}"
+            f"{subject} must have unique names. Found the following repeats:\n{repeats}"
         )
     if reserved_conflicts:
         raise ValueError(

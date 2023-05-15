@@ -369,8 +369,8 @@ def test_url_source_lazy(tmp_path: Path, science_exe: Path) -> None:
     assert process.returncode != 0
     destination = scie_base / "Slartibartfast" / "LICENSE"
     assert re.search(
-        rf"The blob destination {destination} of size {EXPECTED_SIZE} had unexpected hash: "
-        rf"{EXPECTED_SHA256_FINGERPRINT}\n",
+        rf"The blob destination {re.escape(str(destination))} of size {EXPECTED_SIZE} had "
+        rf"unexpected hash: {EXPECTED_SHA256_FINGERPRINT}\n",
         process.stderr,
     ), process.stderr
 
