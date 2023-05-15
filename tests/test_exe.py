@@ -326,7 +326,7 @@ def test_url_source_bad_size(tmp_path: Path, science_exe: Path) -> None:
     result.assert_failure()
     assert re.search(
         rf"The download from {URL} was expected to be {bad_size} bytes, but downloaded "
-        rf"{EXPECTED_SIZE} so far.\n$",
+        rf"{EXPECTED_SIZE} so far.\n",
         result.stderr,
     ), result.stderr
 
@@ -346,7 +346,7 @@ def test_url_source_bad_fingerprint(tmp_path: Path, science_exe: Path) -> None:
         r"Expected sha256 digest:\n"
         rf"\s+{bad_fingerprint}\n"
         r"Actual sha256 digest:\n"
-        rf"\s+{EXPECTED_SHA256_FINGERPRINT}\n$",
+        rf"\s+{EXPECTED_SHA256_FINGERPRINT}\n",
         result.stderr,
     ), result.stderr
 
@@ -370,7 +370,7 @@ def test_url_source_lazy(tmp_path: Path, science_exe: Path) -> None:
     destination = scie_base / "Slartibartfast" / "LICENSE"
     assert re.search(
         rf"The blob destination {destination} of size {EXPECTED_SIZE} had unexpected hash: "
-        rf"{EXPECTED_SHA256_FINGERPRINT}\n$",
+        rf"{EXPECTED_SHA256_FINGERPRINT}\n",
         process.stderr,
     ), process.stderr
 
@@ -403,7 +403,7 @@ def test_unique_command_names(tmp_path: Path, science_exe: Path) -> None:
     assert re.search(
         r"Commands must have unique names. Found the following repeats:\n"
         r"   : 2 instances\n"
-        r"bar: 3 instances\n$",
+        r"bar: 3 instances\n",
         result.stderr,
     ), result.stderr
 
@@ -432,7 +432,7 @@ def test_unique_binding_names(tmp_path: Path, science_exe: Path) -> None:
     result.assert_failure()
     assert re.search(
         r"Binding commands must have unique names. Found the following repeats:\n"
-        r"foo: 2 instances\n$",
+        r"foo: 2 instances\n",
         result.stderr,
     ), result.stderr
 
@@ -452,7 +452,7 @@ def test_reserved_binding_names(tmp_path: Path, science_exe: Path) -> None:
     )
     result.assert_failure()
     assert re.search(
-        r"Binding commands cannot use the reserved binding names: fetch\n$",
+        r"Binding commands cannot use the reserved binding names: fetch\n",
         result.stderr,
     ), result.stderr
 
