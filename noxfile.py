@@ -253,7 +253,12 @@ def create_zipapp(session: Session) -> Path:
 def test(session: Session) -> None:
     science_pyz = create_zipapp(session)
     test_env = {"BUILD_ROOT": str(BUILD_ROOT), "SCIENCE_TEST_PYZ_PATH": str(science_pyz)}
-    session.run("pytest", *(session.posargs or ["-v"]), env=test_env)
+
+    # TODO(John Sirois): Figure out why this fails for GH Windows 2022 runners and re-enable for
+    #  Windows: https://github.com/a-scie/lift/issues/9
+    xdist_args = [] if IS_WINDOWS else ["-n" "auto"]
+
+    session.run("pytest", *xdist_args, *(session.posargs or ["-v"]), env=test_env)
 
 
 @python_session()
