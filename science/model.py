@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Literal, Match, Protocol, TypeAlias, runtime_checkable
+from typing import ClassVar, Iterable, Match, Protocol, TypeAlias, runtime_checkable
 
 from packaging.version import Version
 
@@ -49,8 +49,27 @@ class FileType(Enum):
 class Binding:
     name: str
 
+    @property
+    def lazy(self) -> bool:
+        return True
 
-FileSource: TypeAlias = Binding | Literal["fetch"] | None
+    source_type: ClassVar[str] = "binding"
+
+
+@dataclass(frozen=True)
+class Fetch:
+    url: Url
+    lazy: bool = True
+
+    source_type: ClassVar[str] = "url"
+    binding_name: ClassVar[str] = "fetch"
+
+    @classmethod
+    def create_binding(cls, fetch_exe: File, argv1: str) -> Command:
+        return Command(name=cls.binding_name, exe=fetch_exe.placeholder, args=tuple([argv1]))
+
+
+FileSource: TypeAlias = Binding | Fetch | None
 
 
 @dataclass(frozen=True)
@@ -63,6 +82,13 @@ class File:
     eager_extract: bool = False
     source: FileSource = None
 
+    def __post_init__(self) -> None:
+        if self.source and not self.digest:
+            raise ValueError(
+                f"Since {self} has a {self.source.source_type} source it must also specify `size` "
+                f"and `fingerprint`."
+            )
+
     @property
     def id(self) -> str:
         return self.key or self.name
@@ -72,10 +98,12 @@ class File:
         return f"{{{self.id}}}"
 
     def maybe_check_digest(self, path: Path):
-        if self.digest and not self.source:
-            ExpectedDigest(fingerprint=self.digest.fingerprint, size=self.digest.size).check_path(
-                path
-            )
+        if not self.digest:
+            return
+        if self.source and self.source.lazy:
+            return
+        expected_digest = ExpectedDigest(fingerprint=self.digest.fingerprint, size=self.digest.size)
+        return expected_digest.check_path(path)
 
 
 @dataclass(frozen=True)
@@ -132,14 +160,10 @@ class Url(str):
         return urllib.parse.urlparse(self)
 
 
-DistributionSource: TypeAlias = Url | Path
-
-
 @dataclass(frozen=True)
 class Distribution:
     id: Identifier
     file: File
-    source: DistributionSource
     placeholders: FrozenDict[Identifier, str]
 
     def _expand_placeholder(self, match: Match) -> str:
@@ -171,7 +195,6 @@ class Provider(Protocol):
 class Interpreter:
     id: Identifier
     provider: Provider
-    lazy: bool = False
 
 
 @dataclass(frozen=True)

@@ -10,13 +10,13 @@ from datetime import timedelta
 
 from packaging.version import Version
 
-from science.fetcher import fetch_and_verify, fetch_json, fetch_text
+from science.fetcher import fetch_json, fetch_text
 from science.frozendict import FrozenDict
 from science.hashing import Fingerprint
 from science.model import (
     Digest,
     Distribution,
-    DistributionSource,
+    Fetch,
     File,
     FileType,
     Identifier,
@@ -205,7 +205,7 @@ class PythonBuildStandalone(Provider):
             type=selected_asset.file_type,
             is_executable=False,
             eager_extract=False,
-            source="fetch" if self.lazy else None,
+            source=Fetch(url=Url(selected_asset.url), lazy=self.lazy),
         )
         placeholders = {}
         match self.flavor:
@@ -222,13 +222,4 @@ class PythonBuildStandalone(Provider):
                     "PythonBuildStandalone currently only understands the 'install_only' flavor of "
                     f"distribution, given: {flavor}"
                 )
-        source: DistributionSource = (
-            selected_asset.url
-            if self.lazy
-            else fetch_and_verify(
-                url=selected_asset.url, fingerprint=selected_asset.digest.fingerprint
-            )
-        )
-        return Distribution(
-            id=self.id, file=file, source=source, placeholders=FrozenDict(placeholders)
-        )
+        return Distribution(id=self.id, file=file, placeholders=FrozenDict(placeholders))

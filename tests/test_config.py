@@ -1,5 +1,6 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 import json
 import os.path
 import subprocess
@@ -18,12 +19,13 @@ def test_parse(build_root: Path) -> None:
     assert 1 == len(interpreters), "Expected science to ship on a single fixed interpreter."
 
     interpreter = interpreters[0]
-    assert interpreter.lazy, "Expected science to ship as a gouged-out binary."
-
     distribution = interpreter.provider.distribution(Platform.current())
     assert (
         distribution is not None
     ), "Expected a Python interpreter distribution to be available for each platform tests run on."
+    assert (
+        distribution.file.source and distribution.file.source.lazy
+    ), "Expected science to ship as a gouged-out binary."
     assert (
         Identifier.parse("python") in distribution.placeholders
     ), "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."

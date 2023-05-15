@@ -10,6 +10,7 @@ from science.model import (
     Binding,
     Command,
     Distribution,
+    Fetch,
     File,
     InterpreterGroup,
     ScieJump,
@@ -30,7 +31,9 @@ def _render_file(file: File) -> dict[str, Any]:
     if file.eager_extract:
         data["eager_extract"] = True
     match file.source:
-        case ("fetch" as name) | Binding(name):
+        case Fetch(lazy=True) as fetch:
+            data["source"] = fetch.binding_name
+        case Binding(name):
             data["source"] = name
     return data
 

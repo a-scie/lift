@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import os
 import tomllib
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from dataclasses import dataclass
 from enum import Enum, auto
 from io import BytesIO
 from pathlib import Path
-from typing import Any, BinaryIO, TypeVar
+from typing import Any, BinaryIO, Collection, Iterable, Iterator, TypeVar
 
 from packaging import version
 from packaging.version import Version
@@ -23,6 +23,7 @@ from science.model import (
     Command,
     Digest,
     Env,
+    Fetch,
     File,
     FileSource,
     FileType,
@@ -31,6 +32,7 @@ from science.model import (
     InterpreterGroup,
     Ptex,
     ScieJump,
+    Url,
 )
 from science.platform import Platform
 from science.providers import get_provider
@@ -181,6 +183,34 @@ def parse_digest_field(data: Data) -> Digest | None:
     )
 
 
+def ensure_unique_names(
+    subject: str, commands: Iterable[Command], reserved: Collection[str] = ()
+) -> frozenset[Command]:
+    reserved_conflicts = list[str]()
+
+    def iter_command_names() -> Iterator[str]:
+        for command in commands:
+            name = command.name or ""
+            if name in reserved:
+                reserved_conflicts.append(name)
+            yield name
+
+    non_unique = {name: count for name, count in Counter(iter_command_names()).items() if count > 1}
+    if non_unique:
+        max_width = max(len(name) for name in non_unique)
+        repeats = "\n".join(
+            f"{name.rjust(max_width)}: {count} instances" for name, count in non_unique.items()
+        )
+        raise ValueError(
+            f"{subject} must have unique names. Found the following repeats:\n{repeats}"
+        )
+    if reserved_conflicts:
+        raise ValueError(
+            f"{subject} cannot use the reserved binding names: {', '.join(reserved_conflicts)}"
+        )
+    return frozenset(commands)
+
+
 def parse_config_data(data: Data) -> Application:
     lift = data.get_data("lift")
     application_name = lift.get_str("name")
@@ -231,7 +261,6 @@ def parse_config_data(data: Data) -> Application:
         interpreters_by_id[identifier.value] = Interpreter(
             id=identifier,
             provider=provider.create(identifier=identifier, lazy=lazy, **provider_config),
-            lazy=lazy,
         )
 
     interpreter_groups = []
@@ -271,12 +300,19 @@ def parse_config_data(data: Data) -> Application:
         )
 
         source: FileSource = None
-        if source_name := file.get_str("source", default=""):
-            match source_name:
-                case "fetch":
-                    source = "fetch"
-                case file_name:
-                    source = Binding(file_name)
+        if isinstance(file.data.get("source", None), str) and (
+            binding_name := file.get_str("source", default="")
+        ):
+            source = Binding(binding_name)
+        elif url_source := file.get_data("source", {}):
+            source = Fetch(
+                url=Url(url_source.get_str("url")), lazy=url_source.get_bool("lazy", default=False)
+            )
+        if source and not digest:
+            raise ValueError(
+                f"The file at [{file.path}] with a {source.source_type} source must have `size` "
+                f"and `fingerprint` defined."
+            )
 
         files.append(
             File(
@@ -290,11 +326,23 @@ def parse_config_data(data: Data) -> Application:
             )
         )
 
-    commands = [parse_command(command) for command in lift.get_data_list("commands")]
+    commands = ensure_unique_names(
+        subject="Commands",
+        commands=[parse_command(command) for command in lift.get_data_list("commands")],
+    )
     if not commands:
         raise ValueError("There must be at least one command defined in a science application.")
 
-    bindings = [parse_command(command) for command in lift.get_data_list("bindings", default=[])]
+    internal_binding_names = frozenset(
+        file.source.binding_name
+        for file in files
+        if isinstance(file.source, Fetch) and file.source.lazy
+    )
+    bindings = ensure_unique_names(
+        subject="Binding commands",
+        commands=[parse_command(command) for command in lift.get_data_list("bindings", default=[])],
+        reserved=internal_binding_names,
+    )
 
     return Application(
         name=application_name,
@@ -306,6 +354,6 @@ def parse_config_data(data: Data) -> Application:
         interpreters=tuple(interpreters_by_id.values()),
         interpreter_groups=tuple(interpreter_groups),
         files=tuple(files),
-        commands=frozenset(commands),
-        bindings=frozenset(bindings),
+        commands=commands,
+        bindings=bindings,
     )

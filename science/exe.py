@@ -21,7 +21,8 @@ from packaging import version
 
 from science import __version__, a_scie, lift
 from science.config import parse_config
-from science.model import Application, Command, Distribution, File, Url
+from science.fetcher import fetch_and_verify
+from science.model import Application, Command, Distribution, Fetch, File
 from science.platform import Platform
 
 
@@ -88,9 +89,15 @@ def _export(
             file_mapping.id: file_mapping.path.resolve() for file_mapping in file_mappings
         }
         fetch_urls: dict[str, str] = {}
-        fetch = any("fetch" == file.source for file in application.files)
-        fetch |= any(interpreter.lazy for interpreter in application.interpreters)
-        if fetch:
+
+        for interpreter in application.interpreters:
+            distribution = interpreter.provider.distribution(platform)
+            if distribution:
+                distributions.append(distribution)
+                files.append(distribution.file)
+        files.extend(application.files)
+
+        if any(isinstance(file.source, Fetch) and file.source.lazy for file in files):
             ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
             file_paths_by_id[ptex.id] = chroot / ptex.name
             files.append(ptex)
@@ -99,34 +106,32 @@ def _export(
                 if application.ptex and application.ptex.argv1
                 else "{scie.lift}"
             )
-            bindings.append(Command(name="fetch", exe=ptex.placeholder, args=tuple([argv1])))
+            bindings.append(Fetch.create_binding(fetch_exe=ptex, argv1=argv1))
         bindings.extend(application.bindings)
 
-        for interpreter in application.interpreters:
-            distribution = interpreter.provider.distribution(platform)
-            if distribution:
-                distributions.append(distribution)
-                files.append(distribution.file)
-                match distribution.source:
-                    case Url(url):
-                        fetch_urls[distribution.file.name] = url
-                    case path:
-                        file_paths_by_id[distribution.file.id] = path
-        files.extend(application.files)
-
         for file in files:
-            if file.source is None:
-                path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
-                if not path.exists():
-                    raise ValueError(
-                        f"The file for {file.id} is not mapped or cannot be found at "
-                        f"{path.relative_to(Path.cwd())} relative to the cwd of {Path.cwd()}."
+            file_path: Path | None = None
+            match file.source:
+                case Fetch(url=url, lazy=True):
+                    fetch_urls[file.name] = url
+                case Fetch(url=url, lazy=False):
+                    file_path = fetch_and_verify(
+                        url, fingerprint=file.digest, executable=file.is_executable
                     )
-                file.maybe_check_digest(path)
+                case None:
+                    file_path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
+                    if not file_path.exists():
+                        raise ValueError(
+                            f"The file for {file.id} is not mapped or cannot be found at "
+                            f"{file_path.relative_to(Path.cwd())} relative to the cwd of "
+                            f"{Path.cwd()}."
+                        )
+            if file_path:
+                file.maybe_check_digest(file_path)
                 target = chroot / file.name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 if not target.exists():
-                    target.symlink_to(path)
+                    target.symlink_to(file_path)
 
         lift_manifest = chroot / "lift.json"
 
