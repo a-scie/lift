@@ -9,7 +9,7 @@ import pytest
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    sys.path.append(os.path.join(session.config.rootpath, "test_support"))
+    sys.path.append(os.path.join(session.config.rootpath, "test-support"))
 
 
 @pytest.fixture(scope="session")

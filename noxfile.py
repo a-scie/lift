@@ -155,7 +155,7 @@ def python_session(
     return wrapped
 
 
-PATHS_TO_CHECK = ["science", "tests", "test_support", "noxfile.py"]
+PATHS_TO_CHECK = ["science", "tests", "test-support", "noxfile.py"]
 
 
 def run_black(session: Session, *args: str) -> None:
