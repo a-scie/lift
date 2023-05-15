@@ -4,19 +4,29 @@
 import os.path
 
 from science.frozendict import FrozenDict
-from science.model import Distribution, File, Identifier, Url
+from science.hashing import Fingerprint
+from science.model import Digest, Distribution, Fetch, File, Identifier, Url
 
 
 def test_distribution() -> None:
     distribution = Distribution(
         id=Identifier.parse("cpython"),
         file=File(
-            name="cpython-3.10.9+20221220-x86_64_v4-unknown-linux-gnu-install_only.tar.gz",
+            name="cpython-3.10.9+20221220-x86_64-unknown-linux-gnu-install_only.tar.gz",
             key="cpython310",
-        ),
-        source=Url(
-            "https://github.com/indygreg/python-build-standalone/releases/download/20221220/"
-            "cpython-3.10.9%2B20221220-x86_64_v4-unknown-linux-gnu-install_only.tar.gz"
+            digest=Digest(
+                size=27579433,
+                fingerprint=Fingerprint(
+                    "5eabd117850cf92280569db874f3548d90048abc8ce55c315aeefd69d2ad6e44"
+                ),
+            ),
+            source=Fetch(
+                url=Url(
+                    "https://github.com/indygreg/python-build-standalone/releases/download/"
+                    "20221220/"
+                    "cpython-3.10.9%2B20221220-x86_64-unknown-linux-gnu-install_only.tar.gz"
+                )
+            ),
         ),
         placeholders=FrozenDict(
             {

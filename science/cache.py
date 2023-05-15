@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import atexit
 import hashlib
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -79,7 +80,7 @@ class DownloadCache:
 
 
 def science_cache() -> Path:
-    return Path(user_cache_dir("science"))
+    return Path(os.environ.get("SCIENCE_CACHE", user_cache_dir("science")))
 
 
 def download_cache() -> DownloadCache:

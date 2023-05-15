@@ -33,7 +33,7 @@ class ExpectedDigest:
     def check_fingerprint(self, subject: str, actual_fingerprint: Fingerprint) -> None:
         if self.fingerprint != actual_fingerprint:
             raise ValueError(
-                f"The {subject} had unexpected contents.\n"
+                f"The {subject} has unexpected contents.\n"
                 f"Expected {self.algorithm} digest:\n"
                 f"  {self.fingerprint}\n"
                 f"Actual {self.algorithm} digest:\n"

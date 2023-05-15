@@ -201,7 +201,7 @@ def fetch_and_verify(
                                 )
                                 num_bytes_downloaded = response.num_bytes_downloaded
                     expected_digest.check(
-                        subject="download from {url}",
+                        subject=f"download from {url}",
                         actual_fingerprint=Fingerprint(digest.hexdigest()),
                         actual_size=total_bytes,
                     )
