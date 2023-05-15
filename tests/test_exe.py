@@ -17,7 +17,7 @@ from textwrap import dedent
 import pytest
 import toml
 from _pytest.tmpdir import TempPathFactory
-from testing import issue
+from testing import IS_WINDOWS, issue
 
 from science.config import parse_config_file
 from science.platform import Platform
@@ -470,7 +470,7 @@ def test_reserved_binding_names(tmp_path: Path, science_exe: Path) -> None:
 
 
 def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
-    def expect_error(*, verbose: bool) -> str:
+    def expect_error(*, verbose: bool) -> list[str]:
         (tmp_path / "lift.toml").touch()
         args = [str(science_exe)]
         if verbose:
@@ -480,17 +480,30 @@ def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
             args=args, cwd=tmp_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
         assert result.returncode != 0, result.stdout
-        return result.stderr.strip()
+        return result.stderr.strip().splitlines(keepends=False)
 
     expected_error_message = "Expected `[lift]` of type toml table to be defined in lift.toml."
 
-    stderr = expect_error(verbose=False)
-    assert expected_error_message == stderr, stderr
+    error_lines = expect_error(verbose=False)
+    assert expected_error_message == error_lines[0], os.linesep.join(error_lines)
+    if not IS_WINDOWS:
+        assert len(error_lines) == 1, (
+            "Non-verbose mode should emit just 1 error line, except on Windows where there is a "
+            "trailing `Error:...`."
+        )
 
-    stderr = expect_error(verbose=True)
-    error_lines = stderr.splitlines()
-    assert len(error_lines) > 1, "Expected a backtrace in addition to an error message."
+    # N.B.: The complicated scan down for the expected error message line is forced by Windows,
+    # which emits an extra `Error:...` as explained above.
+    error_lines = expect_error(verbose=True)
+    index = -1
+    for i, line in enumerate(error_lines):
+        if line.endswith(expected_error_message):
+            index = i
+            break
+    assert index > 0, "Expected a backtrace in addition to an error message in verbose mode."
 
-    last_line = error_lines[-1]
-    assert last_line != expected_error_message, "Expected an exception type prefix in verbose mode."
-    assert last_line.endswith(f": {expected_error_message}")
+    error_message_line = error_lines[index]
+    assert (
+        error_message_line != expected_error_message
+    ), "Expected an exception type prefix in verbose mode."
+    assert error_message_line.endswith(f": {expected_error_message}"), os.linesep.join(error_lines)

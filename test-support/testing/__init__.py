@@ -1,7 +1,11 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import os
+
 import pytest
+
+IS_WINDOWS = os.name == "nt"
 
 
 def issue(issue_id: int, ignore: bool = False):
