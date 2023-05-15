@@ -16,17 +16,18 @@ from tqdm import tqdm
 
 from science import hashing
 from science.cache import Missing, download_cache
+from science.errors import InputError
 from science.hashing import ExpectedDigest, Fingerprint
 from science.model import Digest, Url
 
 logger = logging.getLogger(__name__)
 
 
-class AmbiguousAuthError(Exception):
+class AmbiguousAuthError(InputError):
     """Indicates more than one form of authentication was configured for a given URL."""
 
 
-class InvalidAuthError(Exception):
+class InvalidAuthError(InputError):
     """Indicates the configured authentication for a given URL is invalid."""
 
 
@@ -178,7 +179,7 @@ def fetch_and_verify(
                             else None
                         )
                         if expected_digest.is_too_big(total):
-                            raise ValueError(
+                            raise InputError(
                                 f"The content at {url} is expected to be {expected_digest.size} "
                                 f"bytes, but advertises a Content-Length of {total} bytes."
                             )
@@ -189,7 +190,7 @@ def fetch_and_verify(
                             for data in response.iter_bytes():
                                 total_bytes += len(data)
                                 if expected_digest.is_too_big(total_bytes):
-                                    raise ValueError(
+                                    raise InputError(
                                         f"The download from {url} was expected to be "
                                         f"{expected_digest.size} bytes, but downloaded "
                                         f"{total_bytes} so far."

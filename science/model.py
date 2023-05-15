@@ -15,6 +15,7 @@ from typing import ClassVar, Iterable, Match, Protocol, TypeAlias, runtime_check
 
 from packaging.version import Version
 
+from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import ExpectedDigest, Fingerprint
 from science.platform import Platform
@@ -32,7 +33,7 @@ class FileType(Enum):
         for member in cls:
             if extension == member.value:
                 return member
-        raise ValueError(f"No file type matches extension {extension}")
+        raise InputError(f"No file type matches extension {extension}")
 
     Blob = "blob"
     Directory = "directory"
@@ -84,7 +85,7 @@ class File:
 
     def __post_init__(self) -> None:
         if self.source and not self.digest:
-            raise ValueError(
+            raise InputError(
                 f"Since {self} has a {self.source.source_type} source it must also specify `size` "
                 f"and `fingerprint`."
             )
@@ -117,7 +118,7 @@ class Identifier:
     @classmethod
     def parse(cls, value) -> Identifier:
         if any(char in value for char in ("{", "}", ":")):
-            raise ValueError(
+            raise InputError(
                 f"An identifier can not contain any of '{', '}' or ':', given: {value}"
             )
         return cls(value)
@@ -205,18 +206,18 @@ class InterpreterGroup:
         for interpreter in interpreters:
             interpreters_by_provider[type(interpreter.provider)].append(interpreter)
         if not interpreters_by_provider:
-            raise ValueError(
+            raise InputError(
                 "At least two interpreters must be specified to form a group and none were."
             )
         if len(interpreters_by_provider) > 1:
             given = [f"{provider}" for provider, member in interpreters_by_provider.items()]
-            raise ValueError(
+            raise InputError(
                 f"All specified interpreters must have the same provider. Given:\n{given}"
             )
         members = frozenset(interpreters)
         if len(members) < 2:
             member = next(iter(members))
-            raise ValueError(
+            raise InputError(
                 f"At least two interpreters must be specified to form a group but only given "
                 f"{member.id!r}."
             )

@@ -10,6 +10,7 @@ from datetime import timedelta
 
 from packaging.version import Version
 
+from science.errors import InputError
 from science.fetcher import fetch_json, fetch_text
 from science.frozendict import FrozenDict
 from science.hashing import Fingerprint
@@ -143,14 +144,14 @@ class PythonBuildStandalone(Provider):
                 )
 
         if not sha256sums_url:
-            raise ValueError(f"Did not find expected SHA256SUMS asset for release {release}.")
+            raise InputError(f"Did not find expected SHA256SUMS asset for release {release}.")
 
         sha256sums = {}
         for line_no, line in enumerate(fetch_text(sha256sums_url).splitlines(), start=1):
             if line := line.strip():
                 parts = re.split(r"\s+", line)
                 if len(parts) != 2:
-                    raise ValueError(
+                    raise InputError(
                         f"Line {line_no} from {sha256sums_url} has unexpected content:\n{line}"
                     )
                 fingerprint, name = parts
@@ -162,7 +163,7 @@ class PythonBuildStandalone(Provider):
             fingerprinted_assets.append(asset.with_fingerprint(fingerprint))
 
         if not fingerprinted_assets:
-            raise ValueError(
+            raise InputError(
                 f"No released assets found for release {release} Python {version} of flavor "
                 f"{flavor}."
             )
@@ -193,7 +194,7 @@ class PythonBuildStandalone(Provider):
                 asset_rank = rank
                 selected_asset = asset
         if selected_asset is None:
-            raise ValueError(
+            raise InputError(
                 f"No compatible distribution was found for {platform} from amongst:\n"
                 f"{os.linesep.join(asset.name for asset in self.assets)}"
             )
@@ -218,7 +219,7 @@ class PythonBuildStandalone(Provider):
                         placeholders[Identifier.parse("python")] = f"python/bin/python{version}"
                         placeholders[Identifier.parse("pip")] = f"python/bin/pip{version}"
             case flavor:
-                raise ValueError(
+                raise InputError(
                     "PythonBuildStandalone currently only understands the 'install_only' flavor of "
                     f"distribution, given: {flavor}"
                 )

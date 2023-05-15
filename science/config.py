@@ -15,6 +15,7 @@ from typing import Any, BinaryIO, Collection, Iterable, Iterator, TypeVar
 from packaging import version
 from packaging.version import Version
 
+from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Fingerprint
 from science.model import (
@@ -47,7 +48,7 @@ class Data:
     path: str = ""
 
     def config(self, key: str) -> str:
-        return f"`[{self.path}] {key}`"
+        return f"`[{self.path}] {key}`" if self.path else f"`[{key}]`"
 
     class __Required(Enum):
         VALUE = auto()
@@ -83,12 +84,12 @@ class Data:
         )
         if invalid_entries:
             invalid_items = [
-                f"item {index}: {item} of type {type(item).__qualname__}"
+                f"item {index}: {item} of type {self._typename(type(item))}"
                 for index, item in invalid_entries.items()
             ]
-            raise ValueError(
+            raise InputError(
                 f"Expected {self.config(key)} defined in {self.source} to be a list with items of "
-                f"type {expected_item_type.__qualname__} but got {len(invalid_entries)} out of "
+                f"type {self._typename(expected_item_type)} but got {len(invalid_entries)} out of "
                 f"{len(value)} entries of the wrong type:{os.linesep}"
                 f"{os.linesep.join(invalid_items)}"
             )
@@ -110,22 +111,26 @@ class Data:
             )
         ]
 
+    @staticmethod
+    def _typename(type_: type) -> str:
+        return "toml table" if issubclass(type_, dict) else type_.__name__
+
     def get_value(
         self, key: str, expected_type: type[_T], default: _T | __Required = __Required.VALUE
     ) -> _T:
         if key not in self.data:
             if default is self.__Required.VALUE:
-                raise ValueError(
-                    f"Expected {self.config(key)} of type {expected_type.__qualname__} to be "
+                raise InputError(
+                    f"Expected {self.config(key)} of type {self._typename(expected_type)} to be "
                     f"defined in {self.source}."
                 )
             return default
 
         value = self.data[key]
         if not isinstance(value, expected_type):
-            raise ValueError(
-                f"Expected a {expected_type.__qualname__} for {self.config(key)} but found {value} "
-                f"of type {type(value).__qualname__} in {self.source}."
+            raise InputError(
+                f"Expected a {self._typename(expected_type)} for {self.config(key)} but found "
+                f"{value} of type {self._typename(type(value))} in {self.source}."
             )
         return value
 
@@ -201,11 +206,11 @@ def ensure_unique_names(
         repeats = "\n".join(
             f"{name.rjust(max_width)}: {count} instances" for name, count in non_unique.items()
         )
-        raise ValueError(
+        raise InputError(
             f"{subject} must have unique names. Found the following repeats:\n{repeats}"
         )
     if reserved_conflicts:
-        raise ValueError(
+        raise InputError(
             f"{subject} cannot use the reserved binding names: {', '.join(reserved_conflicts)}"
         )
     return frozenset(commands)
@@ -222,7 +227,7 @@ def parse_config_data(data: Data) -> Application:
         for platform in lift.get_list("platforms", expected_item_type=str, default=["current"])
     )
     if not platforms:
-        raise ValueError(
+        raise InputError(
             "There must be at least one platform defined for a science application. Leave "
             "un-configured to request just the current platform."
         )
@@ -252,7 +257,7 @@ def parse_config_data(data: Data) -> Application:
         lazy = interpreter.get_bool("lazy", default=False)
         provider_name = interpreter.get_str("provider")
         if not (provider := get_provider(provider_name)):
-            raise ValueError(f"The provider '{provider_name}' is not registered.")
+            raise InputError(f"The provider '{provider_name}' is not registered.")
         provider_config = {
             key: value
             for key, value in interpreter.data.items()
@@ -269,7 +274,7 @@ def parse_config_data(data: Data) -> Application:
         selector = interpreter_group.get_str("selector")
         members = interpreter_group.get_list("members", expected_item_type=str)
         if len(members) < 2:
-            raise ValueError(
+            raise InputError(
                 f"At least two interpreter group members are needed to form an interpreter group. "
                 f"Given {f'just {next(iter(members))!r}' if members else 'none'} for interpreter "
                 f"group {identifier}."
@@ -283,7 +288,7 @@ def parse_config_data(data: Data) -> Application:
         )
 
     if interpreter_groups and scie_jump.version and scie_jump.version < Version("0.11.0"):
-        raise ValueError(
+        raise InputError(
             f"Cannot use scie-jump {scie_jump.version}.{os.linesep}"
             f"This configuration uses interpreter groups and these require scie-jump v0.11.0 or "
             f"greater."
@@ -309,7 +314,7 @@ def parse_config_data(data: Data) -> Application:
                 url=Url(url_source.get_str("url")), lazy=url_source.get_bool("lazy", default=False)
             )
         if source and not digest:
-            raise ValueError(
+            raise InputError(
                 f"The file at [{file.path}] with a {source.source_type} source must have `size` "
                 f"and `fingerprint` defined."
             )
@@ -331,7 +336,7 @@ def parse_config_data(data: Data) -> Application:
         commands=[parse_command(command) for command in lift.get_data_list("commands")],
     )
     if not commands:
-        raise ValueError("There must be at least one command defined in a science application.")
+        raise InputError("There must be at least one command defined in a science application.")
 
     internal_binding_names = frozenset(
         file.source.binding_name

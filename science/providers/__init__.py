@@ -8,6 +8,7 @@ from typing import Iterator, Mapping
 from science.frozendict import FrozenDict
 from science.model import Provider
 
+from ..errors import InputError
 from .python_build_standalone import PythonBuildStandalone
 
 _BUILTIN_PROVIDER_TYPES = (PythonBuildStandalone,)
@@ -38,7 +39,7 @@ def _plugins() -> Mapping[str, tuple[str, type[Provider]]]:
             else "unknown plugin"
         )
         if not issubclass(provider_type, Provider):
-            raise ValueError(
+            raise InputError(
                 f"All science.providers entrypoints must conform to the {Provider.__qualname__} "
                 f"protocol. Found `{entry_point.name!r} = {provider_type.__qualname__!r}` in "
                 f"{source} which does not."

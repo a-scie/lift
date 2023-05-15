@@ -3,16 +3,20 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import io
+import logging
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from types import TracebackType
 from typing import Any, BinaryIO, Iterable, Iterator
 
 import click
@@ -21,16 +25,33 @@ from packaging import version
 
 from science import __version__, a_scie, lift
 from science.config import parse_config
+from science.errors import InputError
 from science.fetcher import fetch_and_verify
 from science.model import Application, Command, Distribution, Fetch, File
 from science.platform import Platform
+
+
+def _log_fatal(
+    type_: type[BaseException],
+    value: BaseException,
+    tb: TracebackType,
+    *,
+    always_include_backtrace: bool,
+) -> None:
+    if always_include_backtrace or not isinstance(value, InputError):
+        click.secho("".join(traceback.format_tb(tb)), fg="yellow", file=sys.stderr, nl=False)
+        click.secho(
+            f"{type_.__module__}.{type_.__qualname__}: ", fg="yellow", file=sys.stderr, nl=False
+        )
+    click.secho(value, fg="red", file=sys.stderr)
 
 
 @click.group(
     context_settings=dict(auto_envvar_prefix="SCIENCE", help_option_names=["-h", "--help"])
 )
 @click.version_option(__version__, "-V", "--version", message="%(version)s")
-def _main() -> None:
+@click.option("-v", "--verbose", count=True)
+def _main(verbose: int) -> None:
     """Science helps you prepare scies for your application.
 
     Science provides a high-level configuration file format for a scie application and can build
@@ -39,7 +60,10 @@ def _main() -> None:
     For more information on the configuration file format, see:
     https://github.com/a-scie/lift/blob/main/docs/manifest.md
     """
-    click_log.basic_config()
+    sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=verbose > 0)
+    logger = click_log.basic_config()
+    if verbose:
+        logger.setLevel(level=logging.INFO if verbose == 1 else logging.DEBUG)
 
 
 @dataclass(frozen=True)
@@ -48,7 +72,7 @@ class FileMapping:
     def parse(cls, value: str) -> FileMapping:
         components = value.split("=", 1)
         if len(components) != 2:
-            raise ValueError(
+            raise InputError(
                 "Invalid file mapping. A file mapping must be of the form "
                 f"`(<name>|<key>)=<path>`: {value}"
             )
@@ -121,7 +145,7 @@ def _export(
                 case None:
                     file_path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
                     if not file_path.exists():
-                        raise ValueError(
+                        raise InputError(
                             f"The file for {file.id} is not mapped or cannot be found at "
                             f"{file_path.relative_to(Path.cwd())} relative to the cwd of "
                             f"{Path.cwd()}."

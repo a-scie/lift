@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from science.errors import InputError
+
 DEFAULT_ALGORITHM = "sha256"
 
 
@@ -25,14 +27,14 @@ class ExpectedDigest:
 
     def maybe_check_size(self, subject: str, actual_size: Callable[[], int]) -> None:
         if self.size is not None and (actual_bytes := actual_size()) != self.size:
-            raise ValueError(
+            raise InputError(
                 f"The {subject} has unexpected size.\n"
                 f"Expected {self.size} bytes but found {actual_bytes} bytes."
             )
 
     def check_fingerprint(self, subject: str, actual_fingerprint: Fingerprint) -> None:
         if self.fingerprint != actual_fingerprint:
-            raise ValueError(
+            raise InputError(
                 f"The {subject} has unexpected contents.\n"
                 f"Expected {self.algorithm} digest:\n"
                 f"  {self.fingerprint}\n"

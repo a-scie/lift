@@ -294,7 +294,6 @@ def create_url_source_scie(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        check=False,
         cwd=chroot,
         env={**os.environ, **env},
     )
@@ -364,7 +363,6 @@ def test_url_source_lazy(tmp_path: Path, science_exe: Path) -> None:
         env={**os.environ, "SCIE_BASE": str(scie_base)},
         stderr=subprocess.PIPE,
         text=True,
-        check=False,
     )
     assert process.returncode != 0
     destination = scie_base / "Slartibartfast" / "LICENSE"
@@ -469,3 +467,30 @@ def test_reserved_binding_names(tmp_path: Path, science_exe: Path) -> None:
             """
         ),
     ).assert_success()
+
+
+def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
+    def expect_error(*, verbose: bool) -> str:
+        (tmp_path / "lift.toml").touch()
+        args = [str(science_exe)]
+        if verbose:
+            args.append("-v")
+        args.append("build")
+        result = subprocess.run(
+            args=args, cwd=tmp_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        assert result.returncode != 0, result.stdout
+        return result.stderr.strip()
+
+    expected_error_message = "Expected `[lift]` of type toml table to be defined in lift.toml."
+
+    stderr = expect_error(verbose=False)
+    assert expected_error_message == stderr, stderr
+
+    stderr = expect_error(verbose=True)
+    error_lines = stderr.splitlines()
+    assert len(error_lines) > 1, "Expected a backtrace in addition to an error message."
+
+    last_line = error_lines[-1]
+    assert last_line != expected_error_message, "Expected an exception type prefix in verbose mode."
+    assert last_line.endswith(f": {expected_error_message}")

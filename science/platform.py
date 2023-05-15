@@ -6,6 +6,8 @@ from __future__ import annotations
 import platform
 from enum import Enum
 
+from science.errors import InputError
+
 
 class Platform(Enum):
     Linux_aarch64 = "linux-aarch64"
@@ -32,7 +34,7 @@ class Platform(Enum):
             case ("windows", "amd64" | "x86_64"):
                 return cls.Windows_x86_64
             case _:
-                raise ValueError(
+                raise InputError(
                     "The current operating system / machine pair is not supported!: "
                     f"{system} / {machine}"
                 )
