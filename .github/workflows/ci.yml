@@ -36,6 +36,10 @@ jobs:
         uses: actions/checkout@v3
       - name: Check Formatting & Lints
         run: nox -e lint
+      - name: Configure Windows pytest short tmp dir path
+        if: matrix.os == 'windows-2022'
+        run: |
+          echo PYTEST_ADDOPTS="--basetemp C:\\tmp\\pytest" >> ${GITHUB_ENV}
       - name: Unit Tests
         run: nox -e test -- -vvs
       - name: Build & Package

@@ -7,6 +7,7 @@ import io
 import itertools
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -159,7 +160,7 @@ def test_nested_filenames(
     dist_dir.mkdir()
 
     dest = dist_dir / science_pyz.name
-    os.link(science_pyz, dest)
+    shutil.copy(science_pyz, dest)
 
     with config.open(mode="r") as fp:
         config_data = toml.load(fp)
