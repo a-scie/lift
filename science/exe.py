@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import functools
 import hashlib
 import io
@@ -27,7 +28,7 @@ from science import __version__, a_scie, lift
 from science.config import parse_config
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
-from science.model import Application, Command, Distribution, Fetch, File
+from science.model import Application, Binding, Command, Distribution, Fetch, File
 from science.platform import Platform
 
 logger = logging.getLogger(__name__)
@@ -109,6 +110,7 @@ def _export(
     file_mappings: list[FileMapping],
     dest_dir: Path,
     *,
+    invert_lazy_ids: frozenset[str] = frozenset(),
     force: bool = False,
     platforms: Iterable[Platform] | None = None,
     include_provenance: bool = False,
@@ -122,23 +124,43 @@ def _export(
 
         bindings: list[Command] = []
         distributions: list[Distribution] = []
-        files: list[File] = []
+
+        requested_files: list[File] = []
         file_paths_by_id = {
             file_mapping.id: file_mapping.path.resolve() for file_mapping in file_mappings
         }
-        fetch_urls: dict[str, str] = {}
+        inverted = list[str]()
+
+        def maybe_invert_lazy(file: File) -> File:
+            if file.id in invert_lazy_ids:
+                match file.source:
+                    case Fetch(_, lazy=lazy) as fetch:
+                        inverted.append(file.id)
+                        return dataclasses.replace(
+                            file, source=dataclasses.replace(fetch, lazy=not lazy)
+                        )
+                    case Binding(name):
+                        raise InputError(f"Cannot make binding {name!r} non-lazy: {file}")
+                    case None:
+                        raise InputError(f"Cannot lazy fetch a local file: {file}")
+            return file
 
         for interpreter in application.interpreters:
             distribution = interpreter.provider.distribution(platform)
             if distribution:
                 distributions.append(distribution)
-                files.append(distribution.file)
-        files.extend(application.files)
+                requested_files.append(maybe_invert_lazy(distribution.file))
+        requested_files.extend(map(maybe_invert_lazy, application.files))
+        if (actually_inverted := frozenset(inverted)) != invert_lazy_ids:
+            raise InputError(
+                "There following files were not present to invert laziness for: "
+                f"{', '.join(sorted(invert_lazy_ids - actually_inverted))}"
+            )
 
-        if any(isinstance(file.source, Fetch) and file.source.lazy for file in files):
+        if any(isinstance(file.source, Fetch) and file.source.lazy for file in requested_files):
             ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
             file_paths_by_id[ptex.id] = chroot / ptex.name
-            files.append(ptex)
+            requested_files.append(ptex)
             argv1 = (
                 application.ptex.argv1
                 if application.ptex and application.ptex.argv1
@@ -147,26 +169,35 @@ def _export(
             bindings.append(Fetch.create_binding(fetch_exe=ptex, argv1=argv1))
         bindings.extend(application.bindings)
 
-        for file in files:
+        files = list[File]()
+        fetch_urls = dict[str, str]()
+        for requested_file in requested_files:
+            file = requested_file
             file_path: Path | None = None
-            match file.source:
+            match requested_file.source:
                 case Fetch(url=url, lazy=True):
-                    fetch_urls[file.name] = url
+                    fetch_urls[requested_file.name] = url
                 case Fetch(url=url, lazy=False):
+                    file = dataclasses.replace(requested_file, source=None)
                     file_path = fetch_and_verify(
-                        url, fingerprint=file.digest, executable=file.is_executable
+                        url,
+                        fingerprint=requested_file.digest,
+                        executable=requested_file.is_executable,
                     )
                 case None:
-                    file_path = file_paths_by_id.get(file.id) or Path.cwd() / file.name
+                    file_path = (
+                        file_paths_by_id.get(requested_file.id) or Path.cwd() / requested_file.name
+                    )
                     if not file_path.exists():
                         raise InputError(
-                            f"The file for {file.id} is not mapped or cannot be found at "
+                            f"The file for {requested_file.id} is not mapped or cannot be found at "
                             f"{file_path.relative_to(Path.cwd())} relative to the cwd of "
                             f"{Path.cwd()}."
                         )
+            files.append(file)
             if file_path:
-                file.maybe_check_digest(file_path)
-                target = chroot / file.name
+                requested_file.maybe_check_digest(file_path)
+                target = chroot / requested_file.name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 if not target.exists():
                     target.symlink_to(file_path)
@@ -185,7 +216,7 @@ def _export(
                 platform=platform,
                 distributions=distributions,
                 interpreter_groups=application.interpreter_groups,
-                files=files,
+                files=requested_files,
                 commands=application.commands,
                 bindings=bindings,
                 fetch_urls=fetch_urls,
@@ -224,12 +255,19 @@ class AppInfo:
     default=[],
     envvar="SCIENCE_EXPORT_FILE",
 )
+@click.option(
+    "--invert-lazy",
+    "invert_lazy_ids",
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_EXPORT_INVERT_LAZY",
+)
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 @click.option("--force", is_flag=True)
 @click.option("--include-provenance", is_flag=True)
+@click.option("--name", "app_name")
 @click.option(
     "--app-info",
-    "app_info",
     type=AppInfo.parse,
     multiple=True,
     default=[],
@@ -238,17 +276,24 @@ class AppInfo:
 def export(
     config: BinaryIO,
     file_mappings: list[FileMapping],
+    invert_lazy_ids: list[str],
     dest_dir: Path,
     force: bool,
     include_provenance: bool,
+    app_name: str | None,
     app_info: list[AppInfo],
 ) -> None:
     """Export the application configuration as one or more scie lift manifests."""
+
     application = parse_config(config, source=config.name)
+    if app_name:
+        application = dataclasses.replace(application, name=app_name)
+
     for _, lift_manifest in _export(
         application,
         file_mappings,
-        dest_dir,
+        invert_lazy_ids=frozenset(invert_lazy_ids),
+        dest_dir=dest_dir,
         force=force,
         include_provenance=include_provenance,
         app_info=AppInfo.assemble(app_info),
@@ -266,13 +311,20 @@ def export(
     default=[],
     envvar="SCIENCE_BUILD_FILE",
 )
+@click.option(
+    "--invert-lazy",
+    "invert_lazy_ids",
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_BUILD_INVERT_LAZY",
+)
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 @click.option("--preserve-sandbox", is_flag=True)
 @click.option("--use-jump", type=Path)
 @click.option("--include-provenance", is_flag=True)
+@click.option("--name", "app_name")
 @click.option(
     "--app-info",
-    "app_info",
     type=AppInfo.parse,
     multiple=True,
     default=[],
@@ -290,16 +342,21 @@ def export(
 def build(
     config: BinaryIO,
     file_mappings: list[FileMapping],
+    invert_lazy_ids: list[str],
     dest_dir: Path,
     preserve_sandbox: bool,
     use_jump: Path | None,
     include_provenance: bool,
+    app_name: str | None,
     app_info: list[AppInfo],
     hash_functions: list[str],
     use_platform_suffix: bool,
 ) -> None:
     """Build the application executable(s)."""
+
     application = parse_config(config, source=config.name)
+    if app_name:
+        application = dataclasses.replace(application, name=app_name)
 
     current_platform = Platform.current()
     platforms = application.platforms
@@ -331,6 +388,7 @@ def build(
         for platform, lift_manifest in _export(
             application,
             file_mappings,
+            invert_lazy_ids=frozenset(invert_lazy_ids),
             dest_dir=td,
             platforms=platforms,
             include_provenance=include_provenance,
