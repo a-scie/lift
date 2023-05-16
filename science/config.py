@@ -17,12 +17,11 @@ from packaging.version import Version
 
 from science.errors import InputError
 from science.frozendict import FrozenDict
-from science.hashing import Fingerprint
+from science.hashing import Digest, Fingerprint
 from science.model import (
     Application,
     Binding,
     Command,
-    Digest,
     Env,
     Fetch,
     File,

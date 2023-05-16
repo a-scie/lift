@@ -1,11 +1,14 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+from __future__ import annotations
+
 import hashlib
 import io
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Any, BinaryIO, Callable, cast
 
 from science.errors import InputError
 
@@ -14,6 +17,55 @@ DEFAULT_ALGORITHM = "sha256"
 
 class Fingerprint(str):
     pass
+
+
+class BinaryHasher(BinaryIO, ABC):
+    @abstractmethod
+    def digest(self) -> Digest:
+        """Return the digest of the bytes read so far."""
+
+
+class _BinaryIOHasher:
+    def __init__(self, underlying: BinaryIO, algorithm: str = DEFAULT_ALGORITHM) -> None:
+        self._underlying = underlying
+        self._digest = hashlib.new(algorithm)
+        self._read = 0
+
+    @property
+    def name(self) -> str:
+        return self._underlying.name
+
+    def read(self, *args: Any, **kwargs: Any) -> bytes:
+        data = self._underlying.read(*args, **kwargs)
+        self._read += len(data)
+        self._digest.update(data)
+        return data
+
+    def digest(self) -> Digest:
+        return Digest(size=self._read, fingerprint=Fingerprint(self._digest.hexdigest()))
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._underlying, name)
+
+
+@dataclass(frozen=True)
+class Digest:
+    size: int
+    fingerprint: Fingerprint
+
+    @classmethod
+    def hasher(cls, underlying: BinaryIO, algorithm: str = DEFAULT_ALGORITHM) -> BinaryHasher:
+        # N.B.: This cast just serves to localize squelching of MyPy warnings to a single spot.
+        # MyPy cannot grok the `__getattr__` magic in use by _BinaryIOHasher for implementation of
+        # the full BinaryIO interface via delegation.
+        return cast(BinaryHasher, _BinaryIOHasher(underlying, algorithm=algorithm))
+
+    @classmethod
+    def hash(cls, path: Path, algorithm: str = DEFAULT_ALGORITHM) -> Digest:
+        with path.open(mode="rb") as fp:
+            binary_hasher = cls.hasher(fp, algorithm=algorithm)
+            binary_hasher.read()
+            return binary_hasher.digest()
 
 
 @dataclass(frozen=True)

@@ -17,8 +17,8 @@ from tqdm import tqdm
 from science import hashing
 from science.cache import Missing, download_cache
 from science.errors import InputError
-from science.hashing import ExpectedDigest, Fingerprint
-from science.model import Digest, Url
+from science.hashing import Digest, ExpectedDigest, Fingerprint
+from science.model import Url
 
 logger = logging.getLogger(__name__)
 

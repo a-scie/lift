@@ -12,8 +12,8 @@ from pathlib import Path
 from packaging.version import Version
 
 from science.fetcher import fetch_and_verify
-from science.hashing import Fingerprint
-from science.model import Digest, File, Ptex, ScieJump, Url
+from science.hashing import Digest, Fingerprint
+from science.model import File, Ptex, ScieJump, Url
 from science.platform import Platform
 
 
