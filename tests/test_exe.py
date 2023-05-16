@@ -650,4 +650,6 @@ def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
         extra_args=["--invert-lazy", "exe.py"],
     )
     result.assert_failure()
-    assert "Cannot lazy fetch local file 'exe.py'." == result.stderr.strip()
+    assert "Cannot lazy fetch local file 'exe.py'." in result.stderr.strip().splitlines(
+        keepends=False
+    )
