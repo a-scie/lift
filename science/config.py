@@ -88,9 +88,9 @@ class Data:
                 for index, item in invalid_entries.items()
             ]
             raise InputError(
-                f"Expected {self.config(key)} defined in {self.provenance.source} to be a list with items of "
-                f"type {self._typename(expected_item_type)} but got {len(invalid_entries)} out of "
-                f"{len(value)} entries of the wrong type:{os.linesep}"
+                f"Expected {self.config(key)} defined in {self.provenance.source} to be a list "
+                f"with items of type {self._typename(expected_item_type)} but got "
+                f"{len(invalid_entries)} out of {len(value)} entries of the wrong type:{os.linesep}"
                 f"{os.linesep.join(invalid_items)}"
             )
         return value

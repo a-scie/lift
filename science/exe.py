@@ -276,7 +276,7 @@ def export(
     type=AppInfo.parse,
     multiple=True,
     default=[],
-    envvar="SCIENCE_EXPORT_APP_INFO",
+    envvar="SCIENCE_BUILD_APP_INFO",
 )
 @click.option(
     "--hash",
