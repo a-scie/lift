@@ -258,15 +258,22 @@ def url_source_lift_toml_content(
 
 
 @dataclass(frozen=True)
-class ScienceResult:
+class Result:
     scie: Path
     returncode: int
     stdout: str
     stderr: str
 
-    def assert_success(self) -> None:
+    def assert_success(self, assert_url_source_scie_works=True) -> None:
         assert self.returncode == 0, self.stderr
         assert self.scie.is_file()
+        if assert_url_source_scie_works:
+            assert (
+                "Apache License"
+                == subprocess.run(
+                    args=[str(self.scie)], stdout=subprocess.PIPE, text=True, check=True
+                ).stdout.strip()
+            )
 
     def assert_failure(self) -> None:
         assert self.returncode != 0, self.stdout
@@ -283,7 +290,7 @@ def create_url_source_scie(
     additional_toml: str = "",
     extra_args: Iterable[str] = (),
     **env: str,
-) -> ScienceResult:
+) -> Result:
     dest = tmp_path / "dest"
     chroot = tmp_path / "chroot"
     lift_toml_content = url_source_lift_toml_content(
@@ -303,20 +310,13 @@ def create_url_source_scie(
         cwd=chroot,
         env={**os.environ, **env},
     )
-    return ScienceResult(
+    return Result(
         scie=scie, returncode=result.returncode, stdout=result.stdout, stderr=result.stderr
     )
 
 
 def test_url_source(tmp_path: Path, science_exe: Path) -> None:
-    result = create_url_source_scie(tmp_path, science_exe, lazy=False)
-    result.assert_success()
-    assert (
-        "Apache License"
-        == subprocess.run(
-            args=[str(result.scie)], stdout=subprocess.PIPE, text=True, check=True
-        ).stdout.strip()
-    )
+    create_url_source_scie(tmp_path, science_exe, lazy=False).assert_success()
 
 
 def test_url_source_bad_size(tmp_path: Path, science_exe: Path) -> None:
@@ -361,7 +361,7 @@ def test_url_source_lazy(tmp_path: Path, science_exe: Path) -> None:
     result = create_url_source_scie(
         tmp_path, science_exe, lazy=True, expected_fingerprint=bad_fingerprint
     )
-    result.assert_success()
+    result.assert_success(assert_url_source_scie_works=False)
 
     scie_base = tmp_path / "nce"
     process = subprocess.run(
