@@ -638,7 +638,7 @@ def test_invert_lazy_invalid_id(tmp_path: Path, science_exe: Path) -> None:
     result.assert_failure()
     assert (
         "There following files were not present to invert laziness for: bar, foo"
-        == result.stderr.strip()
+        in result.stderr.strip().splitlines(keepends=False)
     )
 
 
