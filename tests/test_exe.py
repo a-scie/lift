@@ -277,6 +277,7 @@ def create_url_source_scie(
     tmp_path: Path,
     science_exe: Path,
     lazy: bool = True,
+    expected_name: str = "url_source",
     expected_size: int = EXPECTED_SIZE,
     expected_fingerprint: str = EXPECTED_SHA256_FINGERPRINT,
     additional_toml: str = "",
@@ -292,7 +293,7 @@ def create_url_source_scie(
         expected_fingerprint=expected_fingerprint,
     )
     lift_toml_content = f"{lift_toml_content}\n{additional_toml}"
-    scie = dest / Platform.current().binary_name("url_source")
+    scie = dest / Platform.current().binary_name(expected_name)
     result = subprocess.run(
         args=[str(science_exe), "build", "--dest-dir", str(dest), "-", *extra_args],
         input=lift_toml_content,
@@ -585,3 +586,68 @@ def test_include_provenance(tmp_path: Path, science_exe: Path) -> None:
     assert "bar" == app_info.pop("foo")
     assert "1/137" == app_info.pop("baz")
     assert not app_info
+
+
+def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
+    result = create_url_source_scie(
+        tmp_path, science_exe, lazy=True, extra_args=["--name", "skinny"], expected_name="skinny"
+    )
+    result.assert_success()
+    assert result.scie.name == Platform.current().binary_name("skinny")
+    skinny_scie = result.scie
+
+    result = create_url_source_scie(
+        tmp_path, science_exe, lazy=False, extra_args=["--name", "fat"], expected_name="fat"
+    )
+    result.assert_success()
+    assert result.scie.name == Platform.current().binary_name("fat")
+    fat_scie = result.scie
+
+    assert skinny_scie.stat().st_size < fat_scie.stat().st_size
+    assert not filecmp.cmp(skinny_scie, fat_scie, shallow=False)
+
+    result = create_url_source_scie(
+        tmp_path / "via-inversion",
+        science_exe,
+        lazy=True,
+        extra_args=["--invert-lazy", "LICENSE", "--name", "fat"],
+        expected_name="fat",
+    )
+    result.assert_success()
+    assert fat_scie != result.scie
+    assert fat_scie.stat().st_size == result.scie.stat().st_size
+    assert filecmp.cmp(fat_scie, result.scie, shallow=False)
+
+
+def test_invert_lazy_invalid_id(tmp_path: Path, science_exe: Path) -> None:
+    result = create_url_source_scie(
+        tmp_path,
+        science_exe,
+        lazy=True,
+        extra_args=[
+            "--invert-lazy",
+            "cpython311",
+            "--invert-lazy",
+            "foo",
+            "--invert-lazy",
+            "LICENSE",
+            "--invert-lazy",
+            "bar",
+        ],
+    )
+    result.assert_failure()
+    assert (
+        "There following files were not present to invert laziness for: bar, foo"
+        == result.stderr.strip()
+    )
+
+
+def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
+    result = create_url_source_scie(
+        tmp_path,
+        science_exe,
+        lazy=True,
+        extra_args=["--invert-lazy", "exe.py"],
+    )
+    result.assert_failure()
+    assert "Cannot lazy fetch local file 'exe.py'." == result.stderr.strip()

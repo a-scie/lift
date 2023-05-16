@@ -140,9 +140,9 @@ def _export(
                             file, source=dataclasses.replace(fetch, lazy=not lazy)
                         )
                     case Binding(name):
-                        raise InputError(f"Cannot make binding {name!r} non-lazy: {file}")
+                        raise InputError(f"Cannot make binding {name!r} non-lazy.")
                     case None:
-                        raise InputError(f"Cannot lazy fetch a local file: {file}")
+                        raise InputError(f"Cannot lazy fetch local file {file.name!r}.")
             return file
 
         for interpreter in application.interpreters:
