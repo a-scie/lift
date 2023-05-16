@@ -15,6 +15,7 @@ from typing import Any, BinaryIO, Collection, Iterable, Iterator, TypeVar
 from packaging import version
 from packaging.version import Version
 
+from science.build_info import BuildInfo, Provenance
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, Fingerprint
@@ -42,7 +43,7 @@ _T = TypeVar("_T")
 
 @dataclass(frozen=True)
 class Data:
-    source: str
+    provenance: Provenance
     data: FrozenDict[str, Any]
     path: str = ""
 
@@ -55,7 +56,7 @@ class Data:
     def get_data(self, key: str, default: dict[str, Any] | __Required = __Required.VALUE) -> Data:
         data = self.get_value(key, expected_type=dict, default=default)
         return Data(
-            source=self.source,
+            provenance=self.provenance,
             data=FrozenDict(data),
             path=f"{self.path}.{key}" if self.path else key,
         )
@@ -87,7 +88,7 @@ class Data:
                 for index, item in invalid_entries.items()
             ]
             raise InputError(
-                f"Expected {self.config(key)} defined in {self.source} to be a list with items of "
+                f"Expected {self.config(key)} defined in {self.provenance.source} to be a list with items of "
                 f"type {self._typename(expected_item_type)} but got {len(invalid_entries)} out of "
                 f"{len(value)} entries of the wrong type:{os.linesep}"
                 f"{os.linesep.join(invalid_items)}"
@@ -101,7 +102,7 @@ class Data:
     ) -> list[Data]:
         return [
             Data(
-                source=self.source,
+                provenance=self.provenance,
                 data=FrozenDict(data),
                 path=f"{self.path}.{key}[{index}]" if self.path else key,
             )
@@ -121,7 +122,7 @@ class Data:
             if default is self.__Required.VALUE:
                 raise InputError(
                     f"Expected {self.config(key)} of type {self._typename(expected_type)} to be "
-                    f"defined in {self.source}."
+                    f"defined in {self.provenance.source}."
                 )
             return default
 
@@ -129,7 +130,7 @@ class Data:
         if not isinstance(value, expected_type):
             raise InputError(
                 f"Expected a {self._typename(expected_type)} for {self.config(key)} but found "
-                f"{value} of type {self._typename(type(value))} in {self.source}."
+                f"{value} of type {self._typename(type(value))} in {self.provenance.source}."
             )
         return value
 
@@ -138,7 +139,10 @@ class Data:
 
 
 def parse_config(content: BinaryIO, source: str) -> Application:
-    return parse_config_data(Data(source=source, data=FrozenDict(tomllib.load(content))))
+    hashed_content = Digest.hasher(content)
+    data = FrozenDict(tomllib.load(hashed_content))
+    provenance = Provenance(source, digest=hashed_content.digest())
+    return parse_config_data(Data(provenance=provenance, data=data))
 
 
 def parse_config_file(path: Path) -> Application:
@@ -348,6 +352,10 @@ def parse_config_data(data: Data) -> Application:
         reserved=internal_binding_names,
     )
 
+    build_info = BuildInfo.gather(
+        lift_toml=data.provenance, app_info=lift.get_data("app_info", default={}).data
+    )
+
     return Application(
         name=application_name,
         description=description,
@@ -360,4 +368,5 @@ def parse_config_data(data: Data) -> Application:
         files=tuple(files),
         commands=commands,
         bindings=bindings,
+        build_info=build_info,
     )

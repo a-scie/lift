@@ -17,18 +17,16 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
-from typing import BinaryIO, Iterable, Iterator
+from typing import Any, BinaryIO, Iterable, Iterator, Mapping
 
 import click
 import click_log
 from packaging import version
 
 from science import __version__, a_scie, lift
-from science.build_info import gather_build_info
 from science.config import parse_config
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
-from science.hashing import Digest
 from science.model import Application, Command, Distribution, Fetch, File
 from science.platform import Platform
 
@@ -107,7 +105,6 @@ def _temporary_directory(cleanup: bool) -> Iterator[Path]:
 
 
 def _export(
-    lift_digest: Digest,
     application: Application,
     file_mappings: list[FileMapping],
     dest_dir: Path,
@@ -115,6 +112,7 @@ def _export(
     force: bool = False,
     platforms: Iterable[Platform] | None = None,
     include_provenance: bool = False,
+    app_info: Mapping[str, Any] | None = None,
 ) -> Iterator[tuple[Platform, Path]]:
     for platform in platforms or application.platforms:
         chroot = dest_dir / platform.value
@@ -175,7 +173,7 @@ def _export(
 
         lift_manifest = chroot / "lift.json"
 
-        build_info = gather_build_info(lift_digest) if include_provenance else None
+        build_info = application.build_info if include_provenance else None
 
         with open(lift_manifest, "w") as lift_manifest_output:
             lift.emit_manifest(
@@ -192,8 +190,28 @@ def _export(
                 bindings=bindings,
                 fetch_urls=fetch_urls,
                 build_info=build_info,
+                app_info=app_info,
             )
         yield platform, lift_manifest
+
+
+@dataclass(frozen=True)
+class AppInfo:
+    @classmethod
+    def assemble(cls, app_infos: Iterable[AppInfo]) -> Mapping[str, Any]:
+        return {app_info.key: app_info.value for app_info in app_infos}
+
+    @classmethod
+    def parse(cls, value: str) -> AppInfo:
+        components = value.split("=", 1)
+        if len(components) != 2:
+            raise InputError(
+                f"Invalid app info. An app info entry must be of the form `<key>=<value>`: {value}"
+            )
+        return cls(key=components[0], value=components[1])
+
+    key: str
+    value: str
 
 
 @_main.command()
@@ -209,24 +227,31 @@ def _export(
 @click.option("--dest-dir", type=Path, default=Path.cwd())
 @click.option("--force", is_flag=True)
 @click.option("--include-provenance", is_flag=True)
+@click.option(
+    "--app-info",
+    "app_info",
+    type=AppInfo.parse,
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_EXPORT_APP_INFO",
+)
 def export(
     config: BinaryIO,
     file_mappings: list[FileMapping],
     dest_dir: Path,
     force: bool,
     include_provenance: bool,
+    app_info: list[AppInfo],
 ) -> None:
     """Export the application configuration as one or more scie lift manifests."""
-    hashed_config = Digest.hasher(config)
-    application = parse_config(hashed_config, source=hashed_config.name)
-    lift_digest = hashed_config.digest()
+    application = parse_config(config, source=config.name)
     for _, lift_manifest in _export(
-        lift_digest,
         application,
         file_mappings,
         dest_dir,
         force=force,
         include_provenance=include_provenance,
+        app_info=AppInfo.assemble(app_info),
     ):
         click.echo(lift_manifest)
 
@@ -246,6 +271,14 @@ def export(
 @click.option("--use-jump", type=Path)
 @click.option("--include-provenance", is_flag=True)
 @click.option(
+    "--app-info",
+    "app_info",
+    type=AppInfo.parse,
+    multiple=True,
+    default=[],
+    envvar="SCIENCE_EXPORT_APP_INFO",
+)
+@click.option(
     "--hash",
     "hash_functions",
     type=click.Choice(sorted(hashlib.algorithms_guaranteed)),
@@ -261,13 +294,12 @@ def build(
     preserve_sandbox: bool,
     use_jump: Path | None,
     include_provenance: bool,
+    app_info: list[AppInfo],
     hash_functions: list[str],
     use_platform_suffix: bool,
 ) -> None:
     """Build the application executable(s)."""
-    hashed_config = Digest.hasher(config)
-    application = parse_config(hashed_config, source=hashed_config.name)
-    lift_digest = hashed_config.digest()
+    application = parse_config(config, source=config.name)
 
     current_platform = Platform.current()
     platforms = application.platforms
@@ -297,12 +329,12 @@ def build(
     )
     with _temporary_directory(cleanup=not preserve_sandbox) as td:
         for platform, lift_manifest in _export(
-            lift_digest,
             application,
             file_mappings,
             dest_dir=td,
             platforms=platforms,
             include_provenance=include_provenance,
+            app_info=AppInfo.assemble(app_info),
         ):
             jump_path = (
                 a_scie.custom_jump(repo_path=use_jump)

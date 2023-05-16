@@ -15,6 +15,7 @@ from typing import ClassVar, Iterable, Match, Protocol, TypeAlias, runtime_check
 
 from packaging.version import Version
 
+from science.build_info import BuildInfo
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
@@ -266,3 +267,4 @@ class Application:
     interpreter_groups: Iterable[InterpreterGroup] = ()
     files: Iterable[File] = ()
     bindings: frozenset[Command] = frozenset()
+    build_info: BuildInfo | None = None
