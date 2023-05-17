@@ -605,6 +605,33 @@ def export(
     multiple=True,
     default=[],
     envvar="SCIENCE_BUILD_HASH",
+    help=dedent(
+        """\
+        Output a checksum file compatible with the shasum family of tools.
+
+        For each unique `--hash` specified, a sibling file to the scie executable will be generated
+        with the same name and hash algorithm name suffix. The file will contain the hex fingerprint
+        of the scie executable using that algorithm to hash it.
+
+        For example, for `--hash sha256` against a scie named example on Windows you might get:
+
+        \b
+        dist/example.exe
+        dist/example.exe.sha256
+
+        The contents of `dist/example.exe.sha256` would look like (`*` means executable):
+
+        \b
+        33fd890f056b0434241a357b616b4a651c82acc1ee4ce42e0b95c059d4a76f04 *example.exe
+
+        And the fingerprint of `example.exe` could be checked by running the following in the
+        `dist` dir:
+
+        \b
+        sha256sum -c example.exe.sha256
+        example.exe: OK
+        """
+    ),
 )
 @pass_lift
 def build(
@@ -671,7 +698,9 @@ def build(
             dst_binary = dest_dir / dst_binary_name
             shutil.move(src=platform_export_dir / src_binary_name, dst=dst_binary)
             if hash_functions:
-                digests = tuple(hashlib.new(hash_function) for hash_function in hash_functions)
+                digests = tuple(
+                    hashlib.new(hash_function) for hash_function in sorted(set(hash_functions))
+                )
                 with dst_binary.open(mode="rb") as fp:
                     for chunk in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
                         for digest in digests:
