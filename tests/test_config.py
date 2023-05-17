@@ -34,7 +34,15 @@ def test_parse(build_root: Path) -> None:
 def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
     with resources.as_file(resources.files("data") / "interpreter-groups.toml") as config:
         subprocess.run(
-            args=[sys.executable, str(science_pyz), "build", "--dest-dir", str(tmp_path), config],
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                config,
+            ],
             check=True,
         )
 
