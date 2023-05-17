@@ -324,6 +324,7 @@ pass_lift = click.make_pass_decorator(LiftConfig)
         [lift]
         name = "example"
 
+        \b
         [[lift.interpreters]]
         id = "cpython"
         provider = "PythonBuildStandalone"
