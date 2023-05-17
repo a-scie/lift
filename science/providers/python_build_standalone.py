@@ -13,17 +13,8 @@ from packaging.version import Version
 from science.errors import InputError
 from science.fetcher import fetch_json, fetch_text
 from science.frozendict import FrozenDict
-from science.hashing import Fingerprint
-from science.model import (
-    Digest,
-    Distribution,
-    Fetch,
-    File,
-    FileType,
-    Identifier,
-    Provider,
-    Url,
-)
+from science.hashing import Digest, Fingerprint
+from science.model import Distribution, Fetch, File, FileType, Identifier, Provider, Url
 from science.platform import Platform
 
 

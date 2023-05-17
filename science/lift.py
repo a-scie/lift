@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Iterable, TextIO
+from typing import Any, Iterable, Mapping, TextIO
 
+from science.build_info import BuildInfo
 from science.model import (
     Binding,
     Command,
@@ -87,7 +88,8 @@ def emit_manifest(
     commands: Iterable[Command],
     bindings: Iterable[Command],
     fetch_urls: dict[str, str],
-    build_info: dict[str, Any] | None = None,
+    build_info: BuildInfo | None = None,
+    app_info: Mapping[str, Any] | None = None,
 ) -> None:
     def render_files() -> list[dict[str, Any]]:
         return [_render_file(file) for file in files]
@@ -111,7 +113,7 @@ def emit_manifest(
     }
     data = dict[str, Any](scie=scie_data)
     if build_info:
-        data.update(science=build_info)
+        data.update(science=build_info.to_dict(**(app_info or {})))
     if fetch_urls:
         data.update(ptex=fetch_urls)
 

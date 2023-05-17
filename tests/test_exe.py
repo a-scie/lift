@@ -5,6 +5,7 @@ import filecmp
 import hashlib
 import io
 import itertools
+import json
 import os
 import re
 import shutil
@@ -14,12 +15,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from textwrap import dedent
+from typing import Any, Iterable
 
 import pytest
 import toml
 from _pytest.tmpdir import TempPathFactory
 from testing import IS_WINDOWS, issue
 
+from science import __version__
 from science.config import parse_config_file
 from science.platform import Platform
 
@@ -273,10 +276,11 @@ class ScienceResult:
 def create_url_source_scie(
     tmp_path: Path,
     science_exe: Path,
-    lazy: bool,
+    lazy: bool = True,
     expected_size: int = EXPECTED_SIZE,
     expected_fingerprint: str = EXPECTED_SHA256_FINGERPRINT,
     additional_toml: str = "",
+    extra_args: Iterable[str] = (),
     **env: str,
 ) -> ScienceResult:
     dest = tmp_path / "dest"
@@ -290,7 +294,7 @@ def create_url_source_scie(
     lift_toml_content = f"{lift_toml_content}\n{additional_toml}"
     scie = dest / Platform.current().binary_name("url_source")
     result = subprocess.run(
-        args=[str(science_exe), "build", "--dest-dir", str(dest), "-"],
+        args=[str(science_exe), "build", "--dest-dir", str(dest), "-", *extra_args],
         input=lift_toml_content,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -508,3 +512,76 @@ def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
         error_message_line != expected_error_message
     ), "Expected an exception type prefix in verbose mode."
     assert error_message_line.endswith(f": {expected_error_message}"), os.linesep.join(error_lines)
+
+
+def test_include_provenance(tmp_path: Path, science_exe: Path) -> None:
+    def create_and_inspect(*args: str, additional_toml: str = "") -> dict[str, Any]:
+        result = create_url_source_scie(
+            tmp_path, science_exe, additional_toml=additional_toml, extra_args=args
+        )
+        result.assert_success()
+        data = json.loads(
+            subprocess.run(
+                args=[str(result.scie)],
+                env={**os.environ, "SCIE": "inspect"},
+                stdout=subprocess.PIPE,
+                text=True,
+                check=True,
+            ).stdout
+        )
+        assert isinstance(data, dict)
+        return data
+
+    assert "science" not in create_and_inspect()
+
+    data = create_and_inspect("--include-provenance")
+    build_info = data["science"]
+    assert "app_info" not in build_info
+    binary_info = build_info["binary"]
+    assert __version__ == binary_info["version"]
+    assert binary_info["url"].startswith(
+        f"https://github.com/a-scie/lift/releases/tag/v{__version__}/"
+    )
+
+    data = create_and_inspect(
+        "--include-provenance",
+        additional_toml=dedent(
+            """\
+            [lift.app_info]
+            foo = "bar"
+            baz = 42
+            """
+        ),
+    )
+    app_info = data["science"]["app_info"]
+    assert "bar" == app_info.pop("foo")
+    assert 42 == app_info.pop("baz")
+    assert not app_info
+
+    data = create_and_inspect(
+        "--include-provenance", "--app-info", "foo=bar", "--app-info", "baz=42"
+    )
+    app_info = data["science"]["app_info"]
+    assert "bar" == app_info.pop("foo")
+    assert "42" == app_info.pop("baz")
+    assert not app_info
+
+    data = create_and_inspect(
+        "--include-provenance",
+        "--app-info",
+        "foo=bar",
+        "--app-info",
+        "baz=1/137",
+        additional_toml=dedent(
+            """\
+            [lift.app_info]
+            spam = "eggs"
+            baz = 42
+            """
+        ),
+    )
+    app_info = data["science"]["app_info"]
+    assert "eggs" == app_info.pop("spam")
+    assert "bar" == app_info.pop("foo")
+    assert "1/137" == app_info.pop("baz")
+    assert not app_info

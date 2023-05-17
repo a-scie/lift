@@ -15,16 +15,11 @@ from typing import ClassVar, Iterable, Match, Protocol, TypeAlias, runtime_check
 
 from packaging.version import Version
 
+from science.build_info import BuildInfo
 from science.errors import InputError
 from science.frozendict import FrozenDict
-from science.hashing import ExpectedDigest, Fingerprint
+from science.hashing import Digest, ExpectedDigest
 from science.platform import Platform
-
-
-@dataclass(frozen=True)
-class Digest:
-    size: int
-    fingerprint: Fingerprint
 
 
 class FileType(Enum):
@@ -272,3 +267,4 @@ class Application:
     interpreter_groups: Iterable[InterpreterGroup] = ()
     files: Iterable[File] = ()
     bindings: frozenset[Command] = frozenset()
+    build_info: BuildInfo | None = None

@@ -4,8 +4,8 @@
 import os.path
 
 from science.frozendict import FrozenDict
-from science.hashing import Fingerprint
-from science.model import Digest, Distribution, Fetch, File, Identifier, Url
+from science.hashing import Digest, Fingerprint
+from science.model import Distribution, Fetch, File, Identifier, Url
 
 
 def test_distribution() -> None:
