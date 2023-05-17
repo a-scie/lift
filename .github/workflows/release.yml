@@ -1,0 +1,98 @@
+name: Release
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to manually run a deploy for.
+        required: true
+jobs:
+  org-check:
+    name: Check GitHub Organization
+    if: ${{ github.repository_owner == 'a-scie' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Noop
+        run: "true"
+  determine-tag:
+    name: Determine the release tag to operate against.
+    needs: org-check
+    runs-on: ubuntu-22.04
+    outputs:
+      release-tag: ${{ steps.determine-tag.outputs.release-tag }}
+      release-version: ${{ steps.determine-tag.outputs.release-version }}
+    steps:
+      - name: Determine Tag
+        id: determine-tag
+        run: |
+          if [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            RELEASE_TAG=${{ github.event.inputs.tag }}
+          else
+            RELEASE_TAG=${GITHUB_REF#refs/tags/}
+          fi
+          if [[ "${RELEASE_TAG}" =~ ^v[0-9]+.[0-9]+.[0-9]+$ ]]; then
+            echo "release-tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+            echo "release-version=${RELEASE_TAG#v}" >> $GITHUB_OUTPUT
+          else
+            echo "::error::Release tag '${RELEASE_TAG}' must match 'v\d+.\d+.\d+'."
+            exit 1
+          fi
+  github-release:
+    name: (${{ matrix.os }}) Create Github Release
+    needs: determine-tag
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-22.04, macos-11, macos-13-aarch64, windows-2022 ]
+    environment: Release
+    env:
+      SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        if: matrix.os != 'macos-13-aarch64'
+        with:
+          python-version: 3.11
+      - name: Setup Nox
+        run: pip install nox
+      - name: Checkout lift ${{ needs.determine-tag.outputs.release-tag }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.determine-tag.outputs.release-tag }}
+      - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
+        run: nox -e package
+      - name: Prepare Changelog
+        id: prepare-changelog
+        uses: a-scie/actions/changelog@v1.3
+        with:
+          changelog-file: ${{ github.workspace }}/CHANGES.md
+          version: ${{ needs.determine-tag.outputs.release-version }}
+          setup-python: ${{ matrix.os != 'macos-13-aarch64' }}
+      - name: Create ${{ needs.determine-tag.outputs.release-tag }} Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.determine-tag.outputs.release-tag }}
+          name: science ${{ needs.determine-tag.outputs.release-version }}
+          body_path: ${{ steps.prepare-changelog.outputs.changelog-file }}
+          draft: false
+          prerelease: false
+          files: dist/science-*
+          fail_on_unmatched_files: true
+          discussion_category_name: Announcements
+  aarch64-release-trigger:
+    name: Trigger Circle CI Linux aarch64 Github Release
+    needs:
+      - determine-tag
+      - github-release
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Trigger aarch64 release
+        uses: CircleCI-Public/trigger-circleci-pipeline-action@v1.0.5
+        with:
+          GHA_Meta: "${{ needs.determine-tag.outputs.release-tag }}"
+        env:
+          CCI_TOKEN: ${{ secrets.CCI_TOKEN }}

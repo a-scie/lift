@@ -5,3 +5,8 @@
 [![CircleCI (Linux aarch64)](https://circleci.com/gh/a-scie/lift.svg?style=svg)](https://circleci.com/gh/a-scie/lift)
 
 Delivers science, a high level tool to build scies with.
+
+## Contribute
+
+See the [contribution guide](CONTRIBUTING.md) if you're interested in hacking on `science` or
+improving its documentation.
