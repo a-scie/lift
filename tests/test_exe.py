@@ -39,9 +39,10 @@ def science_exe(tmp_path_factory: TempPathFactory, build_root: Path, science_pyz
         args=[
             sys.executable,
             str(science_pyz),
-            "build",
+            "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "build",
             "--dest-dir",
             str(dest),
         ],
@@ -61,9 +62,10 @@ def test_use_platform_suffix(
     subprocess.run(
         args=[
             str(science_exe),
-            "build",
+            "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "build",
             "--dest-dir",
             str(tmp_path),
             "--use-platform-suffix",
@@ -98,9 +100,10 @@ def test_hash(
     subprocess.run(
         args=[
             str(science_exe),
-            "build",
+            "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "build",
             "--dest-dir",
             str(tmp_path),
             *itertools.chain.from_iterable(("--hash", algorithm) for algorithm in algorithms),
@@ -136,9 +139,10 @@ def test_dogfood(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
     subprocess.run(
         args=[
             str(science_exe),
-            "build",
+            "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "build",
             "--dest-dir",
             str(dest),
             config,
@@ -181,7 +185,7 @@ def test_nested_filenames(
 
     dest1 = tmp_path / "dest1"
     subprocess.run(
-        args=[str(science_exe), "build", "--dest-dir", str(dest1)], check=True, cwd=tmp_path
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest1)], check=True, cwd=tmp_path
     )
     science_exe1 = dest1 / science_exe.name
     assert science_exe1.is_file()
@@ -194,7 +198,9 @@ def test_nested_filenames(
 
     dest2 = tmp_path / "dest2"
     subprocess.run(
-        args=[str(science_exe1), "build", "--dest-dir", str(dest2)], check=True, cwd=tmp_path
+        args=[str(science_exe1), "lift", "build", "--dest-dir", str(dest2)],
+        check=True,
+        cwd=tmp_path,
     )
     science_exe2 = dest2 / science_exe.name
     assert science_exe2.is_file()
@@ -288,7 +294,7 @@ def create_url_source_scie(
     expected_size: int = EXPECTED_SIZE,
     expected_fingerprint: str = EXPECTED_SHA256_FINGERPRINT,
     additional_toml: str = "",
-    extra_args: Iterable[str] = (),
+    extra_lift_args: Iterable[str] = (),
     **env: str,
 ) -> Result:
     dest = tmp_path / "dest"
@@ -302,7 +308,7 @@ def create_url_source_scie(
     lift_toml_content = f"{lift_toml_content}\n{additional_toml}"
     scie = dest / Platform.current().binary_name(expected_name)
     result = subprocess.run(
-        args=[str(science_exe), "build", "--dest-dir", str(dest), "-", *extra_args],
+        args=[str(science_exe), "lift", *extra_lift_args, "build", "--dest-dir", str(dest), "-"],
         input=lift_toml_content,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -481,7 +487,7 @@ def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
         args = [str(science_exe)]
         if verbose:
             args.append("-v")
-        args.append("build")
+        args.extend(("lift", "build"))
         result = subprocess.run(
             args=args, cwd=tmp_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
@@ -518,7 +524,7 @@ def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
 def test_include_provenance(tmp_path: Path, science_exe: Path) -> None:
     def create_and_inspect(*args: str, additional_toml: str = "") -> dict[str, Any]:
         result = create_url_source_scie(
-            tmp_path, science_exe, additional_toml=additional_toml, extra_args=args
+            tmp_path, science_exe, additional_toml=additional_toml, extra_lift_args=args
         )
         result.assert_success()
         data = json.loads(
@@ -568,7 +574,6 @@ def test_include_provenance(tmp_path: Path, science_exe: Path) -> None:
     assert not app_info
 
     data = create_and_inspect(
-        "--include-provenance",
         "--app-info",
         "foo=bar",
         "--app-info",
@@ -590,14 +595,18 @@ def test_include_provenance(tmp_path: Path, science_exe: Path) -> None:
 
 def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
     result = create_url_source_scie(
-        tmp_path, science_exe, lazy=True, extra_args=["--name", "skinny"], expected_name="skinny"
+        tmp_path,
+        science_exe,
+        lazy=True,
+        extra_lift_args=["--name", "skinny"],
+        expected_name="skinny",
     )
     result.assert_success()
     assert result.scie.name == Platform.current().binary_name("skinny")
     skinny_scie = result.scie
 
     result = create_url_source_scie(
-        tmp_path, science_exe, lazy=False, extra_args=["--name", "fat"], expected_name="fat"
+        tmp_path, science_exe, lazy=False, extra_lift_args=["--name", "fat"], expected_name="fat"
     )
     result.assert_success()
     assert result.scie.name == Platform.current().binary_name("fat")
@@ -610,7 +619,7 @@ def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
         tmp_path / "via-inversion",
         science_exe,
         lazy=True,
-        extra_args=["--invert-lazy", "LICENSE", "--name", "fat"],
+        extra_lift_args=["--invert-lazy", "LICENSE", "--name", "fat"],
         expected_name="fat",
     )
     result.assert_success()
@@ -624,7 +633,7 @@ def test_invert_lazy_invalid_id(tmp_path: Path, science_exe: Path) -> None:
         tmp_path,
         science_exe,
         lazy=True,
-        extra_args=[
+        extra_lift_args=[
             "--invert-lazy",
             "cpython311",
             "--invert-lazy",
@@ -647,7 +656,7 @@ def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
         tmp_path,
         science_exe,
         lazy=True,
-        extra_args=["--invert-lazy", "exe.py"],
+        extra_lift_args=["--invert-lazy", "exe.py"],
     )
     result.assert_failure()
     assert "Cannot lazy fetch local file 'exe.py'." in result.stderr.strip().splitlines(

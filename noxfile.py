@@ -15,6 +15,7 @@ from nox import Session
 
 nox.needs_version = ">=2022.11.21"
 nox.options.stop_on_first_error = True
+nox.options.sessions = ["fmt", "lint", "check", "test"]
 
 REQUIRES_PYTHON_VERSION = "3.11"
 
@@ -257,14 +258,21 @@ def test(session: Session) -> None:
 
 
 @python_session()
+def run(session: Session) -> None:
+    science_pyz = create_zipapp(session)
+    session.run("python", str(science_pyz), *session.posargs)
+
+
+@python_session()
 def package(session: Session) -> None:
     science_pyz = create_zipapp(session)
     session.run(
         "python",
         str(science_pyz),
-        "build",
+        "lift",
         "--file",
         f"science.pyz={science_pyz}",
+        "build",
         "--dest-dir",
         str(DIST_DIR),
         *session.posargs,
