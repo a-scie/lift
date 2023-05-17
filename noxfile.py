@@ -285,4 +285,4 @@ def _package(session: Session, *extra_lift_args: str) -> None:
 @python_session()
 def package(session: Session) -> None:
     _package(session)
-    _package(session, "--invert-lazy", "cpython", "--name", "science-fat")
+    _package(session, "--invert-lazy", "cpython", "--app-name", "science-fat")

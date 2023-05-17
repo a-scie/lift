@@ -332,7 +332,7 @@ def test_url_source_bad_size(tmp_path: Path, science_exe: Path) -> None:
         science_exe,
         lazy=False,
         expected_size=bad_size,
-        SCIENCE_CACHE=str(tmp_path / "cache"),
+        SCIENCE_CACHE_DIR=str(tmp_path / "cache"),
     )
     result.assert_failure()
     assert re.search(
@@ -349,7 +349,7 @@ def test_url_source_bad_fingerprint(tmp_path: Path, science_exe: Path) -> None:
         science_exe,
         lazy=False,
         expected_fingerprint=bad_fingerprint,
-        SCIENCE_CACHE=str(tmp_path / "cache"),
+        SCIENCE_CACHE_DIR=str(tmp_path / "cache"),
     )
     result.assert_failure()
     assert re.search(
@@ -598,7 +598,7 @@ def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
         tmp_path,
         science_exe,
         lazy=True,
-        extra_lift_args=["--name", "skinny"],
+        extra_lift_args=["--app-name", "skinny"],
         expected_name="skinny",
     )
     result.assert_success()
@@ -606,7 +606,11 @@ def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
     skinny_scie = result.scie
 
     result = create_url_source_scie(
-        tmp_path, science_exe, lazy=False, extra_lift_args=["--name", "fat"], expected_name="fat"
+        tmp_path,
+        science_exe,
+        lazy=False,
+        extra_lift_args=["--app-name", "fat"],
+        expected_name="fat",
     )
     result.assert_success()
     assert result.scie.name == Platform.current().binary_name("fat")
@@ -619,7 +623,7 @@ def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
         tmp_path / "via-inversion",
         science_exe,
         lazy=True,
-        extra_lift_args=["--invert-lazy", "LICENSE", "--name", "fat"],
+        extra_lift_args=["--invert-lazy", "LICENSE", "--app-name", "fat"],
         expected_name="fat",
     )
     result.assert_success()
