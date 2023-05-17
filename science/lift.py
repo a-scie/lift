@@ -113,7 +113,7 @@ def emit_manifest(
     }
     data = dict[str, Any](scie=scie_data)
     if build_info:
-        data.update(science=build_info.to_dict(**(app_info or {})))
+        data.update(science=build_info.to_dict(app_name=name, **(app_info or {})))
     if fetch_urls:
         data.update(ptex=fetch_urls)
 
