@@ -5,15 +5,15 @@ from __future__ import annotations
 
 import atexit
 import hashlib
-import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterator, TypeAlias
 
-from appdirs import user_cache_dir
 from filelock import FileLock
+
+from science.context import ScienceConfig
 
 
 @dataclass(frozen=True)
@@ -80,7 +80,7 @@ class DownloadCache:
 
 
 def science_cache() -> Path:
-    return Path(os.environ.get("SCIENCE_CACHE", user_cache_dir("science")))
+    return ScienceConfig.active().cache_dir
 
 
 def download_cache() -> DownloadCache:

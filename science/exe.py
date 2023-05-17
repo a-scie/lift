@@ -28,6 +28,7 @@ from packaging import version
 
 from science import __version__, a_scie, lift
 from science.config import parse_config
+from science.context import ScienceConfig
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
 from science.model import Application, Binding, Command, Distribution, Fetch, File
@@ -80,7 +81,15 @@ def _log_fatal(
         """
     ),
 )
-def _main(verbose: int, quiet: int) -> None:
+@click.option(
+    "--cache-dir",
+    type=Path,
+    default=ScienceConfig.DEFAULT_CACHE_DIR,
+    show_default=True,
+    help="Specify an alternate location for the science cache.",
+)
+@click.pass_context
+def _main(ctx: click.Context, verbose: int, quiet: int, cache_dir: Path) -> None:
     """Science helps you prepare scies for your application.
 
     Science provides a high-level TOML manifest format for a scie application and can build scies
@@ -89,20 +98,10 @@ def _main(verbose: int, quiet: int) -> None:
     For more information on the TOML manifest format, see:
     https://github.com/a-scie/lift/blob/main/docs/manifest.md
     """
-    verbosity = verbose - quiet
-    sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=verbosity > 0)
-    root_logger = click_log.basic_config()
-    match verbosity:
-        case v if v <= -2:
-            root_logger.setLevel(logging.FATAL)
-        case -1:
-            root_logger.setLevel(logging.ERROR)
-        case 0:
-            root_logger.setLevel(logging.WARNING)
-        case 1:
-            root_logger.setLevel(logging.INFO)
-        case v if v >= 2:
-            root_logger.setLevel(logging.DEBUG)
+    science_config = ScienceConfig(verbosity=verbose - quiet, cache_dir=cache_dir)
+    science_config.configure_logging(root_logger=click_log.basic_config())
+    sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=science_config.verbose)
+    ctx.obj = science_config
 
 
 @dataclass(frozen=True)
@@ -287,7 +286,6 @@ pass_lift = click.make_pass_decorator(LiftConfig)
     type=FileMapping.parse,
     multiple=True,
     default=[],
-    envvar="SCIENCE_EXPORT_FILE",
     help=dedent(
         """\
         Map paths to files defined in your manifest.
@@ -313,7 +311,6 @@ pass_lift = click.make_pass_decorator(LiftConfig)
     metavar="FILE_ID",
     multiple=True,
     default=[],
-    envvar="SCIENCE_EXPORT_INVERT_LAZY",
     help=dedent(
         """\
         Toggle the laziness of a file declared in the application lift manifest.
@@ -344,7 +341,7 @@ pass_lift = click.make_pass_decorator(LiftConfig)
         specify:
 
         \b
-        science lift --invert-lazy cpython --invert-lazy example.txt --name example-thin
+        science lift --invert-lazy cpython --invert-lazy example.txt --app-name example-thin
 
         The resulting `example-thin` (or `example-thin.exe` on Windows) scie will include the
         `ptex` binary which will be used to fetch both the Python Build Standalone CPython 3.11
@@ -428,8 +425,7 @@ pass_lift = click.make_pass_decorator(LiftConfig)
     ),
 )
 @click.option(
-    "--name",
-    "app_name",
+    "--app-name",
     help=dedent(
         """\
         Override the name of the application declared in the lift manifest.
@@ -445,7 +441,6 @@ pass_lift = click.make_pass_decorator(LiftConfig)
     type=AppInfo.parse,
     multiple=True,
     default=[],
-    envvar="SCIENCE_EXPORT_APP_INFO",
     help=dedent(
         """\
         Override top-level `[lift.app_info]` keys or define new ones.
@@ -488,6 +483,7 @@ def dest_dir_option():
         "--dest-dir",
         type=Path,
         default=Path.cwd(),
+        show_default=True,
         help=dedent("The destination directory to output files to."),
     )
 
@@ -604,7 +600,6 @@ def export(
     type=click.Choice(sorted(hashlib.algorithms_guaranteed)),
     multiple=True,
     default=[],
-    envvar="SCIENCE_BUILD_HASH",
     help=dedent(
         """\
         Output a checksum file compatible with the shasum family of tools.
@@ -643,7 +638,10 @@ def build(
     use_jump: Path | None,
     hash_functions: list[str],
 ) -> None:
-    """Build scie executables from the lift TOML manifest."""
+    """Build scie executables from the lift TOML manifest.
+
+    If the LIFT_TOML_PATH is left unspecified, `lift.toml` is assumed.
+    """
 
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
