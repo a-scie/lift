@@ -263,8 +263,7 @@ def run(session: Session) -> None:
     session.run("python", str(science_pyz), *session.posargs)
 
 
-@python_session()
-def package(session: Session) -> None:
+def _package(session: Session, *extra_lift_args: str) -> None:
     science_pyz = create_zipapp(session)
     session.run(
         "python",
@@ -272,8 +271,18 @@ def package(session: Session) -> None:
         "lift",
         "--file",
         f"science.pyz={science_pyz}",
+        "--include-provenance",
+        *extra_lift_args,
         "build",
         "--dest-dir",
         str(DIST_DIR),
-        *session.posargs,
+        "--hash",
+        "sha256",
+        "--use-platform-suffix",
     )
+
+
+@python_session()
+def package(session: Session) -> None:
+    _package(session)
+    _package(session, "--invert-lazy", "cpython", "--name", "science-fat")
