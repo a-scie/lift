@@ -13,24 +13,24 @@
 
 ### Push Release Tag
 
-Sync a local branch with https://github.com/a-scie/jump main and confirm it has the version bump
+Sync a local branch with https://github.com/a-scie/lift main and confirm it has the version bump
 and changelog update as the tip commit:
 
 ```
 $ git log --stat -1 HEAD
-commit 01f3a0a8c9c278f092f13ce802bb10e6d3a16696 (HEAD -> main, upstream/main, upstream/HEAD)
+commit b46e245557f776594339e351ecf34e5c0fafb4d2 (HEAD -> main, upstream/main, upstream/HEAD)
 Author: John Sirois <john.sirois@gmail.com>
-Date:   Wed May 17 10:26:46 2023 -0700
+Date:   Wed May 17 11:08:18 2023 -0700
 
-    Prepare the 0.1.0 release.
+    Fix the science binary URL in provenance.
 
- .circleci/config.yml          | 70 ++++++++++++++++++++++++++++++++++++
- .github/workflows/release.yml | 98 ++++++++++++++++++++++++++++++++++++++++++++++++++
- CHANGES.md                    |  5 +++
- CONTRIBUTING.md               | 37 +++++++++++++++++++
- README.md                     |  5 +++
- RELEASE.md                    | 43 ++++++++++++++++++++++
- 6 files changed, 258 insertions(+)
+ CHANGES.md            | 5 +++++
+ RELEASE.md            | 2 +-
+ science/__init__.py   | 2 +-
+ science/build_info.py | 6 +++---
+ science/lift.py       | 2 +-
+ tests/test_exe.py     | 2 +-
+ 6 files changed, 12 insertions(+), 7 deletions(-)
 ```
 
 Tag the release as `v<version>` and push the tag to https://github.com/a-scie/lift main:

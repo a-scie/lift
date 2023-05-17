@@ -547,7 +547,7 @@ def test_include_provenance(tmp_path: Path, science_exe: Path) -> None:
     binary_info = build_info["binary"]
     assert __version__ == binary_info["version"]
     assert binary_info["url"].startswith(
-        f"https://github.com/a-scie/lift/releases/tag/v{__version__}/"
+        f"https://github.com/a-scie/lift/releases/download/v{__version__}/"
     )
 
     data = create_and_inspect(
