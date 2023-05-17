@@ -1,5 +1,7 @@
 [lift]
+# Name can be over-ridden with `science lift --app-name ...` which we do when producing "fat" scies.
 name = "science"
+# We do this here and dogfood ourself!
 description = "Ship your interpreted executables using science."
 
 [[lift.interpreters]]
@@ -7,19 +9,28 @@ id = "cpython"
 provider = "PythonBuildStandalone"
 release = "20230507"
 version = "3.11.3"
+# By default science ships as a "thin" scie that fetches CPython 3.11 on first run.
+# We use `science lift --invert-lazy cpython ...` when producing "fat" scies.
 lazy = true
 
 [[lift.files]]
+# The nox build emits this at `dist/science.pyz` and so our packaging process maps that path using
+# `science lift --file science.pyz=dist/science.pyz ...`.
 name = "science.pyz"
 
 [[lift.commands]]
+# This selects the `python` binary from within the CPython 3.11 interpreter distribution
+# (a tarball) provided by PythonBuildStandalone above.
 exe = "#{cpython:python}"
 args = [
     "{science.pyz}",
 ]
-env.remove_re = [
+
+[lift.commands.env]
+# We strip any ambient SHIV_* env vars and set the SHIV_ROOT to ensure hermetic operation. Although
+# `science` is a Python 3.11 shiv zipapp application under the covers; this should be opaque to the
+# end user. For their puposes `science` is just a native binary.
+remove_re = [
     "SHIV_.*",
 ]
-
-[lift.commands.env.replace]
-SHIV_ROOT = "{scie.bindings}/shiv_root"
+replace = { SHIV_ROOT = "{scie.bindings}/shiv_root" }
