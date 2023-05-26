@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
+from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -142,10 +143,10 @@ def _export(
         chroot = dest_dir / platform.value
         chroot.mkdir(parents=True, exist_ok=True)
 
-        bindings: list[Command] = []
-        distributions: list[Distribution] = []
+        bindings = list[Command]()
+        distributions = list[Distribution]()
 
-        requested_files: list[File] = []
+        requested_files = deque[File]()
         file_paths_by_id = {
             file_mapping.id: file_mapping.path.resolve()
             for file_mapping in lift_config.file_mappings
@@ -181,7 +182,7 @@ def _export(
         if any(isinstance(file.source, Fetch) and file.source.lazy for file in requested_files):
             ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
             file_paths_by_id[ptex.id] = chroot / ptex.name
-            requested_files.append(ptex)
+            requested_files.appendleft(ptex)
             argv1 = (
                 application.ptex.argv1
                 if application.ptex and application.ptex.argv1
