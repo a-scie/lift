@@ -274,11 +274,14 @@ def _package(session: Session, *extra_lift_args: str) -> None:
         "--include-provenance",
         *extra_lift_args,
         "build",
-        "--dest-dir",
-        str(DIST_DIR),
         "--hash",
         "sha256",
         "--use-platform-suffix",
+        env={
+            "SCIENCE_LIFT_BUILD_DEST_DIR": os.environ.get(
+                "SCIENCE_LIFT_BUILD_DEST_DIR", str(DIST_DIR)
+            )
+        },
     )
 
 

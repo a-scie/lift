@@ -61,12 +61,12 @@ class BuildInfo:
     git_state: str | None = None
     app_info: FrozenDict[str, Any] = FrozenDict()
 
-    def to_dict(self, app_name: str = "science", **extra_app_info: Any) -> dict[str, Any]:
+    def to_dict(self, **extra_app_info: Any) -> dict[str, Any]:
         binary = dict[str, Any](
             version=__version__,
             url=(
                 f"https://github.com/a-scie/lift/releases/download/v{__version__}/"
-                f"{Platform.current().qualified_binary_name(app_name)}"
+                f"{Platform.current().qualified_binary_name('science')}"
             ),
         )
         if self.digest:
