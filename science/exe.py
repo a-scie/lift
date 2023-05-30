@@ -295,11 +295,11 @@ pass_lift = click.make_pass_decorator(LiftConfig)
         to the CWD you invoke science from. If any file is not at that path, you can tell science
         to look elsewhere with: `--file <name>=<location>`.
 
-        For example, for this manifest snippet:
+        For example, for this manifest snippet::
 
-        \b
-        [[lift.files]]
-        name = "example.txt"
+         \b
+         [[lift.files]]
+         name = "example.txt"
 
         If the file is located at `src/examples/example.txt` relative to the CWD you would specify
         `--file example.txt=src/examples/example.txt`.
@@ -316,33 +316,31 @@ pass_lift = click.make_pass_decorator(LiftConfig)
         """\
         Toggle the laziness of a file declared in the application lift manifest.
 
-        For example, for this manifest snippet:
+        For example, for this manifest snippet::
 
-        \b
-        [lift]
-        name = "example"
-
-        \b
-        [[lift.interpreters]]
-        id = "cpython"
-        provider = "PythonBuildStandalone"
-        version = "3.11"
-
-        \b
-        [[lift.files]]
-        name = "example.txt"
-        digest = { size = 137, fingerprint = "abcd1234" }}
-        source = { url = "https://example.com", lazy = false }
+         \b
+         [lift]
+         name = "example"
+         \b
+         [[lift.interpreters]]
+         id = "cpython"
+         provider = "PythonBuildStandalone"
+         version = "3.11"
+         \b
+         [[lift.files]]
+         name = "example.txt"
+         digest = { size = 137, fingerprint = "abcd1234" }}
+         source = { url = "https://example.com", lazy = false }
 
         The default scie built will be "fat". Both the Python Build Standalone CPython 3.11
         interpreter distribution and the example.txt file will be downloaded by `science` and
         packed into the `example` (or `example.exe` on Windows) scie.
 
         To create a "skinny" scie in addition using this same application lift manifest you can
-        specify:
+        specify::
 
-        \b
-        science lift --invert-lazy cpython --invert-lazy example.txt --app-name example-thin
+         \b
+         science lift --invert-lazy cpython --invert-lazy example.txt --app-name example-thin
 
         The resulting `example-thin` (or `example-thin.exe` on Windows) scie will include the
         `ptex` binary which will be used to fetch both the Python Build Standalone CPython 3.11
@@ -371,57 +369,57 @@ pass_lift = click.make_pass_decorator(LiftConfig)
         be included. If any `--app-info` are specified, these top-level keys will also be included
         and over-ride any top level keys of the same name present in `[lift.app_info]`.
 
-        For example, given the following application lift manifest snippet:
+        For example, given the following application lift manifest snippet::
 
-        \b
-        [lift.app_info]
-        provided_by = { sponsor = "example.org", licenses = ["Apache-2.0", "MIT"] }
-        edition = "free"
+         \b
+         [lift.app_info]
+         provided_by = { sponsor = "example.org", licenses = ["Apache-2.0", "MIT"] }
+         edition = "free"
 
-        Running the following:
+        Running the following::
 
-        \b
-        science lift \\
-            --include-provenance \\
-            --app-info edition=paid \\
-            --app-info releaser=$(id -un) \\
-            export
+         \b
+         science lift \\
+             --include-provenance \\
+             --app-info edition=paid \\
+             --app-info releaser=$(id -un) \\
+             export
 
-        Would result in a scie lift JSON manifest with extra content like:
+        Would result in a scie lift JSON manifest with extra content like::
 
-        \b
-        {
-          "scie": {
-            ...
-          },
-          "science": {
-            "app_info": {
-              "edition" = "paid"
-              "provided_by": {
-                "licenses": [
-                  "Apache-2.0",
-                  "MIT"
-                ],
-                "releaser": "jsirois",
-                "sponsor": "example.org"
-              }
-            },
-            "binary": {
-              "url": "https://github.com/a-scie/lift/releases/tag/v0.1.0/science-linux-x86_64",
-              "version": "0.1.0"
-            },
-            "git_state": "v0.1.0-0-gc423e47",
-            "manifest": {
-              "hash": "49dc36a6db71bccf1bff35363454f7567fd124ba80d1e488bd320668a11c70bc",
-              "size": 432,
-              "source": "lift.toml"
-            },
-            "notes": [
-              "This scie lift JSON manifest was generated from a source lift toml manifest using the science binary.",
-              "Find out more here: https://github.com/a-scie/lift/blob/v0.1.0/README.md"
-            ]
-          }
-        }
+         \b
+         {
+           "scie": {
+             ...
+           },
+           "science": {
+             "app_info": {
+               "edition" = "paid"
+               "provided_by": {
+                 "licenses": [
+                   "Apache-2.0",
+                   "MIT"
+                 ],
+                 "releaser": "jsirois",
+                 "sponsor": "example.org"
+               }
+             },
+             "binary": {
+               "url": "https://github.com/a-scie/lift/releases/tag/v0.1.0/science-linux-x86_64",
+               "version": "0.1.0"
+             },
+             "git_state": "v0.1.0-0-gc423e47",
+             "manifest": {
+               "hash": "49dc36a6db71bccf1bff35363454f7567fd124ba80d1e488bd320668a11c70bc",
+               "size": 432,
+               "source": "lift.toml"
+             },
+             "notes": [
+               "This scie lift JSON manifest was generated from a source lift toml manifest using the science binary.",
+               "Find out more here: https://github.com/a-scie/lift/blob/v0.1.0/README.md"
+             ]
+           }
+         }
         """
     ),
 )
@@ -500,15 +498,15 @@ def use_platform_suffix_option():
             Science will automatically use a platform suffix for disambiguation. When there is no
             ambiguity, you can force a suffix anyway by using this flag.
 
-            The current platform suffixes are:
+            The current platform suffixes are::
 
-            \b
-            {suffixes}
+             \b
+             {suffixes}
 
             * Indicates the current platform.
             """
         ).format(
-            suffixes="\n".join(
+            suffixes="\n ".join(
                 f"{'*' if platform == Platform.current() else ' '} {platform.value}"
                 for platform in Platform
             )
@@ -609,23 +607,23 @@ def export(
         with the same name and hash algorithm name suffix. The file will contain the hex fingerprint
         of the scie executable using that algorithm to hash it.
 
-        For example, for `--hash sha256` against a scie named example on Windows you might get:
+        For example, for `--hash sha256` against a scie named example on Windows you might get::
 
-        \b
-        dist/example.exe
-        dist/example.exe.sha256
+         \b
+         dist/example.exe
+         dist/example.exe.sha256
 
-        The contents of `dist/example.exe.sha256` would look like (`*` means executable):
+        The contents of `dist/example.exe.sha256` would look like (`*` means executable)::
 
-        \b
-        33fd890f056b0434241a357b616b4a651c82acc1ee4ce42e0b95c059d4a76f04 *example.exe
+         \b
+         33fd890f056b0434241a357b616b4a651c82acc1ee4ce42e0b95c059d4a76f04 *example.exe
 
         And the fingerprint of `example.exe` could be checked by running the following in the
-        `dist` dir:
+        `dist` dir::
 
-        \b
-        sha256sum -c example.exe.sha256
-        example.exe: OK
+         \b
+         sha256sum -c example.exe.sha256
+         example.exe: OK
         """
     ),
 )

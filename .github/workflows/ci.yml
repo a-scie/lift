@@ -44,3 +44,5 @@ jobs:
         run: nox -e test -- -vvs
       - name: Build & Package
         run: nox -e package
+      - name: Generate Doc Site
+        run: nox -e doc
