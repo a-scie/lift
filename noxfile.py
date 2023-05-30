@@ -6,6 +6,7 @@ import hashlib
 import itertools
 import json
 import os
+import shutil
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Collection, Iterable, TypeVar, cast
@@ -156,7 +157,7 @@ def python_session(
     return wrapped
 
 
-PATHS_TO_CHECK = ["science", "tests", "test-support", "noxfile.py"]
+PATHS_TO_CHECK = ["science", "tests", "test-support", "noxfile.py", "docs"]
 
 
 def run_black(session: Session, *args: str) -> None:
@@ -255,6 +256,16 @@ def test(session: Session) -> None:
     science_pyz = create_zipapp(session)
     test_env = {"BUILD_ROOT": str(BUILD_ROOT), "SCIENCE_TEST_PYZ_PATH": str(science_pyz)}
     session.run("pytest", "-n" "auto", *(session.posargs or ["-v"]), env=test_env)
+
+
+@python_session(include_project=True)
+def doc(session: Session) -> None:
+    session.install(".")
+    gen_doc_type = "html"
+    docs_dir = BUILD_ROOT / "docs"
+    build_dir = docs_dir / "build" / gen_doc_type
+    shutil.rmtree(build_dir, ignore_errors=True)
+    session.run("sphinx-build", "-b", gen_doc_type, "-aEW", str(docs_dir), str(build_dir))
 
 
 @python_session()

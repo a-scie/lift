@@ -3,6 +3,7 @@
 /.nox/
 /build/
 /dist/
+/docs/build/
 
 # Python bytecode.
 __pycache__/

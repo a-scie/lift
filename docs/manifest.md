@@ -1,4 +1,4 @@
-# The Science Application Manifest
+# Manifest Format
 
 TODO: Placeholder
 

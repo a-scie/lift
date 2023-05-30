@@ -51,6 +51,9 @@ jobs:
       - run:
           name: Build & Package
           command: nox -e package
+      - run:
+          name: Generate Doc Site
+          command: nox -e doc
   package:
     machine:
       image: ubuntu-2004:current
