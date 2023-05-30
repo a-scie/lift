@@ -42,14 +42,16 @@ def create_extra_link(
     return (
         dedent(
             f"""\
-        <div>
-            <img id="{img_id}" style="vertical-align:middle" src="{light_icon}">
-            <span style="padding-left:2px">{text}</span>
-        </div>
-        <script>
-            Science.theme.registerIcons("{img_id}", "{light_icon}", "{sepia_icon}", "{dark_icon}");
-        </script>
-        """
+            <div>
+                <img id="{img_id}" style="vertical-align:middle" src="{light_icon}">
+                <span style="padding-left:2px">{text}</span>
+            </div>
+            <script>
+                Science.theme.registerIcons(
+                    "{img_id}", "{light_icon}", "{sepia_icon}", "{dark_icon}"
+                );
+            </script>
+            """
         ),
         url,
     )

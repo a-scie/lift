@@ -45,4 +45,7 @@ jobs:
       - name: Build & Package
         run: nox -e package
       - name: Generate Doc Site
+        # We use a fork of https://github.com/vsalvino/sphinx-library currently which necessitates
+        # a VCS requirement and that nets a non-universal lock item; so we skip for now.
+        if: matrix.os != 'windows-2022'
         run: nox -e doc
