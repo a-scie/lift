@@ -6,10 +6,12 @@ from __future__ import annotations
 import dataclasses
 import functools
 import hashlib
+import json
 import logging
 import os
 import shutil
 import sys
+import textwrap
 import traceback
 from pathlib import Path
 from textwrap import dedent
@@ -21,7 +23,7 @@ import click_log
 from click_didyoumean import DYMGroup
 from packaging import version
 
-from science import __version__
+from science import __version__, providers
 from science.commands import build, lift
 from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
@@ -99,6 +101,56 @@ def _main(ctx: click.Context, verbose: int, quiet: int, cache_dir: Path) -> None
     science_config.configure_logging(root_logger=click_log.basic_config())
     sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=science_config.verbose)
     ctx.obj = science_config
+
+
+@_main.group(cls=DYMGroup, name="provider")
+def _provider() -> None:
+    """Perform operations against provider plugins."""
+
+
+@_provider.command(name="list")
+@click.option(
+    "--json",
+    "emit_json",
+    is_flag=True,
+    help="Output the list of providers as a JSON list of objects",
+)
+def _list(emit_json: bool) -> None:
+    """List the installed provider plugins."""
+    if emit_json:
+        click.echo(
+            json.dumps(
+                [
+                    {
+                        "type": provider_info.fully_qualified_name,
+                        "source": provider_info.source,
+                        "short_name": provider_info.short_name,
+                        "summary": provider_info.summary,
+                        "description": provider_info.description,
+                    }
+                    for provider_info in providers.ALL_PROVIDERS
+                ],
+                sort_keys=True,
+            )
+        )
+        return
+
+    indent_width = len(f"{len(providers.ALL_PROVIDERS)}. ")
+    indent = " " * indent_width
+    for index, provider_info in enumerate(providers.ALL_PROVIDERS, start=1):
+        if index > 1:
+            click.echo()
+        index_prefix = f"{index}.".ljust(indent_width)
+        click.echo(f"{index_prefix}{provider_info.fully_qualified_name}")
+        click.echo(f"{indent}source: {provider_info.source}")
+        if provider_info.short_name:
+            click.echo(f"{indent}short name: {provider_info.short_name}")
+        if provider_info.summary:
+            click.echo()
+            click.echo(f"{indent}{provider_info.summary}")
+        if provider_info.description:
+            click.echo()
+            click.echo(textwrap.indent(provider_info.description, prefix=indent))
 
 
 pass_lift = click.make_pass_decorator(LiftConfig)

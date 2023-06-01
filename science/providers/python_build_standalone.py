@@ -50,6 +50,13 @@ class Asset:
 
 @dataclass(frozen=True)
 class PythonBuildStandalone(Provider):
+    """Provides pre-built CPython distributions from the Python Standalone Builds project.
+
+    All science platforms are supported for Python 3 minor versions >= 8. Python Standalone Builds
+    does not provide all patch versions; so you should check their releases if you wish to pin down
+    to the patch level. See here: https://github.com/indygreg/python-build-standalone/releases
+    """
+
     @staticmethod
     def rank_compatibility(platform: Platform, target_triple: str) -> int | None:
         match platform:
