@@ -36,6 +36,7 @@ source_suffix = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 # https://vsalvino.github.io/sphinx-library/customize.html
 
+html_title = f"Science Docs (v{release})"
 html_theme = "library"
 
 

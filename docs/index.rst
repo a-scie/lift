@@ -14,10 +14,3 @@ If you have questions this documentation does not address, please stop by our
 
    manifest
    cli
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
