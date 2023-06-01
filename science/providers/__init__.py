@@ -54,10 +54,14 @@ def _iter_builtin_providers() -> Iterator[ProviderInfo]:
 
 def _iter_providers() -> Iterator[ProviderInfo]:
     providers_by_short_name = dict[str, ProviderInfo]()
-    for provider_info in _iter_builtin_providers():
-        yield provider_info
+
+    def track_short_name(provider_info: ProviderInfo) -> ProviderInfo:
         if provider_info.short_name:
             providers_by_short_name[provider_info.short_name] = provider_info
+        return provider_info
+
+    for provider_info in _iter_builtin_providers():
+        yield track_short_name(provider_info)
 
     for entry_point in importlib.metadata.entry_points().select(
         group="science.providers_by_short_name"
@@ -85,8 +89,8 @@ def _iter_providers() -> Iterator[ProviderInfo]:
             )
         else:
             provider_info = dataclasses.replace(provider_info, short_name=entry_point.name)
-            providers_by_short_name[entry_point.name] = provider_info
-        yield provider_info
+
+        yield track_short_name(provider_info)
 
 
 ALL_PROVIDERS = tuple[ProviderInfo, ...](
