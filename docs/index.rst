@@ -14,3 +14,4 @@ If you have questions this documentation does not address, please stop by our
 
    manifest
    cli
+   providers

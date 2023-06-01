@@ -1,3 +1,4 @@
+docutils
 myst-parser
 sphinx
 sphinx-click

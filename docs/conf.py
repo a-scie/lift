@@ -1,3 +1,6 @@
+# Copyright 2023 Science project contributors.
+# Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -23,10 +26,13 @@ author = "John Sirois"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 extensions = [
+    "_science.providers",
     "myst_parser",
     "sphinx_click",
 ]
+
 source_suffix = {
     ".rst": "restructuredtext",
     ".md": "markdown",
