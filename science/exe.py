@@ -6,33 +6,29 @@ from __future__ import annotations
 import dataclasses
 import functools
 import hashlib
-import io
 import logging
 import os
 import shutil
-import subprocess
 import sys
-import tempfile
 import traceback
-from collections import deque
-from contextlib import contextmanager
-from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 from types import TracebackType
-from typing import Any, BinaryIO, Iterable, Iterator, Mapping
+from typing import BinaryIO
 
 import click
 import click_log
 from click_didyoumean import DYMGroup
 from packaging import version
 
-from science import __version__, a_scie, lift
+from science import __version__
+from science.commands import build, lift
+from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
 from science.context import ScienceConfig
 from science.errors import InputError
-from science.fetcher import fetch_and_verify
-from science.model import Application, Binding, Command, Distribution, Fetch, File
+from science.fs import temporary_directory
+from science.model import Application
 from science.platform import Platform
 
 logger = logging.getLogger(__name__)
@@ -103,177 +99,6 @@ def _main(ctx: click.Context, verbose: int, quiet: int, cache_dir: Path) -> None
     science_config.configure_logging(root_logger=click_log.basic_config())
     sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=science_config.verbose)
     ctx.obj = science_config
-
-
-@dataclass(frozen=True)
-class FileMapping:
-    @classmethod
-    def parse(cls, value: str) -> FileMapping:
-        components = value.split("=", 1)
-        if len(components) != 2:
-            raise InputError(
-                "Invalid file mapping. A file mapping must be of the form "
-                f"`(<name>|<key>)=<path>`: {value}"
-            )
-        return cls(id=components[0], path=Path(components[1]))
-
-    id: str
-    path: Path
-
-
-@contextmanager
-def _temporary_directory(cleanup: bool) -> Iterator[Path]:
-    if cleanup:
-        with tempfile.TemporaryDirectory() as td:
-            yield Path(td)
-    else:
-        yield Path(tempfile.mkdtemp())
-
-
-def _export(
-    lift_config: LiftConfig,
-    application: Application,
-    dest_dir: Path,
-    *,
-    platforms: Iterable[Platform] | None = None,
-) -> Iterator[tuple[Platform, Path]]:
-    app_info = AppInfo.assemble(lift_config.app_info)
-
-    for platform in platforms or application.platforms:
-        chroot = dest_dir / platform.value
-        chroot.mkdir(parents=True, exist_ok=True)
-
-        bindings = list[Command]()
-        distributions = list[Distribution]()
-
-        requested_files = deque[File]()
-        file_paths_by_id = {
-            file_mapping.id: file_mapping.path.resolve()
-            for file_mapping in lift_config.file_mappings
-        }
-        inverted = list[str]()
-
-        def maybe_invert_lazy(file: File) -> File:
-            if file.id in lift_config.invert_lazy_ids:
-                match file.source:
-                    case Fetch(_, lazy=lazy) as fetch:
-                        inverted.append(file.id)
-                        return dataclasses.replace(
-                            file, source=dataclasses.replace(fetch, lazy=not lazy)
-                        )
-                    case Binding(name):
-                        raise InputError(f"Cannot make binding {name!r} non-lazy.")
-                    case None:
-                        raise InputError(f"Cannot lazy fetch local file {file.name!r}.")
-            return file
-
-        for interpreter in application.interpreters:
-            distribution = interpreter.provider.distribution(platform)
-            if distribution:
-                distributions.append(distribution)
-                requested_files.append(maybe_invert_lazy(distribution.file))
-        requested_files.extend(map(maybe_invert_lazy, application.files))
-        if (actually_inverted := frozenset(inverted)) != lift_config.invert_lazy_ids:
-            raise InputError(
-                "There following files were not present to invert laziness for: "
-                f"{', '.join(sorted(lift_config.invert_lazy_ids - actually_inverted))}"
-            )
-
-        if any(isinstance(file.source, Fetch) and file.source.lazy for file in requested_files):
-            ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
-            file_paths_by_id[ptex.id] = chroot / ptex.name
-            requested_files.appendleft(ptex)
-            argv1 = (
-                application.ptex.argv1
-                if application.ptex and application.ptex.argv1
-                else "{scie.lift}"
-            )
-            bindings.append(Fetch.create_binding(fetch_exe=ptex, argv1=argv1))
-        bindings.extend(application.bindings)
-
-        files = list[File]()
-        fetch_urls = dict[str, str]()
-        for requested_file in requested_files:
-            file = requested_file
-            file_path: Path | None = None
-            match requested_file.source:
-                case Fetch(url=url, lazy=True):
-                    fetch_urls[requested_file.name] = url
-                case Fetch(url=url, lazy=False):
-                    file = dataclasses.replace(requested_file, source=None)
-                    file_path = fetch_and_verify(
-                        url,
-                        fingerprint=requested_file.digest,
-                        executable=requested_file.is_executable,
-                    )
-                case None:
-                    file_path = (
-                        file_paths_by_id.get(requested_file.id) or Path.cwd() / requested_file.name
-                    )
-                    if not file_path.exists():
-                        raise InputError(
-                            f"The file for {requested_file.id} is not mapped or cannot be found at "
-                            f"{file_path.relative_to(Path.cwd())} relative to the cwd of "
-                            f"{Path.cwd()}."
-                        )
-            files.append(file)
-            if file_path:
-                requested_file.maybe_check_digest(file_path)
-                target = chroot / requested_file.name
-                target.parent.mkdir(parents=True, exist_ok=True)
-                if not target.exists():
-                    target.symlink_to(file_path)
-
-        lift_manifest = chroot / "lift.json"
-
-        build_info = application.build_info if lift_config.include_provenance else None
-
-        with open(lift_manifest, "w") as lift_manifest_output:
-            lift.emit_manifest(
-                lift_manifest_output,
-                name=application.name,
-                description=application.description,
-                load_dotenv=application.load_dotenv,
-                scie_jump=application.scie_jump,
-                platform=platform,
-                distributions=distributions,
-                interpreter_groups=application.interpreter_groups,
-                files=requested_files,
-                commands=application.commands,
-                bindings=bindings,
-                fetch_urls=fetch_urls,
-                build_info=build_info,
-                app_info=app_info,
-            )
-        yield platform, lift_manifest
-
-
-@dataclass(frozen=True)
-class AppInfo:
-    @classmethod
-    def assemble(cls, app_infos: Iterable[AppInfo]) -> Mapping[str, Any]:
-        return {app_info.key: app_info.value for app_info in app_infos}
-
-    @classmethod
-    def parse(cls, value: str) -> AppInfo:
-        components = value.split("=", 1)
-        if len(components) != 2:
-            raise InputError(
-                f"Invalid app info. An app info entry must be of the form `<key>=<value>`: {value}"
-            )
-        return cls(key=components[0], value=components[1])
-
-    key: str
-    value: str
-
-
-@dataclass(frozen=True)
-class LiftConfig:
-    file_mappings: tuple[FileMapping, ...] = ()
-    invert_lazy_ids: frozenset[str] = frozenset()
-    include_provenance: bool = False
-    app_info: tuple[AppInfo, ...] = ()
-    app_name: str | None = None
 
 
 pass_lift = click.make_pass_decorator(LiftConfig)
@@ -521,18 +346,6 @@ def parse_application(lift_config: LiftConfig, config: BinaryIO) -> Application:
     return application
 
 
-@dataclass(frozen=True)
-class PlatformInfo:
-    @classmethod
-    def create(cls, application: Application, use_suffix: bool = False) -> PlatformInfo:
-        current = Platform.current()
-        use_suffix = use_suffix or application.platforms != frozenset([current])
-        return cls(current=current, use_suffix=use_suffix)
-
-    current: Platform
-    use_suffix: bool
-
-
 @_lift.command()
 @config_arg()
 @dest_dir_option()
@@ -548,8 +361,8 @@ def export(
 
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
-    with _temporary_directory(cleanup=True) as td:
-        for _, manifest_path in _export(lift_config, application, dest_dir=td):
+    with temporary_directory(cleanup=True) as td:
+        for _, manifest_path in lift.export_manifest(lift_config, application, dest_dir=td):
             lift_manifest = dest_dir / (
                 manifest_path.relative_to(td) if platform_info.use_suffix else manifest_path.name
             )
@@ -561,7 +374,7 @@ def export(
             click.echo(lift_manifest)
 
 
-@_lift.command()
+@_lift.command(name="build")
 @config_arg()
 @dest_dir_option()
 @use_platform_suffix_option()
@@ -628,7 +441,7 @@ def export(
     ),
 )
 @pass_lift
-def build(
+def _build(
     lift_config: LiftConfig,
     config: BinaryIO,
     dest_dir: Path,
@@ -664,54 +477,35 @@ def build(
             f"requires at least 0.9.0."
         )
 
-    native_jump_path = (
-        a_scie.custom_jump(repo_path=use_jump)
-        if use_jump
-        else a_scie.jump(platform=platform_info.current)
-    )
-    with _temporary_directory(cleanup=not preserve_sandbox) as td:
-        for platform, lift_manifest in _export(
-            lift_config, application, dest_dir=td, platforms=platforms
-        ):
-            jump_path = (
-                a_scie.custom_jump(repo_path=use_jump)
-                if use_jump
-                else a_scie.jump(specification=application.scie_jump, platform=platform)
-            )
-            platform_export_dir = lift_manifest.parent
-            subprocess.run(
-                args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],
-                cwd=platform_export_dir,
-                stdout=subprocess.DEVNULL,
-                check=True,
-            )
-            src_binary_name = platform_info.current.binary_name(application.name)
-            dst_binary_name = (
-                platform.qualified_binary_name(application.name)
-                if use_platform_suffix
-                else platform.binary_name(application.name)
-            )
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            dst_binary = dest_dir / dst_binary_name
-            shutil.move(src=platform_export_dir / src_binary_name, dst=dst_binary)
-            if hash_functions:
-                digests = tuple(
-                    hashlib.new(hash_function) for hash_function in sorted(set(hash_functions))
-                )
-                with dst_binary.open(mode="rb") as fp:
-                    for chunk in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
-                        for digest in digests:
-                            digest.update(chunk)
-                for digest in digests:
-                    dst_binary.with_name(f"{dst_binary.name}.{digest.name}").write_text(
-                        f"{digest.hexdigest()} *{dst_binary_name}{os.linesep}"
-                    )
-            click.echo(dst_binary)
+    with temporary_directory(cleanup=not preserve_sandbox) as td:
+        assembly_info = build.assemble_scies(
+            lift_config=lift_config,
+            application=application,
+            dest_dir=td,
+            platforms=platforms,
+            platform_info=platform_info,
+            use_jump=use_jump,
+            hash_functions=hash_functions,
+        )
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        def move(path: Path) -> None:
+            dst = dest_dir / path.name
+            shutil.move(src=path, dst=dst)
+            click.echo(dst)
+
+        for scie_assembly in assembly_info.scies:
+            move(scie_assembly.scie)
+            for checksum_file in scie_assembly.hashes:
+                move(checksum_file)
+
             if preserve_sandbox:
-                (lift_manifest.parent / platform_info.current.binary_name("scie-jump")).symlink_to(
-                    native_jump_path
+                (scie_assembly.lift_manifest.parent / assembly_info.native_jump.name).symlink_to(
+                    assembly_info.native_jump
                 )
-                click.secho(f"Sandbox preserved at {lift_manifest.parent}", fg="yellow")
+                click.secho(
+                    f"Sandbox preserved at {scie_assembly.lift_manifest.parent}", fg="yellow"
+                )
 
 
 def main():
