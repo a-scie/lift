@@ -260,7 +260,6 @@ def test(session: Session) -> None:
 
 @python_session(include_project=True)
 def doc(session: Session) -> None:
-    session.install(".")
     gen_doc_type = "html"
     docs_dir = BUILD_ROOT / "docs"
     build_dir = docs_dir / "build" / gen_doc_type
