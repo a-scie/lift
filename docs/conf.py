@@ -57,7 +57,7 @@ def create_extra_link(
                 <span style="padding-left:2px">{text}</span>
             </div>
             <script>
-                # N.B.: The other half of this is implemented in `_static/js/icon_theme.js`.
+                // N.B.: The other half of this is implemented in `_static/js/icon_theme.js`.
                 Science.theme.registerIcons(
                     "{img_id}", "{light_icon}", "{sepia_icon}", "{dark_icon}"
                 );
