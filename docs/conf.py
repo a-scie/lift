@@ -2,13 +2,22 @@
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+import sys
+from datetime import datetime
+from pathlib import Path
 from textwrap import dedent
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+import science
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Science"
-copyright = "2023, Science project contributors"
+version = f"{science.VERSION.major}.{science.VERSION.minor}"
+release = f"{science.VERSION}"
+copyright = f"{datetime.now().year}, Science project contributors"
 author = "John Sirois"
 
 # -- General configuration ---------------------------------------------------
@@ -47,6 +56,7 @@ def create_extra_link(
                 <span style="padding-left:2px">{text}</span>
             </div>
             <script>
+                # N.B.: The other half of this is implemented in `_static/js/icon_theme.js`.
                 Science.theme.registerIcons(
                     "{img_id}", "{light_icon}", "{sepia_icon}", "{dark_icon}"
                 );
