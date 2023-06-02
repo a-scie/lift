@@ -65,6 +65,22 @@ def maybe_create_lock(session: Session) -> bool:
                 lock_checksum = hashlib.sha256(LOCK_FILE.read_bytes()).hexdigest()
                 if lock_checksum == expected_lock_checksum:
                     create_lock = False
+                else:
+                    session.warn(
+                        f"Lock checksum changed from {expected_lock_checksum} to {lock_checksum}, "
+                        "re-generating lock..."
+                    )
+            else:
+                session.warn(
+                    f"Requirements checksum changed from {expected_requirements_checksum} to "
+                    f"{requirements_checksum}, re-generating lock..."
+                )
+    elif LOCK_FILE.exists():
+        session.warn(
+            f"The lock checksum file {lock_checksum_file} does not exist, re-generating lock..."
+        )
+    else:
+        session.warn(f"The lock file {LOCK_FILE} does not exist, re-generating lock...")
 
     if create_lock:
         run_pex(
