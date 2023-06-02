@@ -1,0 +1,6 @@
+# Prevent lock checksumming from getting tripped up by Windows
+# line-ending auto-conversion by git on checkout.
+/nox-support/*-reqs.txt -text
+requirements.txt -text
+lock.json -text
+
