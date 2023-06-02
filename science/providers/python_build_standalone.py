@@ -50,11 +50,25 @@ class Asset:
 
 @dataclass(frozen=True)
 class PythonBuildStandalone(Provider):
-    """Provides pre-built CPython distributions from the Python Standalone Builds project.
+    """Provides *pre-built* CPython distributions from the Python Standalone Builds project.
 
     All science platforms are supported for Python 3 minor versions >= 8. Python Standalone Builds
     does not provide all patch versions; so you should check their releases if you wish to pin down
     to the patch level. See here: https://github.com/indygreg/python-build-standalone/releases
+
+    For all platforms, a `python` placeholder (`#{<id>:python}`) is supported and will be
+    substituted with the selected distribution's Python binary path.
+
+    On the Linux and MacOS platforms a `pip` placeholder (`#{<id>:pip}`) is supported and will be
+    substituted with the selected distribution's pip script path. N.B.: Mutating the
+    distribution with `pip install` or `pip uninstall` is almost always a bad idea. The Python
+    Standalone Builds distributions are unpacked in the shared scie file cache atomically, but any
+    mutations after the initial unpacking are not guarded; as such, you risk concurrency bugs not to
+    mention all the problems associated with mutating a shared Python distribution's site-packages:
+    namely, you can silently break other users of the shared Python distribution. If you have a need
+    to use `pip install`, you probably want to use the `--prefix` or `--target` options or else
+    instead create a venv using the venv module (`-m venv`) and then mutate that private venv using
+    its `pip` script.
     """
 
     @staticmethod

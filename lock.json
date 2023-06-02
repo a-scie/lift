@@ -1452,8 +1452,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "f6bb070fbc9a42482197dfdfa29c01e9e245822a86f17541f5a6dcee098cfe1a",
-              "url": "git+https://github.com/a-scie/sphinx-library@f3d1970df27d9641c2ba84c5af94314bee80d41b"
+              "hash": "21c3f448d17224246e36a5db678e98b9261a1909604c160cd12f45fa1e7eb695",
+              "url": "https://files.pythonhosted.org/packages/6e/f4/7dec21039c12c231508dc06a42efef587b6fda809d330053005b093e84d8/sphinx_library-1.1.2-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "a5b59bbf3c8688eae24845ed02f70272438984e56b1ae5bf616591f94f4b1552",
+              "url": "https://files.pythonhosted.org/packages/52/76/0ff03070f32a66abede43958dd66bc195754a5d33037863cc70c199cec24/sphinx-library-1.1.2.tar.gz"
             }
           ],
           "project_name": "sphinx-library",
@@ -1665,6 +1670,24 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "6b17cbe57cb282158feb41d154cddaeabc16f1d6cff3c7308bd3056f42aa7cd2",
+              "url": "https://files.pythonhosted.org/packages/7d/ef/dc298dd88979292ea2093c2d9393c3a64ce0e85dcb8bd57d42ad64b58035/types_docutils-0.20.0.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "f682b5459a1e6e28208742adb0be8573d1ecbddd442f00d202b0278c1c4418a2",
+              "url": "https://files.pythonhosted.org/packages/16/cd/2c722b562282bfef2a34da3f7497be3b13defb8c2d994f30514f3423af5e/types-docutils-0.20.0.1.tar.gz"
+            }
+          ],
+          "project_name": "types-docutils",
+          "requires_dists": [],
+          "requires_python": null,
+          "version": "0.20.0.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "de7b2bb1831d6f7a4b554671ffe5875e729753496961b3e9b202745e4955dafa",
               "url": "https://files.pythonhosted.org/packages/81/30/45b0447ffff6b390b315847e0aa7ae276350d67d8e1fcf85eb9b9a171941/types_toml-0.10.8.6-py3-none-any.whl"
             },
@@ -1800,6 +1823,7 @@
     "click",
     "click-log",
     "click_didyoumean",
+    "docutils",
     "filelock",
     "httpx",
     "isort",
@@ -1816,6 +1840,7 @@
     "toml",
     "tqdm",
     "types-appdirs",
+    "types-docutils",
     "types-toml",
     "types-tqdm"
   ],

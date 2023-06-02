@@ -43,7 +43,7 @@ class ProviderInfo:
         return None
 
 
-def _iter_builtin_providers() -> Iterator[ProviderInfo]:
+def iter_builtin_providers() -> Iterator[ProviderInfo]:
     for builtin_provider_type in _BUILTIN_PROVIDER_TYPES:
         yield ProviderInfo(
             type=builtin_provider_type,
@@ -60,7 +60,7 @@ def _iter_providers() -> Iterator[ProviderInfo]:
             providers_by_short_name[provider_info.short_name] = provider_info
         return provider_info
 
-    for provider_info in _iter_builtin_providers():
+    for provider_info in iter_builtin_providers():
         yield track_short_name(provider_info)
 
     for entry_point in importlib.metadata.entry_points().select(

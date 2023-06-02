@@ -186,7 +186,7 @@ def lint(session: Session) -> None:
     run_autoflake(session, "--check")
 
 
-@python_session(include_project=True, extra_reqs=["test"])
+@python_session(include_project=True, extra_reqs=["doc", "test"])
 def check(session: Session) -> None:
     session.run(
         "mypy", "--python-version", REQUIRES_PYTHON_VERSION, *PATHS_TO_CHECK, *session.posargs

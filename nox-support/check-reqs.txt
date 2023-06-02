@@ -1,5 +1,6 @@
 mypy
 nox
 types-appdirs
+types-docutils
 types-toml
 types-tqdm
