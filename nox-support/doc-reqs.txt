@@ -2,4 +2,7 @@ docutils
 myst-parser
 sphinx
 sphinx-click
-sphinx-library @ git+https://github.com/a-scie/sphinx-library@f3d1970df27d9641c2ba84c5af94314bee80d41b
+
+# We need https://github.com/vsalvino/sphinx-library/pull/3 for working html_logo support in modern
+# Sphinx. It has been merged but not released to PyPI yet.
+sphinx-library @ git+https://github.com/vsalvino/sphinx-library@5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b

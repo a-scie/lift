@@ -1452,13 +1452,8 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "21c3f448d17224246e36a5db678e98b9261a1909604c160cd12f45fa1e7eb695",
-              "url": "https://files.pythonhosted.org/packages/6e/f4/7dec21039c12c231508dc06a42efef587b6fda809d330053005b093e84d8/sphinx_library-1.1.2-py3-none-any.whl"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "a5b59bbf3c8688eae24845ed02f70272438984e56b1ae5bf616591f94f4b1552",
-              "url": "https://files.pythonhosted.org/packages/52/76/0ff03070f32a66abede43958dd66bc195754a5d33037863cc70c199cec24/sphinx-library-1.1.2.tar.gz"
+              "hash": "f6bb070fbc9a42482197dfdfa29c01e9e245822a86f17541f5a6dcee098cfe1a",
+              "url": "git+https://github.com/vsalvino/sphinx-library@5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b"
             }
           ],
           "project_name": "sphinx-library",
@@ -1724,19 +1719,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "3a8b36f13dd5fdc5d1b16fe317f5668545de77fa0b8e02006381fd49d731ab98",
-              "url": "https://files.pythonhosted.org/packages/38/60/300ad6f93adca578bf05d5f6cd1d854b7d140bebe2f9829561aa9977d9f3/typing_extensions-4.6.2-py3-none-any.whl"
+              "hash": "88a4153d8505aabbb4e13aacb7c486c2b4a33ca3b3f807914a9b4c844c471c26",
+              "url": "https://files.pythonhosted.org/packages/5f/86/d9b1518d8e75b346a33eb59fa31bdbbee11459a7e2cc5be502fa779e96c5/typing_extensions-4.6.3-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "06006244c70ac8ee83fa8282cb188f697b8db25bc8b4df07be1873c43897060c",
-              "url": "https://files.pythonhosted.org/packages/be/fc/3d12393d634fcb31d5f4231c28feaf4ead225124ba08021046317d5f450d/typing_extensions-4.6.2.tar.gz"
+              "hash": "d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5",
+              "url": "https://files.pythonhosted.org/packages/42/56/cfaa7a5281734dadc842f3a22e50447c675a1c5a5b9f6ad8a07b467bffe7/typing_extensions-4.6.3.tar.gz"
             }
           ],
           "project_name": "typing-extensions",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "4.6.2"
+          "version": "4.6.3"
         },
         {
           "artifacts": [

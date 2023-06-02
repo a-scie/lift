@@ -42,11 +42,47 @@ def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
 
 
 def maybe_create_lock(session: Session) -> bool:
-    all_requirements = [BUILD_ROOT / "requirements.txt"] + [
-        Path(p) for p in glob.glob(str(BUILD_ROOT / "nox-support" / "*-reqs.txt"))
+    all_requirements = [
+        BUILD_ROOT / "requirements.txt",
+        *(Path(p) for p in sorted(glob.glob(str(BUILD_ROOT / "nox-support" / "*-reqs.txt")))),
     ]
-    created_lock = False
-    if not LOCK_FILE.exists():
+    requirements_digest = hashlib.sha256()
+    for requirements_file in all_requirements:
+        requirements_digest.update(requirements_file.read_bytes())
+    requirements_checksum = requirements_digest.hexdigest()
+
+    create_lock = True
+    lock_checksum_file = BUILD_ROOT / "nox-support" / "lock.checksums"
+    if LOCK_FILE.exists() and lock_checksum_file.exists():
+        try:
+            checksum_data = json.loads(lock_checksum_file.read_text())
+            expected_requirements_checksum = checksum_data["requirements_checksum"]
+            expected_lock_checksum = checksum_data["lock_checksum"]
+        except (IOError, ValueError, KeyError) as e:
+            session.warn(f"Failed to load lock checksum file at {lock_checksum_file}: {e}")
+        else:
+            if requirements_checksum == expected_requirements_checksum:
+                lock_checksum = hashlib.sha256(LOCK_FILE.read_bytes()).hexdigest()
+                if lock_checksum == expected_lock_checksum:
+                    create_lock = False
+                else:
+                    session.warn(
+                        f"Lock checksum changed from {expected_lock_checksum} to {lock_checksum}, "
+                        "re-generating lock..."
+                    )
+            else:
+                session.warn(
+                    f"Requirements checksum changed from {expected_requirements_checksum} to "
+                    f"{requirements_checksum}, re-generating lock..."
+                )
+    elif LOCK_FILE.exists():
+        session.warn(
+            f"The lock checksum file {lock_checksum_file} does not exist, re-generating lock..."
+        )
+    else:
+        session.warn(f"The lock file {LOCK_FILE} does not exist, re-generating lock...")
+
+    if create_lock:
         run_pex(
             session,
             "pex3",
@@ -66,11 +102,18 @@ def maybe_create_lock(session: Session) -> bool:
             "-o",
             str(LOCK_FILE),
         )
-        created_lock = True
+        lock_checksum = hashlib.sha256(LOCK_FILE.read_bytes()).hexdigest()
+        lock_checksum_file.write_text(
+            json.dumps(
+                {"requirements_checksum": requirements_checksum, "lock_checksum": lock_checksum},
+                indent=2,
+                sort_keys=True,
+            )
+        )
 
     for subset in all_requirements:
         subset_lock = subset.with_suffix(".windows-amd64.lock.txt")
-        if not created_lock and subset_lock.exists():
+        if not create_lock and subset_lock.exists():
             continue
         run_pex(
             session,
@@ -87,7 +130,7 @@ def maybe_create_lock(session: Session) -> bool:
             str(subset_lock),
         )
 
-    return created_lock
+    return create_lock
 
 
 def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) -> None:
