@@ -11,10 +11,10 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Iterator
 
+from science.dataclasses import FieldInfo, field_info
+from science.errors import InputError
 from science.model import Provider
-
-from ..errors import InputError
-from .python_build_standalone import PythonBuildStandalone
+from science.providers.python_build_standalone import PythonBuildStandalone
 
 _BUILTIN_PROVIDER_TYPES = (PythonBuildStandalone,)
 
@@ -41,6 +41,9 @@ class ProviderInfo:
             if desc := os.linesep.join(inspect.cleandoc(doc).splitlines()[1:]).strip():
                 return desc
         return None
+
+    def iter_config_fields(self) -> Iterator[FieldInfo]:
+        return field_info(self.type.config_dataclass())
 
 
 def iter_builtin_providers() -> Iterator[ProviderInfo]:

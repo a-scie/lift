@@ -1,5 +1,6 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 import itertools
 from functools import cached_property
 from typing import Any, Iterable, Iterator
@@ -19,7 +20,7 @@ from science.providers import ProviderInfo
 class _Providers(Directive):
     @cached_property
     def _markdown_parser(self) -> MarkdownIt:
-        return create_md_parser(MdParserConfig(), DocutilsRenderer)
+        return create_md_parser(MdParserConfig(enable_extensions={"linkify"}), DocutilsRenderer)
 
     def _parse_markdown(self, text: str) -> Iterable[nodes.Node]:
         return self._markdown_parser.render(text).children
@@ -38,18 +39,27 @@ class _Providers(Directive):
 
         yield nodes.paragraph()
         class_line = nodes.line()
-        class_line.append(nodes.strong(text="class: "))
-        class_line.append(nodes.literal(text=provider_info.fully_qualified_name))
+        class_line.extend(
+            self._parse_markdown(f"**class**: `{provider_info.fully_qualified_name}`")
+        )
         yield class_line
 
         if provider_info.summary:
             yield nodes.paragraph()
-            summary = nodes.strong()
-            summary.extend(self._parse_markdown(provider_info.summary))
-            yield summary
+            description = f"\n\n{provider_info.description}" if provider_info.description else ""
+            yield from self._parse_markdown(f"""**{provider_info.summary}**{description}""")
 
-            if provider_info.description:
-                yield from self._parse_markdown(provider_info.description)
+        for field_info in provider_info.iter_config_fields():
+            yield nodes.paragraph()
+            field_line = nodes.line()
+            default = f" [*default: {field_info.default!r}*]" if field_info.has_default else ""
+            field_line.extend(
+                self._parse_markdown(f"**{field_info.name}**: `{field_info.type}`{default}")
+            )
+            yield field_line
+
+            if field_info.help:
+                yield from self._parse_markdown(field_info.help)
 
     def run(self) -> list[nodes.Node]:
         return list(
