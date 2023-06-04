@@ -57,30 +57,24 @@ class Config:
         metadata=help_doc(
             """The CPython version to select.
 
-            Can be either in `<major>.<minor>` form or else fully specified as
-            `<major>.<minor>.<patch>`.
+            Can be either in `<major>.<minor>` form; e.g.: '3.11', or else fully specified as
+            `<major>.<minor>.<patch>`; e.g.: '3.11.3'.
 
             ```{caution}
             Python Standalone Builds does not provide all patch versions; so you should check
-            their releases if you wish to pin down to the patch level.
-            See here: https://github.com/indygreg/python-build-standalone/releases
+            [their releases](https://github.com/indygreg/python-build-standalone/releases) if you
+            wish to pin down to the patch level.
             ```
             """
         )
-    )
-    flavor: str = dataclasses.field(
-        default="install_only",
-        metadata=help_doc(
-            """The flavor of the Python Standalone Builds release to use.
-
-            Currently only accepts 'install_only' which is the default.
-            """
-        ),
     )
     release: str | None = dataclasses.field(
         default=None,
         metadata=help_doc(
             f"""Python Standalone Builds release to use.
+
+            Currently releases are dates of the form `YYYYMMDD`, e.g.: '20230507'.
+            See the [GitHub releases page][releases-page] to discover available releases.
 
             If left unspecified the latest release is used.
 
@@ -88,6 +82,17 @@ class Config:
             The latest lookup is cached for 5 days. To force a fresh lookup you can remove
             the cache at `{download_cache().base_dir}`.
             ```
+
+            [releases-page]: https://github.com/indygreg/python-build-standalone/releases
+            """
+        ),
+    )
+    flavor: str = dataclasses.field(
+        default="install_only",
+        metadata=help_doc(
+            """The flavor of the Python Standalone Builds release to use.
+
+            Currently only accepts 'install_only' which is the default.
             """
         ),
     )
@@ -117,7 +122,7 @@ class PythonBuildStandalone(Provider[Config]):
     its `pip` script.
     ```
 
-    [PBS]: https://github.com/indygreg/python-build-standalone/releases
+    [PBS]: https://python-build-standalone.readthedocs.io
     """
 
     @staticmethod
