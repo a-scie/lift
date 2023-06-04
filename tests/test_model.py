@@ -10,7 +10,7 @@ from science.model import Distribution, Fetch, File, Identifier, Url
 
 def test_distribution() -> None:
     distribution = Distribution(
-        id=Identifier.parse("cpython"),
+        id=Identifier("cpython"),
         file=File(
             name="cpython-3.10.9+20221220-x86_64-unknown-linux-gnu-install_only.tar.gz",
             key="cpython310",
@@ -30,8 +30,8 @@ def test_distribution() -> None:
         ),
         placeholders=FrozenDict(
             {
-                Identifier.parse("python"): "python/bin/python",
-                Identifier.parse("pip"): "python/bin/pip",
+                Identifier("python"): "python/bin/python",
+                Identifier("pip"): "python/bin/pip",
             }
         ),
     )

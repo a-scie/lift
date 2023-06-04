@@ -6,12 +6,22 @@ from __future__ import annotations
 import os.path
 import re
 import urllib.parse
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import ClassVar, Iterable, Match, Protocol, TypeAlias, runtime_checkable
+from typing import (
+    ClassVar,
+    Collection,
+    Iterable,
+    Iterator,
+    Match,
+    Protocol,
+    TypeAlias,
+    TypeVar,
+    runtime_checkable,
+)
 
 from packaging.version import Version
 
@@ -20,6 +30,7 @@ from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
 from science.platform import Platform
+from science.types import Dataclass
 
 
 class FileType(Enum):
@@ -108,22 +119,18 @@ class ScieJump:
     digest: Digest | None = None
 
 
-@dataclass(frozen=True)
-class Identifier:
-    @classmethod
-    def parse(cls, value) -> Identifier:
+class Identifier(str):
+    def __new__(cls, value: str) -> Identifier:
         if any(char in value for char in ("{", "}", ":")):
             raise InputError(
                 f"An identifier can not contain any of '{', '}' or ':', given: {value}"
             )
-        return cls(value)
-
-    value: str
+        return super().__new__(cls, value)
 
 
 @dataclass(frozen=True)
 class Ptex:
-    id: Identifier = Identifier.parse("ptex")
+    id: Identifier = Identifier("ptex")
     argv1: str = "{scie.lift}"
     version: Version | None = None
     digest: Digest | None = None
@@ -164,23 +171,28 @@ class Distribution:
 
     def _expand_placeholder(self, match: Match) -> str:
         if placeholder := match.group("placeholder"):
-            return os.path.join(
-                self.file.placeholder, self.placeholders[Identifier.parse(placeholder)]
-            )
+            return os.path.join(self.file.placeholder, self.placeholders[Identifier(placeholder)])
         return self.file.placeholder
 
     def expand_placeholders(self, value: str) -> str:
         return re.sub(
-            rf"#{{{re.escape(self.id.value)}(?::(?P<placeholder>[^{{}}:]+))?}}",
+            rf"#{{{re.escape(self.id)}(?::(?P<placeholder>[^{{}}:]+))?}}",
             self._expand_placeholder,
             value,
         )
 
 
+ConfigDataclass = TypeVar("ConfigDataclass", bound=Dataclass)
+
+
 @runtime_checkable
-class Provider(Protocol):
+class Provider(Protocol[ConfigDataclass]):
     @classmethod
-    def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> Provider:
+    def config_dataclass(cls) -> type[ConfigDataclass]:
+        ...
+
+    @classmethod
+    def create(cls, identifier: Identifier, lazy: bool, config: ConfigDataclass) -> Provider:
         ...
 
     def distribution(self, platform: Platform) -> Distribution | None:
@@ -188,7 +200,7 @@ class Provider(Protocol):
 
 
 @dataclass(frozen=True)
-class Interpreter:
+class Interpreter(Dataclass):
     id: Identifier
     provider: Provider
 
@@ -225,13 +237,13 @@ class InterpreterGroup:
     def _expand_placeholder(self, platform: Platform, match: Match) -> tuple[str, dict[str, str]]:
         if placeholder := match.group("placeholder"):
             env = {}
-            ph = Identifier.parse(placeholder)
-            env_var_prefix = f"_SCIENCE_IG_{self.id.value}_{placeholder}_"
+            ph = Identifier(placeholder)
+            env_var_prefix = f"_SCIENCE_IG_{self.id}_{placeholder}_"
             for member in self.members:
                 distribution = member.provider.distribution(platform)
                 if distribution:
                     ph_value = distribution.placeholders[ph]
-                    env[f"={env_var_prefix}{distribution.id.value}"] = ph_value
+                    env[f"={env_var_prefix}{distribution.id}"] = ph_value
             path = os.path.join(
                 f"{{scie.files.{self.selector}}}", f"{{scie.env.{env_var_prefix}{self.selector}}}"
             )
@@ -247,7 +259,7 @@ class InterpreterGroup:
             return expansion
 
         value = re.sub(
-            rf"#{{{re.escape(self.id.value)}(?::(?P<placeholder>[^{{}}:]+))?}}",
+            rf"#{{{re.escape(self.id)}(?::(?P<placeholder>[^{{}}:]+))?}}",
             expand_placeholder,
             value,
         )
@@ -255,16 +267,81 @@ class InterpreterGroup:
 
 
 @dataclass(frozen=True)
-class Application:
+class Application(Dataclass):
     name: str
     commands: frozenset[Command]
-    description: str | None
+    description: str | None = None
     load_dotenv: bool = False
     scie_jump: ScieJump = ScieJump()
     ptex: Ptex | None = None
     platforms: frozenset[Platform] = frozenset([Platform.current()])
-    interpreters: Iterable[Interpreter] = ()
-    interpreter_groups: Iterable[InterpreterGroup] = ()
-    files: Iterable[File] = ()
+    interpreters: tuple[Interpreter, ...] = ()
+    interpreter_groups: tuple[InterpreterGroup, ...] = ()
+    files: tuple[File, ...] = ()
     bindings: frozenset[Command] = frozenset()
     build_info: BuildInfo | None = None
+
+    @staticmethod
+    def _ensure_unique_names(
+        subject: str, commands: Iterable[Command], reserved: Collection[str] = ()
+    ) -> None:
+        reserved_conflicts = list[str]()
+
+        def iter_command_names() -> Iterator[str]:
+            for command in commands:
+                name = command.name or ""
+                if name in reserved:
+                    reserved_conflicts.append(name)
+                yield name
+
+        non_unique = {
+            name: count for name, count in Counter(iter_command_names()).items() if count > 1
+        }
+        if non_unique:
+            max_width = max(len(name) for name in non_unique)
+            repeats = "\n".join(
+                f"{name.rjust(max_width)}: {count} instances" for name, count in non_unique.items()
+            )
+            raise InputError(
+                f"{subject} must have unique names. Found the following repeats:\n{repeats}"
+            )
+        if reserved_conflicts:
+            raise InputError(
+                f"{subject} cannot use the reserved binding names: {', '.join(reserved_conflicts)}"
+            )
+
+    def __post_init__(self) -> None:
+        if not self.platforms:
+            raise InputError(
+                "There must be at least one platform defined for a science application. Leave "
+                "un-configured to request just the current platform."
+            )
+
+        if not self.commands:
+            raise InputError("There must be at least one command defined in a science application.")
+        self._ensure_unique_names(subject="Commands", commands=self.commands)
+
+        self._ensure_unique_names(
+            subject="Binding commands",
+            commands=self.bindings,
+            reserved=frozenset(
+                file.source.binding_name
+                for file in self.files
+                if isinstance(file.source, Fetch) and file.source.lazy
+            ),
+        )
+
+        if (
+            self.interpreter_groups
+            and self.scie_jump.version
+            and self.scie_jump.version < Version("0.11.0")
+        ):
+            raise InputError(
+                os.linesep.join(
+                    (
+                        f"Cannot use scie-jump {self.scie_jump.version}.",
+                        "This configuration uses interpreter groups and these require scie-jump "
+                        "v0.11.0 or greater.",
+                    )
+                )
+            )

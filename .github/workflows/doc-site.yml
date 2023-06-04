@@ -30,6 +30,9 @@ jobs:
       - name: Checkout Lift
         uses: actions/checkout@v3
       - name: Build Doc Site
+        env:
+          # N.B.: This makes default paths in generated docs generic.
+          XDG_CACHE_HOME: "<USER CACHE DIR>"
         run: nox -e doc
       - name: Setup Pages
         uses: actions/configure-pages@v3

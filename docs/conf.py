@@ -40,7 +40,12 @@ source_suffix = {
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+# https://myst-parser.readthedocs.io/en/latest/configuration.html
 # https://vsalvino.github.io/sphinx-library/customize.html
+
+myst_enable_extensions = [
+    "linkify",
+]
 
 html_title = f"Science Docs (v{release})"
 html_theme = "library"

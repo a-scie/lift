@@ -1,5 +1,5 @@
 docutils
-myst-parser
+myst-parser[linkify]
 sphinx
 sphinx-click
 

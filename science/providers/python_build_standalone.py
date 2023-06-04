@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import re
 from dataclasses import dataclass
@@ -10,6 +11,8 @@ from datetime import timedelta
 
 from packaging.version import Version
 
+from science.cache import download_cache
+from science.dataclasses import help_doc
 from science.errors import InputError
 from science.fetcher import fetch_json, fetch_text
 from science.frozendict import FrozenDict
@@ -49,18 +52,66 @@ class Asset:
 
 
 @dataclass(frozen=True)
-class PythonBuildStandalone(Provider):
-    """Provides *pre-built* CPython distributions from the Python Standalone Builds project.
+class Config:
+    version: str = dataclasses.field(
+        metadata=help_doc(
+            """The CPython version to select.
 
-    All science platforms are supported for Python 3 minor versions >= 8. Python Standalone Builds
-    does not provide all patch versions; so you should check their releases if you wish to pin down
-    to the patch level. See here: https://github.com/indygreg/python-build-standalone/releases
+            Can be either in `<major>.<minor>` form; e.g.: '3.11', or else fully specified as
+            `<major>.<minor>.<patch>`; e.g.: '3.11.3'.
+
+            ```{caution}
+            Python Standalone Builds does not provide all patch versions; so you should check
+            [their releases](https://github.com/indygreg/python-build-standalone/releases) if you
+            wish to pin down to the patch level.
+            ```
+            """
+        )
+    )
+    release: str | None = dataclasses.field(
+        default=None,
+        metadata=help_doc(
+            f"""Python Standalone Builds release to use.
+
+            Currently releases are dates of the form `YYYYMMDD`, e.g.: '20230507'.
+            See the [GitHub releases page][releases-page] to discover available releases.
+
+            If left unspecified the latest release is used.
+
+            ```{{note}}
+            The latest lookup is cached for 5 days. To force a fresh lookup you can remove
+            the cache at `{download_cache().base_dir}`.
+            ```
+
+            [releases-page]: https://github.com/indygreg/python-build-standalone/releases
+            """
+        ),
+    )
+    flavor: str = dataclasses.field(
+        default="install_only",
+        metadata=help_doc(
+            """The flavor of the Python Standalone Builds release to use.
+
+            Currently only accepts 'install_only' which is the default.
+            """
+        ),
+    )
+
+
+@dataclass(frozen=True)
+class PythonBuildStandalone(Provider[Config]):
+    """Provides distributions from the [Python Standalone Builds][PBS] project.
+
+    All science platforms are supported for Python 3 minor versions >= 8.
 
     For all platforms, a `python` placeholder (`#{<id>:python}`) is supported and will be
     substituted with the selected distribution's Python binary path.
 
     On the Linux and MacOS platforms a `pip` placeholder (`#{<id>:pip}`) is supported and will be
-    substituted with the selected distribution's pip script path. N.B.: Mutating the
+    substituted with the selected distribution's pip script path.
+
+    ```{danger}
+    Mutating the
     distribution with `pip install` or `pip uninstall` is almost always a bad idea. The Python
     Standalone Builds distributions are unpacked in the shared scie file cache atomically, but any
     mutations after the initial unpacking are not guarded; as such, you risk concurrency bugs not to
@@ -69,6 +120,9 @@ class PythonBuildStandalone(Provider):
     to use `pip install`, you probably want to use the `--prefix` or `--target` options or else
     instead create a venv using the venv module (`-m venv`) and then mutate that private venv using
     its `pip` script.
+    ```
+
+    [PBS]: https://python-build-standalone.readthedocs.io
     """
 
     @staticmethod
@@ -107,10 +161,14 @@ class PythonBuildStandalone(Provider):
         return None
 
     @classmethod
-    def create(cls, identifier: Identifier, lazy: bool, **kwargs) -> PythonBuildStandalone:
+    def config_dataclass(cls) -> type[Config]:
+        return Config
+
+    @classmethod
+    def create(cls, identifier: Identifier, lazy: bool, config: Config) -> PythonBuildStandalone:
         api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
-        if release := kwargs.get("release"):
-            release_url = Url(f"{api_url}/tags/{release}")
+        if config.release:
+            release_url = Url(f"{api_url}/tags/{config.release}")
             ttl = None
         else:
             release_url = Url(f"{api_url}/latest")
@@ -118,14 +176,13 @@ class PythonBuildStandalone(Provider):
         release_data = fetch_json(release_url, ttl=ttl)
 
         release = release_data["name"]
-        version = Version(kwargs["version"])
-        flavor = kwargs.get("flavor", "install_only")
-
+        version = Version(config.version)
         # Names are like:
         #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
         name_re = re.compile(
             rf"^cpython-(?P<exact_version>{re.escape(str(version))}(?:\.\d+)*)"
-            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{re.escape(flavor)}\.(?P<extension>.+)$"
+            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{re.escape(config.flavor)}"
+            r"\.(?P<extension>.+)$"
         )
 
         # N.B.: There are 3 types of files in PythonBuildStandalone releases:
@@ -177,7 +234,7 @@ class PythonBuildStandalone(Provider):
         if not fingerprinted_assets:
             raise InputError(
                 f"No released assets found for release {release} Python {version} of flavor "
-                f"{flavor}."
+                f"{config.flavor}."
             )
 
         return cls(
@@ -185,7 +242,7 @@ class PythonBuildStandalone(Provider):
             lazy=lazy,
             release=release,
             version=version,
-            flavor=flavor,
+            flavor=config.flavor,
             assets=tuple(fingerprinted_assets),
         )
 
@@ -213,7 +270,7 @@ class PythonBuildStandalone(Provider):
 
         file = File(
             name=selected_asset.name,
-            key=self.id.value,
+            key=self.id,
             digest=selected_asset.digest,
             type=selected_asset.file_type,
             is_executable=False,
@@ -225,11 +282,11 @@ class PythonBuildStandalone(Provider):
             case "install_only":
                 match platform:
                     case Platform.Windows_x86_64:
-                        placeholders[Identifier.parse("python")] = "python\\python.exe"
+                        placeholders[Identifier("python")] = "python\\python.exe"
                     case _:
                         version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
-                        placeholders[Identifier.parse("python")] = f"python/bin/python{version}"
-                        placeholders[Identifier.parse("pip")] = f"python/bin/pip{version}"
+                        placeholders[Identifier("python")] = f"python/bin/python{version}"
+                        placeholders[Identifier("pip")] = f"python/bin/pip{version}"
             case flavor:
                 raise InputError(
                     "PythonBuildStandalone currently only understands the 'install_only' flavor of "

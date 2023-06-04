@@ -27,7 +27,7 @@ def test_parse(build_root: Path) -> None:
         distribution.file.source and distribution.file.source.lazy
     ), "Expected science to ship as a gouged-out binary."
     assert (
-        Identifier.parse("python") in distribution.placeholders
+        Identifier("python") in distribution.placeholders
     ), "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."
 
 

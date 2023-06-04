@@ -30,3 +30,6 @@ class FrozenDict(Generic[K, V], Mapping[K, V]):
         if self._hash is None:
             self._hash = hash(tuple(self.items()))
         return self._hash
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._data!r})"
