@@ -69,7 +69,7 @@ class _Providers(Directive):
         for field_info in provider_info.iter_config_fields():
             field_section = provider_section.create_subsection(title=field_info.name)
 
-            default = f" [default: `{field_info.default!r}`]" if field_info.has_default else ""
+            default = f" default: `{field_info.default!r}`" if field_info.has_default else ""
             field_section.extend(self._parse_markdown(f"*type: `{field_info.type}`{default}*"))
 
             if field_info.help:
