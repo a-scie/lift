@@ -34,6 +34,10 @@ profile = "black"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
+[tool.mypy]
+explicit_package_bases = true
+mypy_path = "docs/_ext"
+
 [[tool.mypy.overrides]]
 module = "click_didyoumean"
 ignore_missing_imports = true

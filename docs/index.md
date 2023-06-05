@@ -5,8 +5,9 @@ https://scie.app/discord).
 
 ```{toctree}
 :maxdepth: 4
+:hidden:
 
 manifest
-cli
 providers
+cli
 ```

@@ -10,12 +10,13 @@ from io import BytesIO
 from pathlib import Path
 from typing import BinaryIO
 
-from science.build_info import BuildInfo, Provenance
+from science.build_info import BuildInfo
 from science.data import Data
-from science.dataclasses import parse as parse_dataclass
+from science.dataclass import Dataclass
+from science.dataclass.deserializer import parse as parse_dataclass
 from science.errors import InputError
 from science.frozendict import FrozenDict
-from science.hashing import Digest
+from science.hashing import Digest, Provenance
 from science.model import (
     Application,
     Identifier,
@@ -24,7 +25,6 @@ from science.model import (
     Provider,
 )
 from science.providers import get_provider
-from science.types import Dataclass
 
 
 def parse_config(content: BinaryIO, source: str) -> Application:
@@ -58,10 +58,11 @@ class ProviderFields(Dataclass):
 
 def parse_provider(data: Data) -> Provider:
     fields = parse_dataclass(data, ProviderFields)
-    if not (provider := get_provider(fields.provider)):
+    if not (provider_info := get_provider(fields.provider)):
         raise InputError(f"The provider '{fields.provider}' is not registered.")
-    config = parse_dataclass(data, provider.config_dataclass())
-    return provider.create(identifier=fields.id, lazy=fields.lazy, config=config)
+    provider_type = provider_info.type
+    config = parse_dataclass(data, provider_type.config_dataclass())
+    return provider_type.create(identifier=fields.id, lazy=fields.lazy, config=config)
 
 
 @dataclass(frozen=True)

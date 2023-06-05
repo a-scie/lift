@@ -194,7 +194,7 @@ def export_manifest(
                 name=application.name,
                 description=application.description,
                 load_dotenv=application.load_dotenv,
-                scie_jump=application.scie_jump,
+                scie_jump=application.scie_jump or ScieJump(),
                 platform=platform,
                 distributions=distributions,
                 interpreter_groups=application.interpreter_groups,
@@ -250,14 +250,15 @@ def _render_command(
     if args:
         cmd["args"] = args
 
-    for name, value in command.env.default.items():
-        env[name] = expand_placeholders(value)
-    for name, value in command.env.replace.items():
-        env[f"={name}"] = expand_placeholders(value)
-    for name in command.env.remove_exact:
-        env[f"={name}"] = None
-    for re in command.env.remove_re:
-        env[re] = None
+    if command_env := command.env:
+        for name, value in command_env.default.items():
+            env[name] = expand_placeholders(value)
+        for name, value in command_env.replace.items():
+            env[f"={name}"] = expand_placeholders(value)
+        for name in command_env.remove_exact:
+            env[f"={name}"] = None
+        for re in command_env.remove_re:
+            env[re] = None
     if env:
         cmd["env"] = env
 

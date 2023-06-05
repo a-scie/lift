@@ -9,14 +9,15 @@ import os
 import typing
 from dataclasses import dataclass
 from functools import cached_property
-from types import NoneType, UnionType
-from typing import ClassVar, Generic, Iterator, Protocol, Type, TypeVar, cast
+from types import GenericAlias, NoneType, UnionType
+from typing import Generic, Iterator, TypeVar, cast
 
+from science.dataclass import Dataclass
 from science.errors import InputError
 
 
-class Dataclass(Protocol):
-    __dataclass_fields__: ClassVar[dict]
+def fully_qualified_name(type_: type) -> str:
+    return f"{type_.__module__}.{type_.__qualname__}"
 
 
 _T = TypeVar("_T")
@@ -25,7 +26,7 @@ _D = TypeVar("_D", bound=Dataclass)
 
 @dataclass(frozen=True)
 class TypeInfo(Generic[_T]):
-    type_: Type[_T]
+    type_: type[_T]
 
     @cached_property
     def origin_types(self) -> tuple[type, ...]:
@@ -41,9 +42,9 @@ class TypeInfo(Generic[_T]):
     def optional(self) -> bool:
         return any(typ is NoneType for typ in self.origin_types)
 
-    @property
+    @cached_property
     def has_origin_type(self) -> bool:
-        return len(self.origin_types) == 1
+        return len([typ for typ in self.origin_types if typ is not NoneType]) == 1
 
     @cached_property
     def origin_type(self) -> type[_T]:
@@ -59,7 +60,14 @@ class TypeInfo(Generic[_T]):
                     )
                 )
             )
-        return cast(type[_T], self.origin_types[0])
+        return cast(type[_T], [typ for typ in self.origin_types if typ is not NoneType][0])
+
+    @cached_property
+    def has_item_type(self) -> bool:
+        try:
+            return self.item_type is not None
+        except InputError:
+            return False
 
     @cached_property
     def item_type(self) -> type:
@@ -72,22 +80,34 @@ class TypeInfo(Generic[_T]):
 
     @cached_property
     def dataclass(self) -> type[_D] | None:
-        if len(self.origin_types) == 1 and dataclasses.is_dataclass(self.origin_type):
+        if self.has_origin_type and dataclasses.is_dataclass(self.origin_type):
             return cast(type[_D], self.origin_type)
         return None
 
     def istype(self, expected_type: type) -> bool:
         return any(typ is expected_type for typ in self.origin_types)
 
-    def issubtype(self, expected_type: type) -> type | None:
+    def issubtype(self, *expected_types: type) -> type | None:
         for typ in self.origin_types:
-            if typ is expected_type or inspect.isclass(typ) and issubclass(typ, expected_type):
+            if typ in expected_types or inspect.isclass(typ) and issubclass(typ, expected_types):
                 return typ
         return None
 
     def iter_types(self) -> Iterator[TypeInfo]:
         if isinstance(self.type_, UnionType):
             for typ in typing.get_args(self.type_):
-                yield TypeInfo(typ)
+                if typ is not NoneType:
+                    yield TypeInfo(typ)
         else:
             yield self
+
+    def iter_parameter_types(self) -> Iterator[TypeInfo]:
+        for typ in typing.get_args(self.type_):
+            yield TypeInfo(typ)
+
+    def __str__(self) -> str:
+        return (
+            str(self.type_)
+            if isinstance(self.type_, (GenericAlias, UnionType))
+            else self.type_.__name__
+        )

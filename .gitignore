@@ -1,10 +1,18 @@
-# Build artifacts dirs.
-/*.egg-info/
+# Nox venvs.
 /.nox/
+
+# Sdist build artifacts dirs.
+/*.egg-info/
 /build/
-/dist/
-/docs/build/
 
 # Python bytecode.
 __pycache__/
 
+# Sphinx doc site (html) builds are generated here.
+/docs/build/
+
+# Our noxfile is setup to output artifacts here by default.
+/dist/
+
+# Our Sphinx extension (see: docs/_ext/) dynamically generates doc sources here.
+/docs/_/

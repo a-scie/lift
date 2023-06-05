@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, BinaryIO, Callable, cast
 
+from science.dataclass.reflect import documented_dataclass
 from science.errors import InputError
 
 DEFAULT_ALGORITHM = "sha256"
@@ -48,7 +49,7 @@ class _BinaryIOHasher:
         return getattr(self._underlying, name)
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="digest")
 class Digest:
     size: int
     fingerprint: Fingerprint
@@ -107,3 +108,9 @@ class ExpectedDigest:
             for chunk in iter(lambda: fp.read(io.DEFAULT_BUFFER_SIZE), b""):
                 digest.update(chunk)
         self.check_fingerprint(subject=subject, actual_fingerprint=Fingerprint(digest.hexdigest()))
+
+
+@dataclass(frozen=True)
+class Provenance:
+    source: str
+    digest: Digest | None = None

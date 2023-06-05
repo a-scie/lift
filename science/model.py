@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os.path
 import re
 import urllib.parse
@@ -26,11 +27,12 @@ from typing import (
 from packaging.version import Version
 
 from science.build_info import BuildInfo
+from science.dataclass import Dataclass
+from science.dataclass.reflect import Ref, documented_dataclass, metadata
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
 from science.platform import Platform
-from science.types import Dataclass
 
 
 class FileType(Enum):
@@ -52,10 +54,7 @@ class FileType(Enum):
     TarZstd = "tar.zst"
 
 
-@dataclass(frozen=True)
-class Binding:
-    name: str
-
+class Binding(str):
     @property
     def lazy(self) -> bool:
         return True
@@ -63,23 +62,45 @@ class Binding:
     source_type: ClassVar[str] = "binding"
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="source")
 class Fetch:
-    url: Url
-    lazy: bool = True
+    """Source a file by fetching it from the internet at scie run-time or scie build-time.
+
+    ```{important}
+    If the file that is being sourced has a `digest` defined, the fetched content will be checked
+    against the specified digest and a mismatch will lead to an error. Without a digest defined the
+    content of the fetched file will be used as-is!
+    ```
+    """
+
+    url: Url = dataclasses.field(metadata=metadata("The URL of the file content to fetch."))
+    lazy: bool = dataclasses.field(
+        default=True,
+        metadata=metadata(
+            """Whether to have the built scie fetch the `url` lazily on the target machine.
+
+            If `false`, the file will be fetched when the scie is built and directly embedded in it.
+            """
+        ),
+    )
 
     source_type: ClassVar[str] = "url"
     binding_name: ClassVar[str] = "fetch"
 
     @classmethod
     def create_binding(cls, fetch_exe: File, argv1: str) -> Command:
-        return Command(name=cls.binding_name, exe=fetch_exe.placeholder, args=tuple([argv1]))
+        return Command(
+            name=cls.binding_name,
+            exe=fetch_exe.placeholder,
+            args=tuple([argv1]),
+            description="Fetch files not present in the scie",
+        )
 
 
-FileSource: TypeAlias = Binding | Fetch | None
+FileSource: TypeAlias = Fetch | Binding | None
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="file")
 class File:
     name: str
     key: str | None = None
@@ -113,9 +134,9 @@ class File:
         return expected_digest.check_path(path)
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="scie_jump")
 class ScieJump:
-    version: Version | None = None
+    version: Version | None = dataclasses.field(default=None, metadata=metadata(reference=True))
     digest: Digest | None = None
 
 
@@ -128,11 +149,11 @@ class Identifier(str):
         return super().__new__(cls, value)
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="ptex")
 class Ptex:
     id: Identifier = Identifier("ptex")
     argv1: str = "{scie.lift}"
-    version: Version | None = None
+    version: Version | None = dataclasses.field(default=None, metadata=metadata(reference=True))
     digest: Digest | None = None
 
     @property
@@ -140,7 +161,7 @@ class Ptex:
         return f"{{{self.id}}}"
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="env")
 class Env:
     default: FrozenDict[str, str] = FrozenDict()
     replace: FrozenDict[str, str] = FrozenDict()
@@ -148,13 +169,13 @@ class Env:
     remove_re: frozenset[str] = frozenset()
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, kw_only=True, alias="command")
 class Command:
+    name: str = ""
+    description: str | None = None
     exe: str
     args: tuple[str, ...] = ()
-    env: Env = Env()
-    name: str | None = None
-    description: str | None = None
+    env: Env | None = None
 
 
 class Url(str):
@@ -199,13 +220,23 @@ class Provider(Protocol[ConfigDataclass]):
         ...
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="interpreter")
 class Interpreter(Dataclass):
     id: Identifier
-    provider: Provider
+    provider: Provider = dataclasses.field(
+        metadata=metadata(
+            """The name of a Science Provider implementation.
+
+            The built-in provider implementations are documented [here](#built-in-providers). Each 
+            provider implementation can define further configuration fields which should be
+            specified in this table.
+            """,
+            reference=True,
+        )
+    )
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="interpreter_group")
 class InterpreterGroup:
     @classmethod
     def create(cls, id_: Identifier, selector: str, interpreters: Iterable[Interpreter]):
@@ -232,7 +263,15 @@ class InterpreterGroup:
 
     id: Identifier
     selector: str
-    members: frozenset[Interpreter]
+    members: frozenset[Interpreter] = dataclasses.field(
+        metadata=metadata(
+            f"""The `id`s of the [interpreter](#{Ref(Interpreter)})s that are members of this group.
+
+            There must be at lease two unique ids provided to form a group.
+            """,
+            reference=True,
+        )
+    )
 
     def _expand_placeholder(self, platform: Platform, match: Match) -> tuple[str, dict[str, str]]:
         if placeholder := match.group("placeholder"):
@@ -266,20 +305,20 @@ class InterpreterGroup:
         return value, env
 
 
-@dataclass(frozen=True)
+@documented_dataclass(frozen=True, alias="lift")
 class Application(Dataclass):
     name: str
-    commands: frozenset[Command]
     description: str | None = None
     load_dotenv: bool = False
-    scie_jump: ScieJump = ScieJump()
-    ptex: Ptex | None = None
+    build_info: BuildInfo | None = dataclasses.field(default=None, metadata=metadata(inline=True))
     platforms: frozenset[Platform] = frozenset([Platform.current()])
     interpreters: tuple[Interpreter, ...] = ()
     interpreter_groups: tuple[InterpreterGroup, ...] = ()
     files: tuple[File, ...] = ()
+    commands: frozenset[Command] = frozenset()
     bindings: frozenset[Command] = frozenset()
-    build_info: BuildInfo | None = None
+    scie_jump: ScieJump | None = None
+    ptex: Ptex | None = None
 
     @staticmethod
     def _ensure_unique_names(
@@ -333,6 +372,7 @@ class Application(Dataclass):
 
         if (
             self.interpreter_groups
+            and self.scie_jump
             and self.scie_jump.version
             and self.scie_jump.version < Version("0.11.0")
         ):

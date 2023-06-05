@@ -12,7 +12,7 @@ from datetime import timedelta
 from packaging.version import Version
 
 from science.cache import download_cache
-from science.dataclasses import help_doc
+from science.dataclass.reflect import metadata
 from science.errors import InputError
 from science.fetcher import fetch_json, fetch_text
 from science.frozendict import FrozenDict
@@ -54,7 +54,7 @@ class Asset:
 @dataclass(frozen=True)
 class Config:
     version: str = dataclasses.field(
-        metadata=help_doc(
+        metadata=metadata(
             """The CPython version to select.
 
             Can be either in `<major>.<minor>` form; e.g.: '3.11', or else fully specified as
@@ -70,7 +70,7 @@ class Config:
     )
     release: str | None = dataclasses.field(
         default=None,
-        metadata=help_doc(
+        metadata=metadata(
             f"""Python Standalone Builds release to use.
 
             Currently releases are dates of the form `YYYYMMDD`, e.g.: '20230507'.
@@ -89,7 +89,7 @@ class Config:
     )
     flavor: str = dataclasses.field(
         default="install_only",
-        metadata=help_doc(
+        metadata=metadata(
             """The flavor of the Python Standalone Builds release to use.
 
             Currently only accepts 'install_only' which is the default.

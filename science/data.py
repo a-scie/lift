@@ -9,9 +9,9 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Collection, Mapping, TypeVar, cast
 
-from science.build_info import Provenance
 from science.errors import InputError
 from science.frozendict import FrozenDict
+from science.hashing import Provenance
 
 _T = TypeVar("_T")
 
