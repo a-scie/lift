@@ -6,16 +6,23 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
+# N.B. This sneaks in a custom `science.dataclass.reflect.Ref` slugifier function that generates
+# valid html anchor ids.
+os.environ["_SCIENCE_REF_SLUGIFIER"] = "sphinx_science.directives:type_id"
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
-import science
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+
+import science
 
 project = "Science"
 version = f"{science.VERSION.major}.{science.VERSION.minor}"
@@ -28,7 +35,7 @@ author = "John Sirois"
 
 sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 extensions = [
-    "_science.providers",
+    "sphinx_science",
     "myst_parser",
     "sphinx_click",
 ]
@@ -43,9 +50,9 @@ source_suffix = {
 # https://myst-parser.readthedocs.io/en/latest/configuration.html
 # https://vsalvino.github.io/sphinx-library/customize.html
 
-myst_enable_extensions = [
-    "linkify",
-]
+from sphinx_science.render import MarkdownParser
+
+myst_enable_extensions = [*MarkdownParser.ENABLE_EXTENSIONS]
 
 html_title = f"Science Docs (v{release})"
 html_theme = "library"
@@ -83,9 +90,9 @@ def create_extra_gh_link(text: str, url: str) -> tuple[str, str]:
     return create_extra_link(
         text,
         url,
-        dark_icon="_static/icons/github-white-16.png",
-        sepia_icon="_static/icons/github-16.png",
-        light_icon="_static/icons/github-16.png",
+        dark_icon="/_static/icons/github-white-16.png",
+        sepia_icon="/_static/icons/github-16.png",
+        light_icon="/_static/icons/github-16.png",
     )
 
 
@@ -113,7 +120,7 @@ html_sidebars = {
         "searchbox.html",  # Search.
         "extralinks.html",  # Links specified in theme options.
         "globaltoc.html",  # Global table of contents.
-        "localtoc.html",  # Contents of the current page.
+        # "localtoc.html",  # Contents of the current page.
         "readingmodes.html",  # Light/sepia/dark color schemes.
         # "sponsors.html",  # Fancy sponsor links.
     ]

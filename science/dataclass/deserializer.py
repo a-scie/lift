@@ -4,21 +4,19 @@
 from __future__ import annotations
 
 import dataclasses
-import inspect
 import os
 import typing
 from collections import OrderedDict
-from dataclasses import MISSING, dataclass
 from textwrap import dedent
-from typing import Any, Collection, Iterator, Mapping, TypeVar, cast
+from typing import Any, Collection, Mapping, TypeVar, cast
 
 from science.data import Data
+from science.dataclass import Dataclass
 from science.errors import InputError
 from science.frozendict import FrozenDict
-from science.types import Dataclass, TypeInfo
+from science.types import TypeInfo
 
 _F = TypeVar("_F")
-_D = TypeVar("_D", bound=Dataclass)
 
 
 def _parse_field(
@@ -119,6 +117,9 @@ def _parse_field(
         )
 
 
+_D = TypeVar("_D", bound=Dataclass)
+
+
 def parse(
     data,
     data_type: type[_D],
@@ -193,32 +194,3 @@ def parse(
             )
 
     return cast(_D, data_type(**kwargs))
-
-
-_HELP_METADATA_KEY = f"{__name__}.help_doc"
-
-
-def help_doc(text: str) -> Mapping[str, str]:
-    return {_HELP_METADATA_KEY: dedent(text)}
-
-
-@dataclass(frozen=True)
-class FieldInfo:
-    name: str
-    type: type
-    default: Any
-    help: str | None
-
-    @property
-    def has_default(self) -> bool:
-        return self.default is not MISSING
-
-
-def field_info(data_type: type[_D]) -> Iterator[FieldInfo]:
-    for field in dataclasses.fields(data_type):
-        yield FieldInfo(
-            name=field.name,
-            type=field.type,
-            default=field.default,
-            help=inspect.cleandoc(field.metadata.get(_HELP_METADATA_KEY, "")),
-        )

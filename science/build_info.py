@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import os
 import shlex
@@ -13,8 +14,9 @@ from pathlib import Path
 from typing import Any
 
 from science import __version__
+from science.dataclass.reflect import metadata
 from science.frozendict import FrozenDict
-from science.hashing import Digest
+from science.hashing import Digest, Provenance
 from science.platform import Platform
 
 logger = logging.getLogger(__name__)
@@ -41,12 +43,6 @@ def _maybe_gather_git_state() -> str | None:
 
 
 @dataclass(frozen=True)
-class Provenance:
-    source: str
-    digest: Digest | None = None
-
-
-@dataclass(frozen=True)
 class BuildInfo:
     @classmethod
     def gather(
@@ -56,9 +52,9 @@ class BuildInfo:
         git_state = _maybe_gather_git_state()
         return cls(lift_toml, digest=digest, git_state=git_state, app_info=app_info)
 
-    lift_toml: Provenance
-    digest: Digest | None = None
-    git_state: str | None = None
+    lift_toml: Provenance = dataclasses.field(metadata=metadata(hidden=True))
+    digest: Digest | None = dataclasses.field(default=None, metadata=metadata(hidden=True))
+    git_state: str | None = dataclasses.field(default=None, metadata=metadata(hidden=True))
     app_info: FrozenDict[str, Any] = FrozenDict()
 
     def to_dict(self, **extra_app_info: Any) -> dict[str, Any]:

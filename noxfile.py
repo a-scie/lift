@@ -301,13 +301,21 @@ def test(session: Session) -> None:
     session.run("pytest", "-n" "auto", *(session.posargs or ["-v"]), env=test_env)
 
 
+def _run_sphinx(session: Session, builder_name: str) -> None:
+    docs_dir = BUILD_ROOT / "docs"
+    build_dir = docs_dir / "build" / builder_name
+    shutil.rmtree(build_dir, ignore_errors=True)
+    session.run("sphinx-build", "-b", builder_name, "-aEW", str(docs_dir), str(build_dir))
+
+
 @python_session(include_project=True)
 def doc(session: Session) -> None:
-    gen_doc_type = "html"
-    docs_dir = BUILD_ROOT / "docs"
-    build_dir = docs_dir / "build" / gen_doc_type
-    shutil.rmtree(build_dir, ignore_errors=True)
-    session.run("sphinx-build", "-b", gen_doc_type, "-aEW", str(docs_dir), str(build_dir))
+    _run_sphinx(session, builder_name="html")
+
+
+@python_session(include_project=True, extra_reqs=["doc"])
+def linkcheck(session: Session) -> None:
+    _run_sphinx(session, builder_name="linkcheck")
 
 
 @python_session()

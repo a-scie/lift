@@ -9,9 +9,10 @@ import os
 import sys
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Iterator
+from typing import Generic, Iterator, TypeVar
 
-from science.dataclasses import FieldInfo, field_info
+from science.dataclass import Dataclass
+from science.dataclass.reflect import FieldInfo, dataclass_info
 from science.errors import InputError
 from science.model import Provider
 from science.providers.python_build_standalone import PythonBuildStandalone
@@ -19,9 +20,12 @@ from science.providers.python_build_standalone import PythonBuildStandalone
 _BUILTIN_PROVIDER_TYPES = (PythonBuildStandalone,)
 
 
+ConfigDataclass = TypeVar("ConfigDataclass", bound=Dataclass)
+
+
 @dataclass(frozen=True)
-class ProviderInfo:
-    type: type[Provider]
+class ProviderInfo(Generic[ConfigDataclass]):
+    type: type[Provider[ConfigDataclass]]
     source: str
     short_name: str | None = None
 
@@ -42,8 +46,8 @@ class ProviderInfo:
                 return desc
         return None
 
-    def iter_config_fields(self) -> Iterator[FieldInfo]:
-        return field_info(self.type.config_dataclass())
+    def config_fields(self) -> tuple[FieldInfo, ...]:
+        return dataclass_info(self.type.config_dataclass()).field_info
 
 
 def iter_builtin_providers() -> Iterator[ProviderInfo]:
@@ -107,8 +111,8 @@ ALL_PROVIDERS = tuple[ProviderInfo, ...](
 )
 
 
-def get_provider(name: str) -> type[Provider] | None:
+def get_provider(name: str) -> ProviderInfo | None:
     for provider_info in ALL_PROVIDERS:
         if name in (provider_info.short_name, provider_info.fully_qualified_name):
-            return provider_info.type
+            return provider_info
     return None
