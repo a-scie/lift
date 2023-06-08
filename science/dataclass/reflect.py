@@ -70,6 +70,7 @@ _T = TypeVar("_T")
 
 @dataclass_transform()
 def documented_dataclass(
+    doc: str = "",
     *,
     alias: str | None = None,
     init: bool = True,
@@ -99,6 +100,8 @@ def documented_dataclass(
                 weakref_slot=weakref_slot,
             )(cls),
         )
+        if doc:
+            data_type.__doc__ = doc
         return document_dataclass(data_type, ClassMetadata(alias=alias))
 
     return wrapper

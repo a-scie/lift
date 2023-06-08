@@ -62,17 +62,19 @@ class Binding(str):
     source_type: ClassVar[str] = "binding"
 
 
-@documented_dataclass(frozen=True, alias="source")
-class Fetch:
-    """Source a file by fetching it from the internet at scie run-time or scie build-time.
+@documented_dataclass(
+    f"""Source a file by fetching it from the internet at scie run-time or scie build-time.
 
-    ```{important}
-    If the file that is being sourced has a `digest` defined, the fetched content will be checked
-    against the specified digest and a mismatch will lead to an error. Without a digest defined the
-    content of the fetched file will be used as-is!
+    ```{{important}}
+    If the file that is being sourced has a [digest](#{Ref(Digest)}) defined, the fetched
+    content will be checked against the specified digest and a mismatch will lead to an error.
+    Without a digest defined the content of the fetched file will be used as-is!
     ```
-    """
-
+    """,
+    frozen=True,
+    alias="source",
+)
+class Fetch:
     url: Url = dataclasses.field(metadata=metadata("The URL of the file content to fetch."))
     lazy: bool = dataclasses.field(
         default=True,
