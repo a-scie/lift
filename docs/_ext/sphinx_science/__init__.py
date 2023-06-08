@@ -9,7 +9,6 @@ from sphinx_science.providers import RenderProviders
 
 
 def setup(app: Sphinx) -> dict[str, Any]:
-    # app.add_directive("dataclass", RenderDataclass)
     RenderDataclass.register(app, "dataclass")
     RenderProviders.register(app, "providers")
 

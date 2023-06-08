@@ -7,13 +7,7 @@
 Delivers `science`, a high level tool to build scies with.
 
 The `science` tool is intended to be the primary tool used by applications to build scies. Although
-t
-
-
-
-
-
-he [`scie-jump`](https://github.com/a-scie/jump) provides everything needed to build a scie, it is
+the [`scie-jump`](https://github.com/a-scie/jump) provides everything needed to build a scie, it is
 low-level and will always have some sharp corners, including its JSON lift manifest format.
 
 The `science` binary is itself a scie built with `science` using the application manifest at
