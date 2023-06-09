@@ -10,8 +10,16 @@ sphinx==6.2.1 \
 sphinx-click==4.4.0 \
   --hash=sha256:2821c10a68fc9ee6ce7c92fad26540d8d8c8f45e6d7258f0e4fb7529ae8fab49 \
   --hash=sha256:cc67692bd28f482c7f01531c61b64e9d2f069bfcf3d24cbbb51d4a84a749fa48
+
+# N.B.: The 21c3f448d17224246e36a5db678e98b9261a1909604c160cd12f45fa1e7eb695 hash
+# was added manually. This is the hash of the 1.1.2 wheel which does not match the
+# VCS requirement this was locked from. The end result is docgen works on Windows
+# until https://github.com/vsalvino/sphinx-library/pull/3 is released and we can
+# switch back to the PyPI release.
 sphinx-library==1.1.2 \
-  --hash=sha256:f6bb070fbc9a42482197dfdfa29c01e9e245822a86f17541f5a6dcee098cfe1a
+  --hash=sha256:f6bb070fbc9a42482197dfdfa29c01e9e245822a86f17541f5a6dcee098cfe1a \
+  --hash=sha256:21c3f448d17224246e36a5db678e98b9261a1909604c160cd12f45fa1e7eb695
+
 jinja2==3.1.2 \
   --hash=sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61 \
   --hash=sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852
