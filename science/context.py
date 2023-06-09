@@ -55,3 +55,9 @@ class ScienceConfig(ContextConfig):
                 root_logger.setLevel(logging.INFO)
             case v if v >= 2:
                 root_logger.setLevel(logging.DEBUG)
+
+
+@dataclass(frozen=True)
+class DocConfig(ContextConfig):
+    site: str
+    local: Path | None = None

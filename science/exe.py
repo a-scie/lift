@@ -27,7 +27,7 @@ from science import __version__, providers
 from science.commands import build, lift
 from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
-from science.context import ScienceConfig
+from science.context import DocConfig, ScienceConfig
 from science.errors import InputError
 from science.fs import temporary_directory
 from science.model import Application
@@ -101,6 +101,42 @@ def _main(ctx: click.Context, verbose: int, quiet: int, cache_dir: Path) -> None
     science_config.configure_logging(root_logger=click_log.basic_config())
     sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=science_config.verbose)
     ctx.obj = science_config
+
+
+pass_doc = click.make_pass_decorator(DocConfig)
+
+
+@_main.group(cls=DYMGroup, name="doc")
+@click.option(
+    "--site",
+    default="https://science.scie.app",
+    show_default=True,
+    help="Specify an alternate URL of the doc site.",
+)
+@click.option("--local", type=Path, hidden=True)  # N.B.: Set via env var by the lift manifest.
+@click.pass_context
+def _doc(ctx: click.Context, site: str, local: Path | None) -> None:
+    """Interact with science docs."""
+    ctx.obj = DocConfig(site=site, local=local)
+
+
+@_doc.command(name="open")
+@click.option(
+    "--remote",
+    is_flag=True,
+    help=dedent(
+        f"""\
+        Open the official remote doc site instead.
+
+        N.B.: The official docs track the latest release of science. You're using {__version__},
+        which may not match.
+        """
+    ),
+)
+@pass_doc
+def _open_doc(doc: DocConfig, remote: bool) -> None:
+    """Opens the local documentation in a browser."""
+    click.launch(doc.site if remote else f"file://{doc.local}")
 
 
 @_main.group(cls=DYMGroup, name="provider")
