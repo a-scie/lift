@@ -1,5 +1,6 @@
-# Copyright 2022 Science project contributors.
+# Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 from enum import Enum
 from functools import cache
 from typing import Self
