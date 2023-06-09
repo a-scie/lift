@@ -33,7 +33,14 @@ def config(build_root: Path) -> Path:
 
 
 @pytest.fixture(scope="module")
-def science_exe(tmp_path_factory: TempPathFactory, build_root: Path, science_pyz: Path) -> Path:
+def docsite(tmp_path_factory: TempPathFactory) -> Path:
+    return tmp_path_factory.mktemp("docsite")
+
+
+@pytest.fixture(scope="module")
+def science_exe(
+    tmp_path_factory: TempPathFactory, build_root: Path, science_pyz: Path, docsite: Path
+) -> Path:
     dest = tmp_path_factory.mktemp("dest")
     subprocess.run(
         args=[
@@ -42,6 +49,8 @@ def science_exe(tmp_path_factory: TempPathFactory, build_root: Path, science_pyz
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "--file",
+            f"docsite={docsite}",
             "build",
             "--dest-dir",
             str(dest),
@@ -55,7 +64,7 @@ def science_exe(tmp_path_factory: TempPathFactory, build_root: Path, science_pyz
 
 
 def test_use_platform_suffix(
-    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path
+    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
 ) -> None:
     expected_executable = tmp_path / Platform.current().qualified_binary_name("science")
     assert not expected_executable.exists()
@@ -65,6 +74,8 @@ def test_use_platform_suffix(
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "--file",
+            f"docsite={docsite}",
             "build",
             "--dest-dir",
             str(tmp_path),
@@ -86,7 +97,12 @@ def shasum() -> str | None:
 
 
 def test_hash(
-    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, shasum: str | None
+    tmp_path: Path,
+    science_exe: Path,
+    config: Path,
+    science_pyz: Path,
+    docsite: Path,
+    shasum: str | None,
 ) -> None:
     expected_executable = tmp_path / Platform.current().binary_name("science")
     algorithms = "sha1", "sha256", "sha512"
@@ -103,6 +119,8 @@ def test_hash(
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "--file",
+            f"docsite={docsite}",
             "build",
             "--dest-dir",
             str(tmp_path),
@@ -134,7 +152,9 @@ def test_hash(
             ), f"The {actual_digest.name} digest did not match."
 
 
-def test_dogfood(tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path) -> None:
+def test_dogfood(
+    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
+) -> None:
     dest = tmp_path / "dest"
     subprocess.run(
         args=[
@@ -142,6 +162,8 @@ def test_dogfood(tmp_path: Path, science_exe: Path, config: Path, science_pyz: P
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
+            "--file",
+            f"docsite={docsite}",
             "build",
             "--dest-dir",
             str(dest),
@@ -171,7 +193,7 @@ def test_nested_filenames(
 
     with config.open(mode="r") as fp:
         config_data = toml.load(fp)
-        science_pyz_file = config_data["lift"]["files"][0]
+        science_pyz_file = config_data["lift"]["files"][-1]
         science_pyz_file["key"] = science_pyz_file["name"]
         science_pyz_file["name"] = str(dest.relative_to(tmp_path))
     test_config = tmp_path / "lift.toml"
@@ -179,10 +201,11 @@ def test_nested_filenames(
         toml.dump(config_data, fp)
 
     application = parse_config_file(test_config)
-    parsed_science_pyz_file = next(iter(application.files))
+    parsed_science_pyz_file = application.files[-1]
     assert science_pyz.name == parsed_science_pyz_file.key
     assert str(Path("dist") / science_pyz.name) == parsed_science_pyz_file.name
 
+    (tmp_path / "docsite").mkdir()
     dest1 = tmp_path / "dest1"
     subprocess.run(
         args=[str(science_exe), "lift", "build", "--dest-dir", str(dest1)], check=True, cwd=tmp_path

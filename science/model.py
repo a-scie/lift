@@ -115,8 +115,13 @@ class File:
     def __post_init__(self) -> None:
         if self.source and not self.digest:
             raise InputError(
-                f"Since {self} has a {self.source.source_type} source it must also specify `size` "
-                f"and `fingerprint`."
+                f"File {self.id!r} has a {self.source.source_type} source it must also specify "
+                "`size` and `fingerprint`."
+            )
+        if self.digest and self.type is FileType.Directory:
+            raise InputError(
+                f"File {self.id!r} is a directory and has a digest defined but digests are not "
+                "supported for directories."
             )
 
     @property

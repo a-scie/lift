@@ -301,11 +301,12 @@ def test(session: Session) -> None:
     session.run("pytest", "-n" "auto", *(session.posargs or ["-v"]), env=test_env)
 
 
-def _run_sphinx(session: Session, builder_name: str) -> None:
+def _run_sphinx(session: Session, builder_name: str) -> Path:
     docs_dir = BUILD_ROOT / "docs"
     build_dir = docs_dir / "build" / builder_name
     shutil.rmtree(build_dir, ignore_errors=True)
     session.run("sphinx-build", "-b", builder_name, "-aEW", str(docs_dir), str(build_dir))
+    return build_dir
 
 
 @python_session(include_project=True)
@@ -324,7 +325,7 @@ def run(session: Session) -> None:
     session.run("python", str(science_pyz), *session.posargs)
 
 
-def _package(session: Session, *extra_lift_args: str) -> None:
+def _package(session: Session, docsite: Path, *extra_lift_args: str) -> None:
     science_pyz = create_zipapp(session)
     session.run(
         "python",
@@ -332,6 +333,8 @@ def _package(session: Session, *extra_lift_args: str) -> None:
         "lift",
         "--file",
         f"science.pyz={science_pyz}",
+        "--file",
+        f"docsite={docsite}",
         "--include-provenance",
         *extra_lift_args,
         "build",
@@ -346,7 +349,8 @@ def _package(session: Session, *extra_lift_args: str) -> None:
     )
 
 
-@python_session()
+@python_session(include_project=True, extra_reqs=["doc"])
 def package(session: Session) -> None:
-    _package(session)
-    _package(session, "--invert-lazy", "cpython", "--app-name", "science-fat")
+    docsite = _run_sphinx(session, builder_name="html")
+    _package(session, docsite)
+    _package(session, docsite, "--invert-lazy", "cpython", "--app-name", "science-fat")

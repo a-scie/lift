@@ -14,6 +14,11 @@ version = "3.11.3"
 lazy = true
 
 [[lift.files]]
+# This is pointed at the output of the sphinx htm doc gen to produce a zip of the static html site
+# using `science lift --file docsite=docs/build/html ...`.
+name = "docsite"
+
+[[lift.files]]
 # The nox build emits this at `dist/science.pyz` and so our packaging process maps that path using
 # `science lift --file science.pyz=dist/science.pyz ...`.
 name = "science.pyz"
@@ -33,4 +38,6 @@ args = [
 remove_re = [
     "SHIV_.*",
 ]
-replace = { SHIV_ROOT = "{scie.bindings}/shiv_root" }
+[lift.commands.env.replace]
+SHIV_ROOT = "{scie.bindings}/shiv_root"
+SCIENCE_DOC_LOCAL = "{docsite}/index.html"

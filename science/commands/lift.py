@@ -21,6 +21,7 @@ from science.model import (
     Distribution,
     Fetch,
     File,
+    FileType,
     InterpreterGroup,
     ScieJump,
 )
@@ -177,9 +178,25 @@ def export_manifest(
                             f"{Path.cwd()}."
                         )
             files.append(file)
-            if file_path:
+
+            target = chroot / requested_file.name
+            if file_path and file_path.is_dir():
+                if requested_file.type and requested_file.type is not FileType.Directory:
+                    raise InputError(
+                        f"The file for {requested_file.id} is expected to be a "
+                        f"{requested_file.type} but maps to the directory {file_path}."
+                    )
+
+                # N.B.: The scie-jump boot pack expects a local directory to zip up as a sibling. It
+                # then includes the local sibling <dir>.zip in the scie. If we point it at the
+                # directory `file_path` directly via symlink it will follow the symlink and zip up
+                # the directory as a sibling there instead and not find the resulting zip. As such
+                # we create a thin local directory of symlinks here for it to work against.
+                target.mkdir(parents=True, exist_ok=True)
+                for entry in file_path.iterdir():
+                    (target / entry.name).symlink_to(entry)
+            elif file_path:
                 requested_file.maybe_check_digest(file_path)
-                target = chroot / requested_file.name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 if not target.exists():
                     target.symlink_to(file_path)
