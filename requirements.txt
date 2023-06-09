@@ -5,4 +5,5 @@ click_didyoumean
 filelock
 httpx
 packaging
+psutil
 tqdm
