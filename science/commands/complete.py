@@ -7,32 +7,19 @@ from typing import Self
 
 import psutil
 
-from science.os import EXE_EXT, IS_WINDOWS
+from science.os import EXE_EXT
 
 
 class Shell(Enum):
     @classmethod
     @cache
     def current(cls) -> Self | None:
-        python_process = psutil.Process()
-        if IS_WINDOWS:
-            python_process = python_process.parent()
-        if not python_process:
-            return None
-
-        scie_process = python_process.parent()
-        if not scie_process:
-            return None
-
-        shell_process = scie_process.parent()
-        if not shell_process:
-            return None
-
-        parent_exe_name = scie_process.name()
-        try:
-            return cls(parent_exe_name.rstrip(EXE_EXT).lower() if IS_WINDOWS else parent_exe_name)
-        except ValueError:
-            return None
+        known_shells = tuple(shell.value for shell in cls)
+        process = psutil.Process()
+        while process := process.parent():
+            if (exe := process.name().rstrip(EXE_EXT).lower()) in known_shells:
+                return cls(exe)
+        return None
 
     Bash = "bash"
     Fish = "fish"
