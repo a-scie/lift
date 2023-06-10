@@ -15,6 +15,7 @@ from typing import Any
 
 from science import __version__
 from science.dataclass.reflect import metadata
+from science.doc import DOC_SITE_URL
 from science.frozendict import FrozenDict
 from science.hashing import Digest, Provenance
 from science.platform import Platform
@@ -76,9 +77,9 @@ class BuildInfo:
 
         build_info = dict[str, Any](
             notes=[
-                "This scie lift JSON manifest was generated from a source lift toml manifest "
-                "using the science binary.",
-                f"Find out more here: https://github.com/a-scie/lift/blob/v{__version__}/README.md",
+                f"This scie lift JSON manifest was generated from {self.lift_toml.source} using "
+                "the science binary.",
+                f"Find out more here: {DOC_SITE_URL}",
             ],
             binary=binary,
             manifest=lift_toml,
