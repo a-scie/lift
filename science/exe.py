@@ -31,6 +31,7 @@ from science.commands.complete import Shell
 from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
 from science.context import DocConfig, ScienceConfig
+from science.doc import DOC_SITE_URL
 from science.errors import InputError
 from science.fs import temporary_directory
 from science.model import Application
@@ -57,9 +58,24 @@ def _log_fatal(
     click.secho(value, fg="red", file=sys.stderr)
 
 
+SEE_MANIFEST_HELP = (
+    f"For more information on the TOML manifest format, see: {DOC_SITE_URL}/manifest.html"
+)
+
+
 @click.group(
     cls=DYMGroup,
     context_settings=dict(auto_envvar_prefix="SCIENCE", help_option_names=["-h", "--help"]),
+    help=dedent(
+        f"""\
+        Science helps you prepare scies for your application.
+
+        Science provides a high-level TOML manifest format for a scie application and can build scies
+        and export scie lift JSON manifests from these configuration files.
+
+        {SEE_MANIFEST_HELP}
+        """
+    ),
 )
 @click.version_option(__version__, "-V", "--version", message="%(version)s")
 @click.option(
@@ -95,14 +111,7 @@ def _log_fatal(
 )
 @click.pass_context
 def _main(ctx: click.Context, verbose: int, quiet: int, cache_dir: Path) -> None:
-    """Science helps you prepare scies for your application.
-
-    Science provides a high-level TOML manifest format for a scie application and can build scies
-    and export scie lift JSON manifests from these configuration files.
-
-    For more information on the TOML manifest format, see:
-    https://github.com/a-scie/lift/blob/main/docs/manifest.md
-    """
+    # N.B.: Help is defined above in the _main group decorator since it's a dynamic string.
     science_config = ScienceConfig(verbosity=verbose - quiet, cache_dir=cache_dir)
     science_config.configure_logging(root_logger=click_log.basic_config())
     sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=science_config.verbose)
@@ -166,7 +175,7 @@ pass_doc = click.make_pass_decorator(DocConfig)
 @_main.group(cls=DYMGroup, name="doc")
 @click.option(
     "--site",
-    default="https://science.scie.app",
+    default=DOC_SITE_URL,
     show_default=True,
     help="Specify an alternate URL of the doc site.",
 )
@@ -249,7 +258,17 @@ def _list(emit_json: bool) -> None:
 pass_lift = click.make_pass_decorator(LiftConfig)
 
 
-@_main.group(cls=DYMGroup, name="lift")
+@_main.group(
+    cls=DYMGroup,
+    name="lift",
+    help=dedent(
+        f"""\
+        Perform operations against your application lift TOML manifest.
+
+        {SEE_MANIFEST_HELP}
+        """
+    ),
+)
 @click.option(
     "--file",
     "file_mappings",
@@ -385,12 +404,14 @@ pass_lift = click.make_pass_decorator(LiftConfig)
                "source": "lift.toml"
              },
              "notes": [
-               "This scie lift JSON manifest was generated from a source lift toml manifest using the science binary.",
-               "Find out more here: https://github.com/a-scie/lift/blob/v0.1.0/README.md"
+               "This scie lift JSON manifest was generated from lift.toml using the science binary.",
+               "Find out more here: $DOC_SITE_URL$"
              ]
            }
          }
-        """
+        """.replace(
+            "$DOC_SITE_URL$", DOC_SITE_URL
+        )  # A few too many {} to escape them all.
     ),
 )
 @click.option(
@@ -427,11 +448,7 @@ def _lift(
     app_name: str | None,
     app_info: list[AppInfo],
 ) -> None:
-    """Perform operations against your application lift TOML manifest.
-
-    For more information on the TOML manifest format, see:
-    https://github.com/a-scie/lift/blob/main/docs/manifest.md
-    """
+    # N.B.: Help is defined above in the _lift group decorator since it's a dynamic string.
     ctx.obj = LiftConfig(
         file_mappings=tuple(file_mappings),
         invert_lazy_ids=frozenset(invert_lazy_ids),

@@ -28,7 +28,8 @@ from packaging.version import Version
 
 from science.build_info import BuildInfo
 from science.dataclass import Dataclass
-from science.dataclass.reflect import Ref, documented_dataclass, metadata
+from science.dataclass.reflect import documented_dataclass, metadata
+from science.doc import Ref
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
@@ -102,15 +103,106 @@ class Fetch:
 FileSource: TypeAlias = Fetch | Binding | None
 
 
-@documented_dataclass(frozen=True, alias="file")
+@documented_dataclass(
+    f"""A file to include in the scie.
+
+    Files are generally embedded in the scie executable and extracted as needed at run-time using
+    a concurrency-safe file system cache. Archives are unpacked unless the file type is marked
+    `{FileType.Blob.value!r}`
+    """,
+    frozen=True,
+    alias="file",
+)
 class File:
-    name: str
-    key: str | None = None
-    digest: Digest | None = None
-    type: FileType | None = None
-    is_executable: bool = False
-    eager_extract: bool = False
-    source: FileSource = None
+    name: str = dataclasses.field(
+        metadata=metadata(
+            f"""\
+            The name of the file.
+
+            This will usually be the actual file name or the relative path to a file, but it can
+            also be an abstract name. If the file name is not a relative path there are two things
+            to note:
+            * If the file `type` is not explicitly set, it will be inferred from the extension
+              unless the file resolves as a directory, in which case it will have type
+              `{FileType.Directory.value!r}`.
+            * The file will need to be mapped via the `science lift --file <name>=<path> ...` option
+              at build-time.
+            """
+        )
+    )
+    key: str | None = dataclasses.field(
+        default=None,
+        metadata=metadata(
+            lambda: f"""\
+            An alternate name for the file.
+
+            The key can be used in place of the `name` in `{{<name>}}` or `{{scie.file.<name>}}`
+            placeholders in [`command`](#{Ref(Command)}) fields or when mapping the the file using
+            the `science lift --file <name>=<path> ...` option at build-time.
+            """
+        ),
+    )
+    digest: Digest | None = dataclasses.field(
+        default=None,
+        metadata=metadata(
+            f"""The expected digest of the file.
+
+            The digest will be checked at scie build-time if the file has no `source` and it will be
+            checked again upon extraction from the scie at runtime.
+            """
+        ),
+    )
+    type: FileType | None = dataclasses.field(
+        default=None,
+        metadata=metadata(
+            f"""The file type expected.
+
+            ```{{note}}
+            Can be set to `{FileType.Blob.value!r}` to turn off automatic extraction of recognised
+            archive types.
+            ```
+            """
+        ),
+    )
+    is_executable: bool = dataclasses.field(
+        default=False,
+        metadata=metadata(
+            """Is the file an executable.
+
+            This is auto-detected if the file has no `source` but must be set if the file is an
+            executable that is provided by a `source`. This has no effect for Windows platform
+            scies.
+            """
+        ),
+    )
+    eager_extract: bool = dataclasses.field(
+        default=False,
+        metadata=metadata(
+            lambda: f"""Extract the file from the scie upon first execution of the scie.
+
+            Although files are automatically extracted when referenced directly or indirectly by
+            placeholders in the scie [`command`](#{Ref(Command)}) selected for execution, the scie
+            may have other un-referenced files used by other commands that you wish to be extracted
+            eagerly anyhow.
+            """
+        ),
+    )
+    source: FileSource = dataclasses.field(
+        default=None,
+        metadata=metadata(
+            lambda: f"""A source for the file's byte content.
+
+            Normally files are expected to be found locally at scie build-time, but you may want
+            science to fetch them for you as a convenience at build time or you may want the scie
+            to fetch them lazily at run-time. Specifying a [`source`](#{Ref(Fetch)}) table can
+            accomplish either.
+
+            For more exotic cases the source can be a string that is the name of a binding
+            [`command`](#{Ref(Command)}) that accepts the `name` of the file as its sole argument
+            and produces the file's byte content on stdout.
+            """
+        ),
+    )
 
     def __post_init__(self) -> None:
         if self.source and not self.digest:
@@ -227,9 +319,31 @@ class Provider(Protocol[ConfigDataclass]):
         ...
 
 
-@documented_dataclass(frozen=True, alias="interpreter")
+@documented_dataclass(
+    f"""An interpreter distribution.
+
+    For example, a CPython distribution from [Python Standalone Builds][PBS] or a JDK archive.
+
+    These are supplied by [Providers](#built-in-providers) and produce a [`file`](#{Ref(File)})
+    entry in the scie with special `#{{<id>:<name>}}` placeholder support for accessing named files
+    within the distribution archive.
+
+    [PBS]: https://python-build-standalone.readthedocs.io
+    """,
+    frozen=True,
+    alias="interpreter",
+)
 class Interpreter(Dataclass):
-    id: Identifier
+    id: Identifier = dataclasses.field(
+        metadata=metadata(
+            lambda: f"""An identifier to use in `#{{<id>...}}` placeholders.
+
+            The `#{{<id>}}` placeholder can be used in [`command`](#{Ref(Command)}) fields to
+            reference the interpreter distribution archive. The `#{{<id>:<name>}}` placeholder can
+            be used to reference named files provided by the interpreter distribution.
+            """
+        )
+    )
     provider: Provider = dataclasses.field(
         metadata=metadata(
             """The name of a Science Provider implementation.
@@ -241,9 +355,40 @@ class Interpreter(Dataclass):
             reference=True,
         )
     )
+    lazy: bool = dataclasses.field(
+        default=False,
+        metadata=metadata(
+            f"""Whether to lazily fetch the interpreter distribution at scie run-time.
+
+            By default, the interpreter distribution is fetched and embedded in the scie at
+            build-time.
+
+            ```{{note}}
+            Science uses [`ptex`](https://github.com/a-scie/ptex) to perform lazy run-time fetching
+            and will embed it as a [`file`](#{Ref(File)}) in the scie. You can control the version
+            used and other aspects of the fetch with the [`ptex` table](#{Ref(Ptex)}).
+            ```
+            """,
+        ),
+    )
 
 
-@documented_dataclass(frozen=True, alias="interpreter_group")
+@documented_dataclass(
+    f"""A group of [`interpreters`][1] from the same provider that can be dynamically selected from.
+
+    An interpreter group is useful if you want to ship a single scie binary that can dynamically
+    select an appropriate interpreter at runtime.
+
+    ```{{tip}}
+    To cut down on assembled scie size, it generally makes sense to mark all or all but one
+    interpreter distribution in the group as `lazy = true`.
+    ```
+
+    [1]: #{Ref(Interpreter)}
+    """,
+    frozen=True,
+    alias="interpreter_group",
+)
 class InterpreterGroup:
     @classmethod
     def create(cls, id_: Identifier, selector: str, interpreters: Iterable[Interpreter]):
@@ -268,11 +413,27 @@ class InterpreterGroup:
             )
         return cls(id=id_, selector=selector, members=members)
 
-    id: Identifier
-    selector: str
+    id: Identifier = dataclasses.field(
+        metadata=metadata(
+            f"""An identifier to use in `#{{<id>...}}` placeholders.
+
+            These work just like [`interpreter`](#{Ref(Interpreter)}) ids, proxying through to the
+            interpreter group member selected by the `selector`.
+            """
+        )
+    )
+    selector: str = dataclasses.field(
+        metadata=metadata(
+            f"""A string, that should resolve to the `id` of a member of the group.
+
+            The selector is resolved in the same manner as [`command`](#{Ref(Command)}) fields where
+            any placeholders are recursively resolved.
+            """
+        )
+    )
     members: frozenset[Interpreter] = dataclasses.field(
         metadata=metadata(
-            f"""The `id`s of the [interpreter](#{Ref(Interpreter)})s that are members of this group.
+            f"""The ids of the [`interpreter`](#{Ref(Interpreter)})s that are members of this group.
 
             There must be at lease two unique ids provided to form a group.
             """,
