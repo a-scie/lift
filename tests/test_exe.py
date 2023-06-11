@@ -20,10 +20,11 @@ from typing import Any, Iterable
 import pytest
 import toml
 from _pytest.tmpdir import TempPathFactory
-from testing import IS_WINDOWS, issue
+from testing import issue
 
 from science import __version__
 from science.config import parse_config_file
+from science.os import IS_WINDOWS
 from science.platform import Platform
 
 

@@ -11,6 +11,9 @@ types-appdirs==1.4.3.5 \
 types-docutils==0.20.0.1 \
   --hash=sha256:6b17cbe57cb282158feb41d154cddaeabc16f1d6cff3c7308bd3056f42aa7cd2 \
   --hash=sha256:f682b5459a1e6e28208742adb0be8573d1ecbddd442f00d202b0278c1c4418a2
+types-psutil==5.9.5.13 \
+  --hash=sha256:692213804a926bf88eeaef40dc3c7d3e01926eb5282de4655c4bf8af1ba0b675 \
+  --hash=sha256:3374c06ff92436f57c72e5df1e8fa08480af3e846f78d72498ddc7181985ac85
 types-toml==0.10.8.6 \
   --hash=sha256:de7b2bb1831d6f7a4b554671ffe5875e729753496961b3e9b202745e4955dafa \
   --hash=sha256:6d3ac79e36c9ee593c5d4fb33a50cca0e3adceb6ef5cff8b8e5aef67b4c4aaf2

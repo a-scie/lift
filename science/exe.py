@@ -10,9 +10,11 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import textwrap
 import traceback
+from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
 from types import TracebackType
@@ -25,15 +27,19 @@ from packaging import version
 
 from science import __version__, providers
 from science.commands import build, lift
+from science.commands.complete import Shell
 from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
 from science.context import DocConfig, ScienceConfig
 from science.errors import InputError
 from science.fs import temporary_directory
 from science.model import Application
+from science.os import EXE_EXT
 from science.platform import Platform
 
 logger = logging.getLogger(__name__)
+
+SCIE_ARGV0 = os.environ.get("SCIE_ARGV0")
 
 
 def _log_fatal(
@@ -101,6 +107,57 @@ def _main(ctx: click.Context, verbose: int, quiet: int, cache_dir: Path) -> None
     science_config.configure_logging(root_logger=click_log.basic_config())
     sys.excepthook = functools.partial(_log_fatal, always_include_backtrace=science_config.verbose)
     ctx.obj = science_config
+
+
+@_main.command(name="complete")
+@click.option(
+    "--shell",
+    default=shell.value if (shell := Shell.current()) else None,
+    type=click.Choice([shell.value for shell in Shell]),
+    show_default=Shell.current() is not None,
+    callback=lambda _ctx, _param, value: Shell(value),
+    required=Shell.current() is None,
+    help="Specify the shell to generate a completion script for.",
+)
+@click.option(
+    "--output", type=click.File("wb"), help="The file to output the shell completion script to."
+)
+def _complete(shell: Shell, output: BytesIO | None) -> None:
+    """Generate shell completion scripts.
+
+    By default, the appropriate shell completion script for the current shell is output to stdout,
+    but both the shell and output destination can be altered.
+
+    The use of the script depends on your shell type and preferences. To test things out you can
+    use:
+
+    * `bash` or `zsh`::
+
+        \b
+        eval "$(science complete)"
+
+    * `fish`::
+
+        \b
+        eval (science complete)
+
+    To trigger option completion you must type `-` before tabbing.
+
+    .. note::
+     If science cannot detect your shell, or it can but is not one of the supported shells for
+     completion, you must specify `--shell`.
+    """
+    if not SCIE_ARGV0:
+        raise InputError("Can only generate completion scripts when run from a scie.")
+
+    env_var_bin_name = SCIE_ARGV0.rstrip(EXE_EXT).replace("-", "_").upper()
+    sys.exit(
+        subprocess.run(
+            [SCIE_ARGV0],
+            env={**os.environ, f"_{env_var_bin_name}_COMPLETE": f"{shell.value}_source"},
+            stdout=output.fileno() if output else None,
+        ).returncode
+    )
 
 
 pass_doc = click.make_pass_decorator(DocConfig)
@@ -602,4 +659,4 @@ def main():
     # user since both the Python distribution and the code are hidden away in the nce cache. Since
     # we know we run as a scie in normal circumstances, use the SCIE_ARGV0 exported by the
     # scie-jump when present.
-    _main(prog_name=os.environ.get("SCIE_ARGV0"))
+    _main(prog_name=SCIE_ARGV0)
