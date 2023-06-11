@@ -14,6 +14,20 @@ from myst_parser.mdit_to_docutils.base import DocutilsRenderer
 from myst_parser.parsers.mdit import create_md_parser
 
 
+@dataclass(frozen=True, kw_only=True)
+class Icon:
+    light: str
+    sepia: str
+    dark: str
+
+
+@dataclass(frozen=True)
+class Link:
+    id: str
+    url: str
+    icon: Icon | None = None
+
+
 @dataclass
 class Section:
     @classmethod

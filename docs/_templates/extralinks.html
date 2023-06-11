@@ -1,0 +1,61 @@
+{% if theme_extra_links %}
+<h3>{{ _('Links') }}</h3>
+<ul>
+    {% if theme_extra_links.values() | selectattr("icon") | list | count %}
+    <script>
+        const Science = (() => {
+            let iconsByImageId = {};
+            return {
+                theme: {
+                    registerIcons: (id, light, sepia, dark) => {
+                        iconsByImageId[id] = {
+                            "light": light,
+                            "sepia": sepia,
+                            "dark": dark,
+                        }
+                    },
+                    updateMode: (mode) => {
+                        for (const [id, icons] of Object.entries(iconsByImageId)) {
+                            const image = document.getElementById(id);
+                            image.src = icons[mode] || icons.light
+                        }
+                    }
+                }
+            }
+        })();
+
+        Storage.prototype.__setItem = Storage.prototype.setItem;
+        Storage.prototype.setItem = (key, value) => {
+            localStorage.__setItem(key, value);
+            if (key === "sphinx-library-mode") {
+                Science.theme.updateMode(value);
+            }
+        };
+    </script>
+    {% endif %}
+    {% for text, link in theme_extra_links.items() %}
+    <li class="toctree-l1"><a href="{{ link.url }}">
+        {% if link.icon %}
+        <div>
+            <img
+                id="{{ link.id }}_img"
+                style="vertical-align:middle"
+                src="{{ pathto(link.icon.light, 1) }}"
+            >
+            <span style="padding-left:2px">{{text}}</span>
+        </div>
+        <script>
+            Science.theme.registerIcons(
+                "{{ link.id }}_img",
+                "{{ pathto(link.icon.light, 1) }}",
+                "{{ pathto(link.icon.sepia, 1) }}",
+                "{{ pathto(link.icon.dark, 1) }}",
+            );
+        </script>
+        {% else %}
+        {{ text }}
+        {% endif %}
+    </a></li>
+    {% endfor %}
+</ul>
+{% endif %}

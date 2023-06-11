@@ -1,16 +1,15 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
 
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import os
-import sys
-from datetime import datetime
-from pathlib import Path
-from textwrap import dedent
 
 # N.B. This sneaks in a custom `science.dataclass.reflect.Ref` slugifier function that generates
 # valid html anchor ids.
@@ -45,12 +44,16 @@ source_suffix = {
     ".md": "markdown",
 }
 
+templates_path = [
+    "_templates",
+]
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 # https://myst-parser.readthedocs.io/en/latest/configuration.html
 # https://vsalvino.github.io/sphinx-library/customize.html
 
-from sphinx_science.render import MarkdownParser
+from sphinx_science.render import Icon, Link, MarkdownParser
 
 myst_enable_extensions = [*MarkdownParser.ENABLE_EXTENSIONS]
 
@@ -58,42 +61,24 @@ html_title = f"Science Docs (v{release})"
 html_theme = "library"
 
 
-EXTRA_LINK_IMG_ID = 0
+GITHUB_ICON = Icon(
+    light="_static/icons/github-16.png",
+    sepia="_static/icons/github-16.png",
+    dark="_static/icons/github-white-16.png",
+)
+
+_NEXT_LINK_ID = 0
 
 
-def create_extra_link(
-    text: str, url: str, light_icon: str, sepia_icon: str, dark_icon: str
-) -> tuple[str, str]:
-    global EXTRA_LINK_IMG_ID
-    img_id = f"__extra_link_img_{EXTRA_LINK_IMG_ID}"
-    EXTRA_LINK_IMG_ID += 1
-    return (
-        dedent(
-            f"""\
-            <div>
-                <img id="{img_id}" style="vertical-align:middle" src="{light_icon}">
-                <span style="padding-left:2px">{text}</span>
-            </div>
-            <script>
-                // N.B.: The other half of this is implemented in `_static/js/icon_theme.js`.
-                Science.theme.registerIcons(
-                    "{img_id}", "{light_icon}", "{sepia_icon}", "{dark_icon}"
-                );
-            </script>
-            """
-        ),
-        url,
-    )
+def next_link_id() -> int:
+    global _NEXT_LINK_ID
+    next_id = _NEXT_LINK_ID
+    _NEXT_LINK_ID += 1
+    return next_id
 
 
-def create_extra_gh_link(text: str, url: str) -> tuple[str, str]:
-    return create_extra_link(
-        text,
-        url,
-        dark_icon="/_static/icons/github-white-16.png",
-        sepia_icon="/_static/icons/github-16.png",
-        light_icon="/_static/icons/github-16.png",
-    )
+def create_extra_link(url: str, icon: Icon | None = None) -> Link:
+    return Link(id=f"__extra_link_{next_link_id()}", url=url, icon=icon)
 
 
 html_theme_options = {
@@ -101,13 +86,11 @@ html_theme_options = {
     "typography": "book",
     "show_project_name": False,
     "description": "Build your executables using science.",
-    "extra_links": dict(
-        (
-            create_extra_gh_link("Source Code", "https://github.com/a-scie/lift"),
-            create_extra_gh_link("Issue Tracker", "https://github.com/a-scie/lift/issues"),
-            create_extra_gh_link("Releases", "https://github.com/a-scie/lift/releases"),
-        )
-    ),
+    "extra_links": {
+        "Source Code": create_extra_link("https://github.com/a-scie/lift", GITHUB_ICON),
+        "Issue Tracker": create_extra_link("https://github.com/a-scie/lift/issues", GITHUB_ICON),
+        "Releases": create_extra_link("https://github.com/a-scie/lift/releases", GITHUB_ICON),
+    },
 }
 
 html_show_sourcelink = True
@@ -126,4 +109,3 @@ html_sidebars = {
     ]
 }
 html_static_path = ["_static"]
-html_js_files = ["js/icon_theme.js"]
