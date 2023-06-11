@@ -338,9 +338,9 @@ class Interpreter(Dataclass):
         metadata=metadata(
             lambda: f"""An identifier to use in `#{{<id>...}}` placeholders.
 
-            The `#{{<id>}}` placeholder can be used a a placeholder [`command`](#{Ref(Command)})
-            fields to reference the interpreter distribution archive or `#{{<id>:<name>}}` to
-            reference named files provided by the interpreter distribution.
+            The `#{{<id>}}` placeholder can be used in [`command`](#{Ref(Command)}) fields to
+            reference the interpreter distribution archive. The `#{{<id>:<name>}}` placeholder can
+            be used to reference named files provided by the interpreter distribution.
             """
         )
     )
