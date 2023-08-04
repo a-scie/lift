@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.1.3
+
+Update the science internal Python distribution to [PBS](
+https://github.com/indygreg/python-build-standalone/) CPython 3.11.4. This should make `science`
+executable out of the box on more Linux distros.
+
 ## 0.1.2
 
 This release brings two fixes prompted by [scie-pants](https://github.com/pantsbuild/scie-pants)
