@@ -211,6 +211,7 @@ def export_manifest(
                 name=application.name,
                 description=application.description,
                 load_dotenv=application.load_dotenv,
+                base=application.base,
                 scie_jump=application.scie_jump or ScieJump(),
                 platform=platform,
                 distributions=distributions,
@@ -287,6 +288,7 @@ def _emit_manifest(
     name: str,
     description: str | None,
     load_dotenv: bool,
+    base: str | None,
     scie_jump: ScieJump,
     platform: Platform,
     distributions: Iterable[Distribution],
@@ -306,18 +308,20 @@ def _emit_manifest(
             _render_command(cmd, platform, distributions, interpreter_groups) for cmd in cmds
         )
 
-    scie_data = {
-        "lift": {
-            "name": name,
-            "description": description,
-            "load_dotenv": load_dotenv,
-            "files": render_files(),
-            "boot": {
-                "commands": render_commands(commands),
-                "bindings": render_commands(bindings),
-            },
-        }
+    lift_data = {
+        "name": name,
+        "description": description,
+        "load_dotenv": load_dotenv,
+        "files": render_files(),
+        "boot": {
+            "commands": render_commands(commands),
+            "bindings": render_commands(bindings),
+        },
     }
+    if base:
+        lift_data.update(base=base)
+
+    scie_data = {"lift": lift_data}
     data = dict[str, Any](scie=scie_data)
     if build_info:
         data.update(science=build_info.to_dict(**(app_info or {})))

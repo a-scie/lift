@@ -3,6 +3,7 @@
 
 import json
 import os.path
+import shutil
 import subprocess
 import sys
 from importlib import resources
@@ -74,3 +75,50 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
         assert (scie_base / data2["hash"]).is_dir()
 
         assert data1["hash"] != data2["hash"]
+
+
+def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
+    current_platform = Platform.current()
+    match current_platform:
+        case Platform.Windows_x86_64:
+            config_name = "scie-base.windows.toml"
+            expected_base = "~\\AppData\\Local\\Temp\\custom-base"
+        case _:
+            config_name = "scie-base.unix.toml"
+            expected_base = "/tmp/custom-base"
+
+    with resources.as_file(resources.files("data") / config_name) as config:
+        subprocess.run(
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                config,
+            ],
+            check=True,
+        )
+
+        exe_path = tmp_path / current_platform.binary_name("custom-base")
+
+        data = json.loads(
+            subprocess.run(
+                args=[exe_path],
+                env={**os.environ, "SCIE": "inspect"},
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+        )
+        assert expected_base == data["scie"]["lift"]["base"]
+        expanded_base = os.path.expanduser(expected_base)
+        try:
+            assert (
+                f"Hello from {expanded_base}!"
+                == subprocess.run(
+                    args=[exe_path], stdout=subprocess.PIPE, text=True, check=True
+                ).stdout.strip()
+            )
+        finally:
+            shutil.rmtree(expanded_base, ignore_errors=True)
