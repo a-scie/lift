@@ -82,7 +82,7 @@ def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
     match current_platform:
         case Platform.Windows_x86_64:
             config_name = "scie-base.windows.toml"
-            expected_base = "~\\AppData\\Temp\\custom-base"
+            expected_base = "~\\AppData\\Local\\Temp\\custom-base"
         case _:
             config_name = "scie-base.unix.toml"
             expected_base = "/tmp/custom-base"

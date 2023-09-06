@@ -1,7 +1,7 @@
 [lift]
 name = "custom-base"
 description = "Test custom scie base configuration."
-base = "~\\AppData\\Temp\\custom-base"
+base = "~\\AppData\\Local\\Temp\\custom-base"
 
 [[lift.interpreters]]
 id = "cpython"
