@@ -13,5 +13,5 @@ lazy = true
 exe = "#{cpython:python}"
 args = [
     "-c",
-    "print('Hello from {scie.base}!')"
+    "print(r'Hello from {scie.base}!')"
 ]
