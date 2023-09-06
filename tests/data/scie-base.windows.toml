@@ -1,0 +1,17 @@
+[lift]
+name = "custom-base"
+description = "Test custom scie base configuration."
+base = "~\\AppData\\Temp\\custom-base"
+
+[[lift.interpreters]]
+id = "cpython"
+provider = "PythonBuildStandalone"
+version = "3.10"
+lazy = true
+
+[[lift.commands]]
+exe = "#{cpython:python}"
+args = [
+    "-c",
+    "print('Hello from {scie.base}!')"
+]
