@@ -3,6 +3,7 @@
 
 import json
 import os.path
+import shutil
 import subprocess
 import sys
 from importlib import resources
@@ -74,3 +75,40 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
         assert (scie_base / data2["hash"]).is_dir()
 
         assert data1["hash"] != data2["hash"]
+
+
+def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
+    with resources.as_file(resources.files("data") / "scie-base.toml") as config:
+        subprocess.run(
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                config,
+            ],
+            check=True,
+        )
+
+        exe_path = tmp_path / Platform.current().binary_name("custom-base")
+
+        data = json.loads(
+            subprocess.run(
+                args=[exe_path],
+                env={**os.environ, "SCIE": "inspect"},
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+        )
+        assert "/tmp/custom-base" == data["scie"]["lift"]["base"]
+        try:
+            assert (
+                "Hello from /tmp/custom-base!"
+                == subprocess.run(
+                    args=[exe_path], stdout=subprocess.PIPE, text=True, check=True
+                ).stdout.strip()
+            )
+        finally:
+            shutil.rmtree("/tmp/custom-base", ignore_errors=True)

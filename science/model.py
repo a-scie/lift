@@ -480,6 +480,10 @@ class Application(Dataclass):
     load_dotenv: bool = False
     build_info: BuildInfo | None = dataclasses.field(default=None, metadata=metadata(inline=True))
     platforms: frozenset[Platform] = frozenset([Platform.current()])
+    base: str | None = dataclasses.field(
+        default=None,
+        metadata=metadata("An alternate path to use for the scie base `nce` CAS."),
+    )
     interpreters: tuple[Interpreter, ...] = ()
     interpreter_groups: tuple[InterpreterGroup, ...] = ()
     files: tuple[File, ...] = ()

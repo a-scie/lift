@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.2.0
+
+Add support for specifying a custom base `nce` cache dir and upgrade the internal [PBS](
+https://github.com/indygreg/python-build-standalone/) CPython 3.11.5.
+
 ## 0.1.3
 
 Update the science internal Python distribution to [PBS](
