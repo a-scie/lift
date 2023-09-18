@@ -18,7 +18,7 @@ import json
 import sys
 
 
-with open("{scie.lift}") as fp:
+with open(r"{scie.lift}") as fp:
     data = json.load(fp)
 
 def get_description(command_name: str) -> str | None:

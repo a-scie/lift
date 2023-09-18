@@ -141,19 +141,12 @@ def test_command_descriptions(tmp_path: Path, science_pyz: Path) -> None:
 
         exe_path = tmp_path / Platform.current().binary_name("command-descriptions")
         scie_base = tmp_path / "scie-base"
-        result = subprocess.run(
-            args=[exe_path],
-            env={**os.environ, "SCIE_BASE": str(scie_base)},
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            # check=True,
+        data = json.loads(
+            subprocess.run(
+                args=[exe_path],
+                env={**os.environ, "SCIE_BASE": str(scie_base)},
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
         )
-        if result.returncode != 0:
-            print(f">>> The scie exited with {result.returncode}", file=sys.stderr)
-            print(f"STDOUT:\n{result.stdout}", file=sys.stderr)
-            print(f"STDERR:\n{result.stderr}", file=sys.stderr)
-        result.check_returncode()
-
-        data = json.loads(result.stdout)
         assert {"": "Print a JSON object of command descriptions by name.", "version": None} == data
