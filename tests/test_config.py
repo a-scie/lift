@@ -122,3 +122,31 @@ def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
             )
         finally:
             shutil.rmtree(expanded_base, ignore_errors=True)
+
+
+def test_command_descriptions(tmp_path: Path, science_pyz: Path) -> None:
+    with resources.as_file(resources.files("data") / "command-descriptions.toml") as config:
+        subprocess.run(
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                config,
+            ],
+            check=True,
+        )
+
+        exe_path = tmp_path / Platform.current().binary_name("command-descriptions")
+        scie_base = tmp_path / "scie-base"
+        data = json.loads(
+            subprocess.run(
+                args=[exe_path],
+                env={**os.environ, "SCIE_BASE": str(scie_base)},
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+        )
+        assert {"": "Print a JSON object of command descriptions by name.", "version": None} == data

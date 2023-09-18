@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.2.1
+
+Fix command descriptions not being rendered in the JSON lift manifest of built scies.
+
 ## 0.2.0
 
 Add support for specifying a custom base `nce` cache dir and upgrade the internal [PBS](

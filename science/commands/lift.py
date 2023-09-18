@@ -280,6 +280,9 @@ def _render_command(
     if env:
         cmd["env"] = env
 
+    if description := command.description:
+        cmd["description"] = description
+
     return command.name or "", cmd
 
 

@@ -1,0 +1,36 @@
+[lift]
+name = "command-descriptions"
+description = "Test command decription propagation."
+
+[[lift.interpreters]]
+id = "cpython"
+provider = "PythonBuildStandalone"
+version = "3.10"
+lazy = true
+
+[[lift.commands]]
+description = "Print a JSON object of command descriptions by name."
+exe = "#{cpython:python}"
+args = [
+    "-c",
+    """
+import json
+import sys
+
+
+with open(r"{scie.lift}") as fp:
+    data = json.load(fp)
+
+def get_description(command_name: str) -> str | None:
+    return data["scie"]["lift"]["boot"]["commands"][command_name].get("description")
+
+json.dump(
+    {{command_name: get_description(command_name) for command_name in ("", "version")}, sys.stdout
+)
+    """
+]
+
+[[lift.commands]]
+name = "version"
+exe = "#{cpython:python}"
+args = ["-V"]
