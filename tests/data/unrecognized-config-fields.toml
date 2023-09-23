@@ -1,0 +1,66 @@
+[lift]
+name = "igs"
+description = "Test interpreter group selection."
+
+# N.B: `scie-jump` is invalid, should be `scie_jump`.
+[lift.scie-jump]
+version = "0.11.0"
+
+[lift.scie_jump]
+# N.B: `version2` is invalid, should be `version`.
+version2 = "0.11.0"
+
+[[lift.interpreters]]
+id = "cpython310"
+provider = "PythonBuildStandalone"
+version = "3.10"
+lazy = true
+
+[[lift.interpreters]]
+id = "cpython311"
+provider = "PythonBuildStandalone"
+version = "3.11"
+# N.B: `lizzy` is invalid, should be `lazy`.
+lizzy = true
+
+[[lift.interpreter_groups]]
+id = "cpython"
+selector = "{scie.env.PYTHON}"
+members = [
+    "cpython310",
+    "cpython311",
+]
+
+[[lift.commands]]
+# N.B: `environ` is invalid.
+environ = { key = "value" }
+exe = "#{cpython:python}"
+args = [
+    "-c",
+    """\
+import json
+import sys
+
+
+data = {{
+    "version": sys.version_info[:2],
+    "hash": "{scie.files:hash.#{cpython}}"
+}
+json.dump(data, sys.stdout)
+    """,
+]
+[lift.commands.env]
+# N.B: `remove_re2` is invalid, should be `remove_re`.
+remove_re2 = [
+    "regexp"
+]
+# N.B: `replace2` is invalid, should be `replace2`.
+[lift.commands.env.replace2]
+KEY = "VALUE"
+
+[lift.app_info]
+key = "value"
+
+# N.B: `app-info` is invalid, should be `app_info`.
+[lift.app-info]
+key2 = "value2"
