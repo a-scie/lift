@@ -115,7 +115,10 @@ def parse_config_data(data: Data) -> Application:
         eol = os.linesep
         raise InputError(
             f"The following `lift` manifest entries in {data.provenance.source} were not recognized{eol}"
-            f"{os.linesep.join(key for key, _ in unused_items)}"
+            f"{os.linesep.join(key for key, _ in unused_items)}{eol}"
+            f"{eol}"
+            "Refer to the lift manifest format specification at https://science.scie.app/manifest.html or by "
+            "running `science doc open manifest`"
         )
 
     return application
