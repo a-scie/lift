@@ -171,17 +171,17 @@ def test_unrecognized_config_fields(tmp_path: Path, science_pyz: Path) -> None:
         assert (
             dedent(
                 f"""\
-            The following `lift` manifest entries in {config} were not recognized:
-            scie-jump
-            scie_jump.version2
-            interpreters[2].lizzy
-            commands[1].environ
-            commands[1].env.remove_re2
-            commands[1].env.replace2
-            app-info
+                The following `lift` manifest entries in {config} were not recognized:
+                scie-jump
+                scie_jump.version2
+                interpreters[2].lizzy
+                commands[1].environ
+                commands[1].env.remove_re2
+                commands[1].env.replace2
+                app-info
 
-            Refer to the lift manifest format specification at https://science.scie.app/manifest.html or by running `science doc open manifest`.
-            """
+                Refer to the lift manifest format specification at https://science.scie.app/manifest.html or by running `science doc open manifest`.
+                """
             )
             == result.stderr.decode()
         )
