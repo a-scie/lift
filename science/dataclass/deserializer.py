@@ -54,39 +54,42 @@ def _parse_field(
 
     if map_type := type_.issubtype(Mapping):
         # default is Env
-        data_value = data.get_data(name, default=cast(dict[str, Any] | Data.Required, default))
+        data_value = data.get_data(
+            name, default=cast(dict[str, Any] | Data.Required, default), used=True
+        )
         # We assume any mapping type used will be constructible with a single dict argument.
         return cast(_F, map_type(data_value.data))
 
     if type_.issubtype(Collection) and not type_.issubtype(str):
         item_type = type_.item_type
+        items: list[Any] = []
         if dataclasses.is_dataclass(item_type) or isinstance(item_type, Mapping):
             data_list = data.get_data_list(name, default=cast(list | Data.Required, default))
+
             if isinstance(item_type, Mapping):
-                return cast(
-                    _F,
-                    [
-                        # We assume any mapping type used will be constructible with a single dict
-                        # argument.
-                        cast(Mapping, item_type(data_item.data))  # type: ignore[misc]
-                        for data_item in data_list
-                    ],
+                items.extend(
+                    # We assume any mapping type used will be constructible with a single dict
+                    # argument.
+                    cast(_F, item_type(data_item.data))  # type: ignore[misc]
+                    for data_item in data_list
                 )
             else:
-                return cast(
-                    _F,
-                    [
-                        parse(data_item, item_type, custom_parsers=custom_parsers)
-                        for data_item in data_list
-                    ],
+                items.extend(
+                    parse(data_item, item_type, custom_parsers=custom_parsers)
+                    for data_item in data_list
                 )
         else:
-            return cast(
-                _F,
+            items.extend(
                 data.get_list(
                     name, expected_item_type=item_type, default=cast(list | Data.Required, default)
-                ),
+                )
             )
+
+        if type_.has_origin_type and (origin_type := type_.origin_type) is not list:
+            # I.E.: tuple, frozenset, etc.
+            return origin_type(items)  # type: ignore[call-arg]
+
+        return cast(_F, items)
 
     value = data.get_value(name, expected_type=object, default=default)
     if value is default:
@@ -121,7 +124,7 @@ _D = TypeVar("_D", bound=Dataclass)
 
 
 def parse(
-    data,
+    data: Data,
     data_type: type[_D],
     *,
     custom_parsers: Mapping[type, typing.Callable[[Data], Any]] = FrozenDict(),

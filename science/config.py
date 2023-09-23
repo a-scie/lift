@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import tomllib
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -45,7 +46,7 @@ def parse_config_str(config: str) -> Application:
 
 def parse_build_info(data: Data) -> BuildInfo:
     return BuildInfo.gather(
-        lift_toml=data.provenance, app_info=data.get_data("app_info", default={}).data
+        lift_toml=data.provenance, app_info=data.get_data("app_info", default={}, used=True).data
     )
 
 
@@ -102,9 +103,19 @@ def parse_config_data(data: Data) -> Application:
             interpreters=[interpreters_by_id[Identifier(member)] for member in members],
         )
 
-    return parse_dataclass(
+    application = parse_dataclass(
         lift,
         Application,
         interpreters=tuple(interpreters_by_id.values()),
         custom_parsers={BuildInfo: parse_build_info, InterpreterGroup: parse_interpreter_group},
     )
+
+    unused_items = list(lift.iter_unused_items())
+    if unused_items:
+        eol = os.linesep
+        raise InputError(
+            f"The following `lift` manifest entries in {data.provenance.source} were not recognized{eol}"
+            f"{os.linesep.join(key for key, _ in unused_items)}"
+        )
+
+    return application
