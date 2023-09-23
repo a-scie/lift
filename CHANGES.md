@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.2.2
+
+Unrecognized lift manifest configuration data now generates an informative error instead of
+silently skipping the unrecognized configuration.
+
 ## 0.2.1
 
 Fix command descriptions not being rendered in the JSON lift manifest of built scies.
