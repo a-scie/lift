@@ -12,10 +12,10 @@ from textwrap import dedent
 from typing import BinaryIO
 
 from science.build_info import BuildInfo
-from science.context import DocConfig, active_context_config
 from science.data import Data
 from science.dataclass import Dataclass
 from science.dataclass.deserializer import parse as parse_dataclass
+from science.doc import DOC_SITE_URL
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, Provenance
@@ -113,12 +113,6 @@ def parse_config_data(data: Data) -> Application:
 
     unused_items = list(lift.iter_unused_items())
     if unused_items:
-        doc_config = active_context_config(DocConfig)
-        doc_url = (
-            f"{doc_config.site}/manifest.html"
-            if doc_config
-            else "https://science.scie.app/manifest.html"
-        )
         raise InputError(
             dedent(
                 """\
@@ -131,7 +125,7 @@ def parse_config_data(data: Data) -> Application:
             .format(
                 manifest_source=data.provenance.source,
                 unrecognized_fields="\n".join(key for key, _ in unused_items),
-                doc_url=doc_url,
+                doc_url=f"{DOC_SITE_URL}/manifest.html",
             )
             .strip()
         )
