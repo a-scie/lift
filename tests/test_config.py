@@ -8,6 +8,7 @@ import subprocess
 import sys
 from importlib import resources
 from pathlib import Path
+from textwrap import dedent
 
 from science.config import parse_config_file
 from science.model import Identifier
@@ -164,27 +165,24 @@ def test_unrecognized_config_fields(tmp_path: Path, science_pyz: Path) -> None:
                 str(tmp_path),
                 config,
             ],
+            text=True,
             stderr=subprocess.PIPE,
         )
         assert result.returncode != 0
         assert (
-            os.linesep.join(
-                (
-                    f"The following `lift` manifest entries in {config} were not recognized:",
-                    "scie-jump",
-                    "scie_jump.version2",
-                    "interpreters[2].lizzy",
-                    "commands[1].environ",
-                    "commands[1].env.remove_re2",
-                    "commands[1].env.replace2",
-                    "app-info",
-                    "",
-                    (
-                        "Refer to the lift manifest format specification at https://science.scie.app/manifest.html or "
-                        "by running `science doc open manifest`."
-                    ),
-                    "",
-                )
-            )
-            == result.stderr.decode()
+            dedent(
+                f"""\
+                The following `lift` manifest entries in {config} were not recognized:
+                scie-jump
+                scie_jump.version2
+                interpreters[2].lizzy
+                commands[1].environ
+                commands[1].env.remove_re2
+                commands[1].env.replace2
+                app-info
+
+                Refer to the lift manifest format specification at https://science.scie.app/manifest.html or by running `science doc open manifest`.
+                """
+            ).strip()
+            == result.stderr.strip()
         )
