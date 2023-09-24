@@ -8,9 +8,11 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
+from textwrap import dedent
 from typing import BinaryIO
 
 from science.build_info import BuildInfo
+from science.context import DocConfig, active_context_config
 from science.data import Data
 from science.dataclass import Dataclass
 from science.dataclass.deserializer import parse as parse_dataclass
@@ -45,7 +47,7 @@ def parse_config_str(config: str) -> Application:
 
 def parse_build_info(data: Data) -> BuildInfo:
     return BuildInfo.gather(
-        lift_toml=data.provenance, app_info=data.get_data("app_info", default={}).data
+        lift_toml=data.provenance, app_info=data.get_data("app_info", default={}, used=True).data
     )
 
 
@@ -102,9 +104,36 @@ def parse_config_data(data: Data) -> Application:
             interpreters=[interpreters_by_id[Identifier(member)] for member in members],
         )
 
-    return parse_dataclass(
+    application = parse_dataclass(
         lift,
         Application,
         interpreters=tuple(interpreters_by_id.values()),
         custom_parsers={BuildInfo: parse_build_info, InterpreterGroup: parse_interpreter_group},
     )
+
+    unused_items = list(lift.iter_unused_items())
+    if unused_items:
+        doc_config = active_context_config(DocConfig)
+        doc_url = (
+            f"{doc_config.site}/manifest.html"
+            if doc_config
+            else "https://science.scie.app/manifest.html"
+        )
+        raise InputError(
+            dedent(
+                """\
+                The following `lift` manifest entries in {manifest_source} were not recognized:
+                {unrecognized_fields}
+
+                Refer to the lift manifest format specification at {doc_url} or by running `science doc open manifest`.
+                """
+            )
+            .format(
+                manifest_source=data.provenance.source,
+                unrecognized_fields="\n".join(key for key, _ in unused_items),
+                doc_url=doc_url,
+            )
+            .strip()
+        )
+
+    return application

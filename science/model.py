@@ -487,8 +487,8 @@ class Application(Dataclass):
     interpreters: tuple[Interpreter, ...] = ()
     interpreter_groups: tuple[InterpreterGroup, ...] = ()
     files: tuple[File, ...] = ()
-    commands: frozenset[Command] = frozenset()
-    bindings: frozenset[Command] = frozenset()
+    commands: tuple[Command, ...] = ()
+    bindings: tuple[Command, ...] = ()
     scie_jump: ScieJump | None = None
     ptex: Ptex | None = None
 

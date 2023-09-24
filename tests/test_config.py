@@ -8,6 +8,7 @@ import subprocess
 import sys
 from importlib import resources
 from pathlib import Path
+from textwrap import dedent
 
 from science.config import parse_config_file
 from science.model import Identifier
@@ -150,3 +151,38 @@ def test_command_descriptions(tmp_path: Path, science_pyz: Path) -> None:
             ).stdout
         )
         assert {"": "Print a JSON object of command descriptions by name.", "version": None} == data
+
+
+def test_unrecognized_config_fields(tmp_path: Path, science_pyz: Path) -> None:
+    with resources.as_file(resources.files("data") / "unrecognized-config-fields.toml") as config:
+        result = subprocess.run(
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                config,
+            ],
+            text=True,
+            stderr=subprocess.PIPE,
+        )
+        assert result.returncode != 0
+        assert (
+            dedent(
+                f"""\
+                The following `lift` manifest entries in {config} were not recognized:
+                scie-jump
+                scie_jump.version2
+                interpreters[2].lizzy
+                commands[1].environ
+                commands[1].env.remove_re2
+                commands[1].env.replace2
+                app-info
+
+                Refer to the lift manifest format specification at https://science.scie.app/manifest.html or by running `science doc open manifest`.
+                """
+            )
+            == result.stderr
+        )

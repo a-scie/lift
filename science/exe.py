@@ -15,10 +15,11 @@ import sys
 import textwrap
 import traceback
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, PurePath
 from textwrap import dedent
 from types import TracebackType
 from typing import BinaryIO
+from urllib.parse import urlparse, urlunparse
 
 import click
 import click_log
@@ -199,10 +200,22 @@ def _doc(ctx: click.Context, site: str, local: Path | None) -> None:
         """
     ),
 )
+@click.argument("page", default=None, required=False)
 @pass_doc
-def _open_doc(doc: DocConfig, remote: bool) -> None:
-    """Opens the local documentation in a browser."""
-    click.launch(doc.site if remote else f"file://{doc.local}")
+def _open_doc(doc: DocConfig, remote: bool, page: str | None = None) -> None:
+    """Opens the local documentation in a browser.
+
+    If an optional page argument is supplied, that page will be opened instead of the default doc site page.
+    """
+    url = doc.site if remote else f"file://{doc.local}"
+    if not page:
+        if not remote:
+            url = f"{url}/index.html"
+    else:
+        url_info = urlparse(url)
+        page = f"{page}.html" if not PurePath(page).suffix else page
+        url = urlunparse(url_info._replace(path=f"{url_info.path}/{page}"))
+    click.launch(url)
 
 
 @_main.group(cls=DYMGroup, name="provider")
