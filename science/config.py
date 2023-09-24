@@ -127,11 +127,13 @@ def parse_config_data(data: Data) -> Application:
 
                 Refer to the lift manifest format specification at {doc_url} or by running `science doc open manifest`.
                 """
-            ).format(
+            )
+            .format(
                 manifest_source=data.provenance.source,
                 unrecognized_fields="\n".join(key for key, _ in unused_items),
                 doc_url=doc_url,
             )
+            .strip()
         )
 
     return application

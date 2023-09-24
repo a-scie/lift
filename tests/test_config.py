@@ -183,6 +183,6 @@ def test_unrecognized_config_fields(tmp_path: Path, science_pyz: Path) -> None:
 
                 Refer to the lift manifest format specification at https://science.scie.app/manifest.html or by running `science doc open manifest`.
                 """
-            ).strip()
-            == result.stderr.strip()
+            )
+            == result.stderr
         )
