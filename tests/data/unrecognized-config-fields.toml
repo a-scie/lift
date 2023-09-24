@@ -54,7 +54,7 @@ json.dump(data, sys.stdout)
 remove_re2 = [
     "regexp"
 ]
-# N.B: `replace2` is invalid, should be `replace2`.
+# N.B: `replace2` is invalid, should be `replace`.
 [lift.commands.env.replace2]
 KEY = "VALUE"
 
