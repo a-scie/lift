@@ -12,7 +12,7 @@ from functools import cache
 from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
-from typing import BinaryIO, DefaultDict, Generic, Iterator, TypeVar
+from typing import BinaryIO, DefaultDict, Generic, Iterator, Mapping, TypeVar
 
 from science.build_info import BuildInfo
 from science.data import Accessor, Data
@@ -120,26 +120,18 @@ class ValidConfig(Generic[_D]):
         return None
 
 
-@dataclass(frozen=True)
-class UnrecognizedApplicationConfig:
-    @classmethod
-    def gather(cls, lift: Data, index_start: int) -> UnrecognizedApplicationConfig | None:
-        unused_items = list(lift.iter_unused_items(index_start=index_start))
-        if not unused_items:
-            return None
-
-        valid_config_by_unused_accessor: dict[Accessor, ValidConfig | None] = {}
-        for unused_accessor, _ in unused_items:
-            valid_config: ValidConfig | None = ValidConfig.gather(Application)
-            for accessor in unused_accessor.iter_lineage():
-                if not valid_config:
-                    break
-                valid_config = valid_config.access(accessor.key)
-            valid_config_by_unused_accessor[unused_accessor] = valid_config
-
-        return cls(unrecognized=FrozenDict(valid_config_by_unused_accessor))
-
-    unrecognized: FrozenDict[Accessor, ValidConfig | None]
+def gather_unrecognized_application_config(
+    lift: Data, index_start: int
+) -> Mapping[Accessor, ValidConfig | None]:
+    valid_config_by_unused_accessor: dict[Accessor, ValidConfig | None] = {}
+    for unused_accessor, _ in lift.iter_unused_items(index_start=index_start):
+        valid_config: ValidConfig | None = ValidConfig.gather(Application)
+        for accessor in unused_accessor.iter_lineage():
+            if not valid_config:
+                break
+            valid_config = valid_config.access(accessor.key)
+        valid_config_by_unused_accessor[unused_accessor] = valid_config
+    return valid_config_by_unused_accessor
 
 
 def parse_config_data(data: Data) -> Application:
@@ -179,11 +171,11 @@ def parse_config_data(data: Data) -> Application:
         custom_parsers={BuildInfo: parse_build_info, InterpreterGroup: parse_interpreter_group},
     )
 
-    unrecognized_config = UnrecognizedApplicationConfig.gather(lift, index_start=1)
+    unrecognized_config = gather_unrecognized_application_config(lift, index_start=1)
     if unrecognized_config:
         unrecognized_field_info: DefaultDict[str, list[str]] = defaultdict(list)
         index_used = False
-        for accessor, valid_config in unrecognized_config.unrecognized.items():
+        for accessor, valid_config in unrecognized_config.items():
             index_used |= accessor.path_includes_index()
             suggestions = unrecognized_field_info[accessor.render()]
             if valid_config:
