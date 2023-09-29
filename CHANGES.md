@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.3.0
+
+The unrecognized lift manifest configuration data error message now includes suggestions when the
+unrecognized configuration is likely a typo.
+
 ## 0.2.2
 
 Unrecognized lift manifest configuration data now generates an informative error instead of

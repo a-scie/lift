@@ -3,18 +3,23 @@
 
 from __future__ import annotations
 
+import dataclasses
+import difflib
 import tomllib
-from collections import OrderedDict
+from collections import defaultdict
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
+from functools import cache
 from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
-from typing import BinaryIO
+from typing import BinaryIO, Generic, TypeVar
 
 from science.build_info import BuildInfo
-from science.data import Data
+from science.data import Accessor, Data
 from science.dataclass import Dataclass
 from science.dataclass.deserializer import parse as parse_dataclass
+from science.dataclass.reflect import FieldInfo, dataclass_info
 from science.doc import DOC_SITE_URL
 from science.errors import InputError
 from science.frozendict import FrozenDict
@@ -74,20 +79,73 @@ class InterpreterGroupFields(Dataclass):
     members: tuple[str, ...]
 
 
+def _iter_field_info(datatype: type[Dataclass]) -> Iterator[FieldInfo]:
+    for field_info in dataclass_info(datatype).field_info:
+        if not field_info.hidden and not field_info.inline:
+            yield field_info
+        elif field_info.inline and (dt := field_info.type.dataclass):
+            yield from _iter_field_info(dt)
+
+
+_D = TypeVar("_D", bound=Dataclass)
+
+
+@dataclass(frozen=True)
+class ValidConfig(Generic[_D]):
+    @classmethod
+    @cache
+    def gather(cls, datatype: type[_D]) -> ValidConfig:
+        return cls(
+            datatype=datatype,
+            fields=FrozenDict(
+                {field_info.name: field_info for field_info in _iter_field_info(datatype)}
+            ),
+        )
+
+    datatype: type[_D]
+    fields: FrozenDict[str, FieldInfo]
+
+    def access(self, field_name: str) -> ValidConfig | None:
+        field_info = self.fields.get(field_name)
+        if not field_info:
+            return None
+
+        if datatype := field_info.type.dataclass:
+            return ValidConfig.gather(datatype)
+
+        if field_info.type.has_item_type and dataclasses.is_dataclass(
+            item_type := field_info.type.item_type
+        ):
+            return ValidConfig.gather(item_type)
+
+        return None
+
+
+def gather_unrecognized_application_config(
+    lift: Data, index_start: int
+) -> Mapping[Accessor, ValidConfig | None]:
+    valid_config_by_unused_accessor: dict[Accessor, ValidConfig | None] = {}
+    for unused_accessor, _ in lift.iter_unused_items(index_start=index_start):
+        valid_config: ValidConfig | None = ValidConfig.gather(Application)
+        for accessor in unused_accessor.iter_lineage():
+            if not valid_config:
+                break
+            valid_config = valid_config.access(accessor.key)
+        valid_config_by_unused_accessor[unused_accessor] = valid_config
+    return valid_config_by_unused_accessor
+
+
 def parse_config_data(data: Data) -> Application:
     lift = data.get_data("lift")
 
-    interpreters_by_id = OrderedDict(
+    interpreters_by_id = {
         (
-            (
-                interp := parse_dataclass(
-                    interpreter, Interpreter, custom_parsers={Provider: parse_provider}
-                )
-            ).id,
-            interp,
-        )
+            interp := parse_dataclass(
+                interpreter, Interpreter, custom_parsers={Provider: parse_provider}
+            )
+        ).id: interp
         for interpreter in lift.get_data_list("interpreters", default=[])
-    )
+    }
 
     def parse_interpreter_group(ig_data: Data) -> InterpreterGroup:
         fields = parse_dataclass(ig_data, InterpreterGroupFields)
@@ -111,12 +169,28 @@ def parse_config_data(data: Data) -> Application:
         custom_parsers={BuildInfo: parse_build_info, InterpreterGroup: parse_interpreter_group},
     )
 
-    unused_items = list(lift.iter_unused_items())
-    if unused_items:
+    unrecognized_config = gather_unrecognized_application_config(lift, index_start=1)
+    if unrecognized_config:
+        unrecognized_field_info = defaultdict[str, list[str]](list)
+        index_used = False
+        for accessor, valid_config in unrecognized_config.items():
+            index_used |= accessor.path_includes_index()
+            suggestions = unrecognized_field_info[accessor.render()]
+            if valid_config:
+                suggestions.extend(difflib.get_close_matches(accessor.key, valid_config.fields))
+
+        field_column_width = max(map(len, unrecognized_field_info))
+        unrecognized_fields = []
+        for name, suggestions in unrecognized_field_info.items():
+            line = name.rjust(field_column_width)
+            if suggestions:
+                line += f": Did you mean {' or '.join(suggestions)}?"
+            unrecognized_fields.append(line)
+
         raise InputError(
             dedent(
                 """\
-                The following `lift` manifest entries in {manifest_source} were not recognized:
+                The following `lift` manifest entries in {manifest_source} were not recognized{index_parenthetical}:
                 {unrecognized_fields}
 
                 Refer to the lift manifest format specification at {doc_url} or by running `science doc open manifest`.
@@ -124,7 +198,8 @@ def parse_config_data(data: Data) -> Application:
             )
             .format(
                 manifest_source=data.provenance.source,
-                unrecognized_fields="\n".join(key for key, _ in unused_items),
+                index_parenthetical=" (indexes are 1-based)" if index_used else "",
+                unrecognized_fields="\n".join(unrecognized_fields),
                 doc_url=f"{DOC_SITE_URL}/manifest.html",
             )
             .strip()
