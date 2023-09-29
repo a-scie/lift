@@ -32,7 +32,7 @@ members = [
 ]
 
 [[lift.commands]]
-# N.B: `environ` is invalid.
+# N.B: `just_wrong` is invalid.
 just_wrong = { key = "value" }
 exe = "#{cpython:python}"
 args = [

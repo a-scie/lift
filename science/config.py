@@ -6,13 +6,14 @@ from __future__ import annotations
 import dataclasses
 import difflib
 import tomllib
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from functools import cache
 from io import BytesIO
 from pathlib import Path
 from textwrap import dedent
-from typing import BinaryIO, DefaultDict, Generic, Iterator, Mapping, TypeVar
+from typing import BinaryIO, Generic, TypeVar
 
 from science.build_info import BuildInfo
 from science.data import Accessor, Data
@@ -137,17 +138,14 @@ def gather_unrecognized_application_config(
 def parse_config_data(data: Data) -> Application:
     lift = data.get_data("lift")
 
-    interpreters_by_id = OrderedDict(
+    interpreters_by_id = {
         (
-            (
-                interp := parse_dataclass(
-                    interpreter, Interpreter, custom_parsers={Provider: parse_provider}
-                )
-            ).id,
-            interp,
-        )
+            interp := parse_dataclass(
+                interpreter, Interpreter, custom_parsers={Provider: parse_provider}
+            )
+        ).id: interp
         for interpreter in lift.get_data_list("interpreters", default=[])
-    )
+    }
 
     def parse_interpreter_group(ig_data: Data) -> InterpreterGroup:
         fields = parse_dataclass(ig_data, InterpreterGroupFields)
@@ -173,7 +171,7 @@ def parse_config_data(data: Data) -> Application:
 
     unrecognized_config = gather_unrecognized_application_config(lift, index_start=1)
     if unrecognized_config:
-        unrecognized_field_info: DefaultDict[str, list[str]] = defaultdict(list)
+        unrecognized_field_info = defaultdict[str, list[str]](list)
         index_used = False
         for accessor, valid_config in unrecognized_config.items():
             index_used |= accessor.path_includes_index()
