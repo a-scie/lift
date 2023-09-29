@@ -13,6 +13,40 @@ from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Provenance
 
+
+@dataclass(frozen=True)
+class Accessor:
+    key: str
+    parent: Accessor | None = None
+    _index: int | None = None
+
+    def index(self, index: int) -> Accessor:
+        return dataclasses.replace(self, _index=index)
+
+    def render(self) -> str:
+        if self.parent:
+            rendered = f"{self.parent.render()}.{self.key}"
+        else:
+            rendered = self.key
+
+        if self._index is not None:
+            rendered += f"[{self._index}]"
+        return rendered
+
+    def iter_lineage(self, include_self: bool = False) -> Iterator[Accessor]:
+        if self.parent:
+            yield from self.parent.iter_lineage(include_self=True)
+        if include_self:
+            yield self
+
+    def path_includes_index(self) -> bool:
+        if self._index is not None:
+            return True
+        if self.parent and self.parent.path_includes_index():
+            return True
+        return False
+
+
 _T = TypeVar("_T")
 
 
@@ -150,17 +184,25 @@ class Data:
             self._unused_data.pop(key, None)
         return value
 
-    def iter_unused_items(self) -> Iterator[tuple[str, Any]]:
+    def iter_unused_items(
+        self, parent: Accessor | None = None, index_start: int = 0
+    ) -> Iterator[tuple[Accessor, Any]]:
         for key, value in self._unused_data.items():
+            accessor = Accessor(key, parent=parent)
             if isinstance(value, list) and all(isinstance(item, Data) for item in value):
-                for index, item in enumerate(value, start=1):
-                    for sub_key, sub_value in item.iter_unused_items():
-                        yield f"{key}[{index}].{sub_key}", sub_value
+                for index, item in enumerate(value, start=index_start):
+                    accessor = accessor.index(index)
+                    for sub_accessor, sub_value in item.iter_unused_items(
+                        parent=accessor, index_start=index_start
+                    ):
+                        yield sub_accessor, sub_value
             elif isinstance(value, Data):
-                for sub_key, sub_value in value.iter_unused_items():
-                    yield f"{key}.{sub_key}", sub_value
+                for sub_accessor, sub_value in value.iter_unused_items(
+                    parent=accessor, index_start=index_start
+                ):
+                    yield sub_accessor, sub_value
             else:
-                yield key, value
+                yield accessor, value
 
     def __bool__(self):
         return bool(self.data)
