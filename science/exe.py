@@ -517,7 +517,8 @@ def use_platform_suffix_option():
 def parse_application(lift_config: LiftConfig, config: BinaryIO) -> Application:
     application = parse_config(config, source=config.name)
     if lift_config.app_name:
-        application = dataclasses.replace(application, name=lift_config.app_name)
+        # MyPy does not handle dataclass_transform yet: https://github.com/python/mypy/issues/14293
+        application = dataclasses.replace(application, name=lift_config.app_name)  # type: ignore[misc]
     return application
 
 

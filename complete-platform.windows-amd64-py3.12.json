@@ -1,21 +1,14 @@
 {
-  "marker_environment": {
-    "implementation_name": "cpython",
-    "implementation_version": "3.11.0",
-    "os_name": "nt",
-    "platform_machine": "AMD64",
-    "platform_python_implementation": "CPython",
-    "platform_release": "10",
-    "platform_system": "Windows",
-    "platform_version": "10.0.22621",
-    "python_full_version": "3.11.0",
-    "python_version": "3.11",
-    "sys_platform": "win32"
-  },
+  "path": "C:\\Program Files\\Python312\\python.exe",
+  "version": "3.12.0",
+  "requirement": "CPython==3.12.0",
+  "platform": "win_amd64-cp-3.12.0-cp312",
+  "venv": false,
   "compatible_tags": [
-    "cp311-cp311-win_amd64",
+    "cp312-cp312-win_amd64",
+    "cp312-abi3-win_amd64",
+    "cp312-none-win_amd64",
     "cp311-abi3-win_amd64",
-    "cp311-none-win_amd64",
     "cp310-abi3-win_amd64",
     "cp39-abi3-win_amd64",
     "cp38-abi3-win_amd64",
@@ -25,8 +18,9 @@
     "cp34-abi3-win_amd64",
     "cp33-abi3-win_amd64",
     "cp32-abi3-win_amd64",
-    "py311-none-win_amd64",
+    "py312-none-win_amd64",
     "py3-none-win_amd64",
+    "py311-none-win_amd64",
     "py310-none-win_amd64",
     "py39-none-win_amd64",
     "py38-none-win_amd64",
@@ -38,8 +32,9 @@
     "py32-none-win_amd64",
     "py31-none-win_amd64",
     "py30-none-win_amd64",
-    "py311-none-any",
+    "py312-none-any",
     "py3-none-any",
+    "py311-none-any",
     "py310-none-any",
     "py39-none-any",
     "py38-none-any",
@@ -51,5 +46,18 @@
     "py32-none-any",
     "py31-none-any",
     "py30-none-any"
-  ]
+  ],
+  "marker_environment": {
+    "implementation_name": "cpython",
+    "implementation_version": "3.12.0",
+    "os_name": "nt",
+    "platform_machine": "AMD64",
+    "platform_python_implementation": "CPython",
+    "platform_release": "11",
+    "platform_system": "Windows",
+    "platform_version": "10.0.22621",
+    "python_full_version": "3.12.0",
+    "python_version": "3.12",
+    "sys_platform": "win32"
+  }
 }

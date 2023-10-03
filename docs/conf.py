@@ -39,9 +39,12 @@ extensions = [
     "sphinx_click",
 ]
 
+# N.B.: Order is critical here for Sphinx to find our custom directive generated content, which
+# resides in `.md` files.
+# See: https://www.sphinx-doc.org/en/master/_modules/sphinx/project.html#Project.doc2path
 source_suffix = {
-    ".rst": "restructuredtext",
     ".md": "markdown",
+    ".rst": "restructuredtext",
 }
 
 templates_path = [

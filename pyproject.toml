@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A high level tool to build scies with."
 readme = "README.md"
-requires-python = "==3.11.*"
+requires-python = "==3.12.*"
 license = {file = "LICENSE"}
 dynamic = ["version", "dependencies"]
 
@@ -26,7 +26,7 @@ include = ["science*"]
 
 [tool.black]
 line-length = 100
-target-version = ["py311"]
+target-version = ["py312"]
 
 [tool.isort]
 profile = "black"
