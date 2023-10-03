@@ -18,13 +18,13 @@ nox.needs_version = ">=2022.11.21"
 nox.options.stop_on_first_error = True
 nox.options.sessions = ["fmt", "lint", "check", "test"]
 
-REQUIRES_PYTHON_VERSION = "3.11"
+REQUIRES_PYTHON_VERSION = "3.12"
 
-PEX_REQUIREMENT = "pex==2.1.136"
+PEX_REQUIREMENT = "pex==2.1.148"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
-WINDOWS_AMD64_COMPLETE_PLATFORM = BUILD_ROOT / "complete-platform.windows-amd64-py3.11.json"
+WINDOWS_AMD64_COMPLETE_PLATFORM = BUILD_ROOT / "complete-platform.windows-amd64-py3.12.json"
 LOCK_FILE = BUILD_ROOT / "lock.json"
 
 IS_WINDOWS = os.name == "nt"

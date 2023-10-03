@@ -21,10 +21,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-22.04
     steps:
-      - name: Setup Python 3.11
+      - name: Setup Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift

@@ -119,9 +119,10 @@ def export_manifest(
                 match file.source:
                     case Fetch(_, lazy=lazy) as fetch:
                         inverted.append(file.id)
+                        # MyPy does not handle dataclass_transform yet: https://github.com/python/mypy/issues/14293
                         return dataclasses.replace(
-                            file, source=dataclasses.replace(fetch, lazy=not lazy)
-                        )
+                            file, source=dataclasses.replace(fetch, lazy=not lazy)  # type: ignore[misc]
+                        )  # type: ignore[misc]
                     case Binding(name):
                         raise InputError(f"Cannot make binding {name!r} non-lazy.")
                     case None:
@@ -161,7 +162,8 @@ def export_manifest(
                 case Fetch(url=url, lazy=True):
                     fetch_urls[requested_file.name] = url
                 case Fetch(url=url, lazy=False):
-                    file = dataclasses.replace(requested_file, source=None)
+                    # MyPy does not handle dataclass_transform yet: https://github.com/python/mypy/issues/14293
+                    file = dataclasses.replace(requested_file, source=None)  # type: ignore[misc]
                     file_path = fetch_and_verify(
                         url,
                         fingerprint=requested_file.digest,

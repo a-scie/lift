@@ -25,11 +25,11 @@ jobs:
     env:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Setup Python 3.11
+      - name: Setup Python 3.12
         uses: actions/setup-python@v4
         if: matrix.os != 'macos-13-aarch64'
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift

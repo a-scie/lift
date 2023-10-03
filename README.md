@@ -21,10 +21,10 @@ your $PATH somewhere.
 The binaries are released via [GitHub Releases](https://github.com/a-scie/lift/releases)
 for Windows x86_64 and Linux and macOS for both aarch64 and x86_64. For each of these platforms
 there are two varieties, "thin" and "fat". The "fat" varieties are named `science-fat-*`, include
-a hermetic CPython 3.11 distribution from the [Python Build Standalone]() project and are larger as
-a result. The "thin" varieties have the CPython 3.11 distribution gouged out and are smaller as a
+a hermetic CPython 3.12 distribution from the [Python Build Standalone]() project and are larger as
+a result. The "thin" varieties have the CPython 3.12 distribution gouged out and are smaller as a
 result. In its place a [`ptex`](https://github.com/a-scie/ptex) binary is included that fills in the
-CPython 3.11 distribution by fetching it when the "thin" `science` binary is first run.
+CPython 3.12 distribution by fetching it when the "thin" `science` binary is first run.
 
 I run on Linux x86_64; so I install a stable release like so:
 ```

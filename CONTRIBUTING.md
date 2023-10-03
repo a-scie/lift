@@ -14,7 +14,7 @@ Thank you in advance for your time and effort.
 ## Development Environment
 
 You'll need just a few tools to hack on the scie-jump:
-+ A Python 3.11 interpreter
++ A Python 3.12 interpreter
 + The [`nox`](https://nox.thea.codes/en/stable/) tool.
 
 ## Development Cycle
