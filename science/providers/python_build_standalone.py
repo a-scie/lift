@@ -122,7 +122,7 @@ class PythonBuildStandalone(Provider[Config]):
     its `pip` script.
     ```
 
-    [PBS]: https://python-build-standalone.readthedocs.io
+    [PBS]: https://gregoryszorc.com/docs/python-build-standalone/main
     """
 
     @staticmethod

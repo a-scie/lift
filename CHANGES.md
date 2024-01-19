@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.3.1
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.1 and fix some docs.
+
 ## 0.3.0
 
 The unrecognized lift manifest configuration data error message now includes suggestions when the
@@ -16,14 +20,13 @@ Fix command descriptions not being rendered in the JSON lift manifest of built s
 
 ## 0.2.0
 
-Add support for specifying a custom base `nce` cache dir and upgrade the internal [PBS](
-https://github.com/indygreg/python-build-standalone/) CPython 3.11.5.
+Add support for specifying a custom base `nce` cache dir and upgrade the science internal Python
+distribution to [PBS][PBS] CPython 3.11.5.
 
 ## 0.1.3
 
-Update the science internal Python distribution to [PBS](
-https://github.com/indygreg/python-build-standalone/) CPython 3.11.4. This should make `science`
-executable out of the box on more Linux distros.
+Update the science internal Python distribution to [PBS][PBS] CPython 3.11.4. This should make
+`science` executable out of the box on more Linux distros.
 
 ## 0.1.2
 
@@ -41,3 +44,5 @@ the science binary used to build the scie.
 ## 0.1.0
 
 The 1st public release of the project.
+
+[PBS]: https://github.com/indygreg/python-build-standalone/
