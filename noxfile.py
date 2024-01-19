@@ -20,7 +20,7 @@ nox.options.sessions = ["fmt", "lint", "check", "test"]
 
 REQUIRES_PYTHON_VERSION = "3.12"
 
-PEX_REQUIREMENT = "pex==2.1.148"
+PEX_REQUIREMENT = "pex==2.1.159"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()

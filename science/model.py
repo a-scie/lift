@@ -328,7 +328,7 @@ class Provider(Protocol[ConfigDataclass]):
     entry in the scie with special `#{{<id>:<name>}}` placeholder support for accessing named files
     within the distribution archive.
 
-    [PBS]: https://python-build-standalone.readthedocs.io
+    [PBS]: https://gregoryszorc.com/docs/python-build-standalone/main
     """,
     frozen=True,
     alias="interpreter",
