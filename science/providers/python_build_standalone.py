@@ -122,7 +122,24 @@ class PythonBuildStandalone(Provider[Config]):
     its `pip` script.
     ```
 
+    Note that Python Standalone Builds distributions come with some [quirks] that you should probably
+    familiarize yourself with to make sure your application runs correctly under them.
+
+    ```{warning}
+    One known quirk revolves around the statically linked OpenSSL Python Standalone Builds
+    distributions ship with. These are compiled from official OpenSSL releases which can be a
+    problem when run on machines that have their own patched version of OpenSSL that reads custom
+    OpenSSL configuration data (e.g.: from `/etc/ssl/openssl.cnf`). Normally, OpenSSL errors for
+    configuration options it does not understand, but, due to a quirk in the CPython `ssl` module,
+    most Python applications will have OpenSSL configuration errors masked and continue to run with
+    partially applied OpenSSL config. This may have security implications for your application.
+
+    For more on this see:
+    https://github.com/indygreg/python-build-standalone/issues/207#issuecomment-1936500903
+    ```
+
     [PBS]: https://gregoryszorc.com/docs/python-build-standalone/main
+    [quirks]: https://gregoryszorc.com/docs/python-build-standalone/main/quirks.html
     """
 
     @staticmethod
