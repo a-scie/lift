@@ -51,14 +51,14 @@ jobs:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Setup Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         if: matrix.os != 'macos-13-aarch64'
         with:
           python-version: 3.12
       - name: Setup Nox
         run: pip install nox
       - name: Checkout lift ${{ needs.determine-tag.outputs.release-tag }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ needs.determine-tag.outputs.release-tag }}
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
@@ -71,7 +71,8 @@ jobs:
           version: ${{ needs.determine-tag.outputs.release-version }}
           setup-python: ${{ matrix.os != 'macos-13-aarch64' }}
       - name: Create ${{ needs.determine-tag.outputs.release-tag }} Release
-        uses: softprops/action-gh-release@v1
+        # Upgrades node16 -> node20: in main but not tagged yet.
+        uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -91,7 +92,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Trigger aarch64 release
-        uses: CircleCI-Public/trigger-circleci-pipeline-action@v1.0.5
+        # Upgrade node16 -> node20: Out for review here:
+        #   https://github.com/CircleCI-Public/trigger-circleci-pipeline-action/pull/75
+        uses: a-scie/trigger-circleci-pipeline-action@5386b18a33d1d272a294422b78d35bd09256fb8f
         with:
           GHA_Meta: "${{ needs.determine-tag.outputs.release-tag }}"
         env:

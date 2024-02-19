@@ -26,14 +26,14 @@ jobs:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Setup Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         if: matrix.os != 'macos-13-aarch64'
         with:
           python-version: 3.12
       - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Check Formatting & Lints
         run: nox -e lint
       - name: Configure Windows pytest short tmp dir path

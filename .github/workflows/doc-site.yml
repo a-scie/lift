@@ -22,24 +22,24 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Setup Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.12
       - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build Doc Site
         env:
           # N.B.: This makes default paths in generated docs generic.
           XDG_CACHE_HOME: "<USER CACHE DIR>"
         run: nox -e doc linkcheck
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           path: "docs/build/html/"
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
