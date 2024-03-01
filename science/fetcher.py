@@ -95,9 +95,10 @@ def _fetch_to_cache(
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
             case Missing(work=work):
-                with _configured_client(url, headers).stream("GET", url) as response, work.open(
-                    "wb"
-                ) as cache_fp:
+                with (
+                    _configured_client(url, headers).stream("GET", url) as response,
+                    work.open("wb") as cache_fp,
+                ):
                     for data in response.iter_bytes():
                         cache_fp.write(data)
     return cache_result.path
