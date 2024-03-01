@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.3.2
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.2 and perform Mac
+aarch64 releases on GitHub hosted runners.
+
 ## 0.3.1
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.1 and fix some docs.
