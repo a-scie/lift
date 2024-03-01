@@ -224,7 +224,7 @@ def fmt(session: Session) -> None:
 
 @python_session(extra_reqs=["fmt"])
 def lint(session: Session) -> None:
-    run_black(session, "--check")
+    run_black(session, "--check", "--diff")
     run_isort(session, "--check-only")
     run_autoflake(session, "--check")
 
