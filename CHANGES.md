@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.3.3
+
+Fix `science doc open` to use a local documentation server. This works around all the problems
+you encounter trying to get a documentation site to function like the production via file:// URLs.
+
 ## 0.3.2
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.2 and perform Mac

@@ -7,6 +7,7 @@ import itertools
 import json
 import os
 import shutil
+import subprocess
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Collection, Iterable, TypeVar, cast
@@ -37,7 +38,12 @@ def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
         session.run("pex", PEX_REQUIREMENT, "--venv", "--sh-boot", "-o", str(pex_pex))
         session.run("python", "-m", "pip", "uninstall", "-y", "pex")
     return session.run(
-        "python", str(pex_pex), *args, env={"PEX_SCRIPT": script, **env}, silent=silent
+        "python",
+        str(pex_pex),
+        *args,
+        env={"PEX_SCRIPT": script, **env},
+        silent=silent,
+        stderr=subprocess.DEVNULL if silent else None,
     )
 
 
@@ -310,8 +316,8 @@ def _run_sphinx(session: Session, builder_name: str) -> Path:
 
 
 @python_session(include_project=True)
-def doc(session: Session) -> None:
-    _run_sphinx(session, builder_name="html")
+def doc(session: Session) -> Path:
+    return _run_sphinx(session, builder_name="html")
 
 
 @python_session(include_project=True, extra_reqs=["doc"])
@@ -322,7 +328,10 @@ def linkcheck(session: Session) -> None:
 @python_session()
 def run(session: Session) -> None:
     science_pyz = create_zipapp(session)
-    session.run("python", str(science_pyz), *session.posargs)
+    doc_path = doc(session)
+    session.run(
+        "python", str(science_pyz), *session.posargs, env={"SCIENCE_DOC_LOCAL": str(doc_path)}
+    )
 
 
 def _package(session: Session, docsite: Path, *extra_lift_args: str) -> None:
