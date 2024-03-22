@@ -8,12 +8,17 @@ import json
 import logging
 import os
 import re
+import shlex
 import signal
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from datetime import datetime
+from functools import cache
 from pathlib import Path, PurePath
+
+import psutil
 
 from science import __version__
 from science.cache import science_cache
@@ -33,13 +38,18 @@ def _server_dir(ensure: bool = False) -> Path:
     return server_dir
 
 
+def _render_unix_time(unix_time: float) -> str:
+    return datetime.fromtimestamp(unix_time).strftime("%Y-%m-%d %H:%M:%S")
+
+
 @dataclass(frozen=True)
 class ServerInfo:
     url: str
     pid: int
+    create_time: float
 
     def __str__(self) -> str:
-        return f"{self.url} @ {self.pid}"
+        return f"{self.url} @ {self.pid} (started at {_render_unix_time(self.create_time)})"
 
 
 @dataclass(frozen=True)
@@ -54,7 +64,9 @@ class Pidfile:
         try:
             with pidfile.open() as fp:
                 data = json.load(fp)
-            return cls(ServerInfo(url=data["url"], pid=data["pid"]))
+            return cls(
+                ServerInfo(url=data["url"], pid=data["pid"], create_time=data["create_time"])
+            )
         except (OSError, ValueError, KeyError) as e:
             logger.debug(f"Failed to load {SERVER_NAME} pid file from {pidfile}: {e}")
             return None
@@ -81,24 +93,53 @@ class Pidfile:
         if not url:
             return None
 
+        try:
+            create_time = psutil.Process(pid).create_time()
+        except psutil.Error:
+            return None
+
         with cls._pidfile(ensure=True).open("w") as fp:
-            json.dump(dict(url=url, pid=pid), fp, indent=2, sort_keys=True)
-        return cls(ServerInfo(url=url, pid=pid))
+            json.dump(dict(url=url, pid=pid, create_time=create_time), fp, indent=2, sort_keys=True)
+        return cls(ServerInfo(url=url, pid=pid, create_time=create_time))
 
     server_info: ServerInfo
 
-    def alive(self) -> bool:
-        # TODO(John Sirois): Handle pid rollover.
+    @property
+    @cache
+    def _process(self) -> psutil.Process | None:
         try:
-            os.kill(self.server_info.pid, 0)
-            return True
-        except OSError as e:
-            if e.errno == errno.ESRCH:  # No such process.
-                return False
-            raise
+            process = psutil.Process(self.server_info.pid)
+        except psutil.Error:
+            return None
+        else:
+            try:
+                create_time = process.create_time()
+            except psutil.Error:
+                return None
+            else:
+                if create_time != self.server_info.create_time:
+                    try:
+                        command = shlex.join(process.cmdline())
+                    except psutil.Error:
+                        command = "<unknown command line>"
+                    logger.debug(
+                        f"Pid has rolled over for {self.server_info} to {command} (started at "
+                        f"{_render_unix_time(create_time)})"
+                    )
+                    return None
+                return process
+
+    def alive(self) -> bool:
+        if process := self._process:
+            try:
+                return process.is_running()
+            except psutil.Error:
+                pass
+        return False
 
     def kill(self) -> None:
-        os.kill(self.server_info.pid, signal.SIGTERM)
+        if process := self._process:
+            process.terminate()
 
 
 @dataclass(frozen=True)
