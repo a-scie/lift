@@ -22,6 +22,7 @@ import psutil
 
 from science import __version__
 from science.cache import science_cache
+from science.platform import Platform
 
 logger = logging.getLogger(__name__)
 
@@ -178,14 +179,22 @@ def launch(
     env = {**os.environ, "PYTHONUNBUFFERED": "1"}
     with log.open("w") as fp:
         # Not proper daemonization, but good enough.
+        daemon_kwargs = (
+            {
+                # The subprocess.DETACHED_PROCESS attribute is only defined on Windows.
+                "creationflags": subprocess.DETACHED_PROCESS  # type: ignore[attr-defined]
+            }
+            if Platform.current() is Platform.Windows_x86_64
+            else {"preexec_fn": os.setsid}
+        )
         process = subprocess.Popen(
             args=[sys.executable, "-m", "http.server", str(port)],
             env=env,
             cwd=document_root,
-            preexec_fn=os.setsid,
             bufsize=1,
             stdout=fp.fileno(),
             stderr=subprocess.STDOUT,
+            **daemon_kwargs,
         )
 
     pidfile = Pidfile.record(server_log=log, pid=process.pid, timeout=timeout)
