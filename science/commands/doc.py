@@ -3,13 +3,11 @@
 
 from __future__ import annotations
 
-import errno
 import json
 import logging
 import os
 import re
 import shlex
-import signal
 import subprocess
 import sys
 import time
@@ -200,9 +198,9 @@ def launch(
     pidfile = Pidfile.record(server_log=log, pid=process.pid, timeout=timeout)
     if not pidfile:
         try:
-            os.kill(process.pid, signal.SIGKILL)
-        except OSError as e:
-            if e.errno != errno.ESRCH:  # No such process.
+            psutil.Process(process.pid).kill()
+        except psutil.Error as e:
+            if not isinstance(e, psutil.NoSuchProcess):
                 raise LaunchError(
                     log,
                     additional_msg=(
