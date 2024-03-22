@@ -29,6 +29,9 @@ from packaging import version
 from science import __version__, providers
 from science.commands import build, lift
 from science.commands.complete import Shell
+from science.commands.doc import SERVER_NAME, LaunchError
+from science.commands.doc import launch as launch_doc_server
+from science.commands.doc import shutdown as shutdown_doc_server
 from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
 from science.context import DocConfig, ScienceConfig
@@ -52,11 +55,9 @@ def _log_fatal(
     always_include_backtrace: bool,
 ) -> None:
     if always_include_backtrace or not isinstance(value, InputError):
-        click.secho("".join(traceback.format_tb(tb)), fg="yellow", file=sys.stderr, nl=False)
-        click.secho(
-            f"{type_.__module__}.{type_.__qualname__}: ", fg="yellow", file=sys.stderr, nl=False
-        )
-    click.secho(value, fg="red", file=sys.stderr)
+        click.secho("".join(traceback.format_tb(tb)), fg="yellow", err=True, nl=False)
+        click.secho(f"{type_.__module__}.{type_.__qualname__}: ", fg="yellow", err=True, nl=False)
+    click.secho(value, fg="red", err=True)
 
 
 SEE_MANIFEST_HELP = (
@@ -202,12 +203,43 @@ def _doc(ctx: click.Context, site: str, local: Path | None) -> None:
 )
 @click.argument("page", default=None, required=False)
 @pass_doc
-def _open_doc(doc: DocConfig, remote: bool, page: str | None = None) -> None:
+@click.pass_context
+def _open_doc(ctx: click.Context, doc: DocConfig, remote: bool, page: str | None = None) -> None:
     """Opens the local documentation in a browser.
 
-    If an optional page argument is supplied, that page will be opened instead of the default doc site page.
+    If an optional page argument is supplied, that page will be opened instead of the default doc
+    site page.
+
+    Documentation is served by a local HTTP server which you can shut down with `science doc close`.
     """
-    url = doc.site if remote else f"file://{doc.local}"
+    if remote or not doc.local:
+        url = doc.site
+    else:
+        try:
+            launch_result = launch_doc_server(document_root=doc.local)
+        except LaunchError:
+            try:
+                launch_result = launch_doc_server(document_root=doc.local, port=0)
+            except LaunchError as e:
+                with open(e.log) as fp:
+                    for line in fp:
+                        logger.error(line.rstrip())
+                logger.fatal(f"Failed to launch {SERVER_NAME}.")
+                ctx.exit(1)
+                return
+
+        url = launch_result.server_info.url
+        if launch_result.already_running:
+            click.secho(
+                f"Using {SERVER_NAME} already running at {launch_result.server_info}.",
+                fg="cyan",
+                err=True,
+            )
+        else:
+            click.secho(
+                f"Launched {SERVER_NAME} at {launch_result.server_info}", fg="green", err=True
+            )
+
     if not page:
         if not remote:
             url = f"{url}/index.html"
@@ -215,7 +247,18 @@ def _open_doc(doc: DocConfig, remote: bool, page: str | None = None) -> None:
         url_info = urlparse(url)
         page = f"{page}.html" if not PurePath(page).suffix else page
         url = urlunparse(url_info._replace(path=f"{url_info.path}/{page}"))
+
     click.launch(url)
+
+
+@_doc.command(name="close")
+def _close_doc() -> None:
+    """Shuts down the local documentation server."""
+    server_info = shutdown_doc_server()
+    if server_info:
+        click.secho(f"Shut down the {SERVER_NAME} at {server_info}.", fg="green", err=True)
+    else:
+        click.secho("No documentation server was running.", fg="cyan", err=True)
 
 
 @_main.group(cls=DYMGroup, name="provider")
