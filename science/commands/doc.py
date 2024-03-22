@@ -192,6 +192,7 @@ def launch(
             bufsize=1,
             stdout=fp.fileno(),
             stderr=subprocess.STDOUT,
+            close_fds=True,
             **daemon_kwargs,
         )
 
