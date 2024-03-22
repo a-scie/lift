@@ -85,10 +85,7 @@ class Pidfile:
                     match = re.search(r"Serving HTTP on \S+ port (?P<port>\d+) ", line)
                     if match:
                         port = match.group("port")
-                        print(f"Matched {port} from:{os.linesep}{line}", file=sys.stderr)
                         return "http://localhost:{port}".format(port=port)
-                    else:
-                        print(f"Failed to match line:{os.linesep}{line}", file=sys.stderr)
         return None
 
     @classmethod
