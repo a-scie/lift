@@ -74,16 +74,21 @@ class Pidfile:
     def _read_url(server_log: Path, timeout: float) -> str | None:
         # N.B.: The simple http server module output is:
         # Serving HTTP on 0.0.0.0 port 33539 (http://0.0.0.0:33539/) ...
+        # Or:
+        # Serving HTTP on :: port 33539 (http://[::]:33539/) ...
+        # Etc.
 
         start = time.time()
         while time.time() - start < timeout:
             with server_log.open() as fp:
                 for line in fp:
-                    if line.endswith(os.linesep):
-                        match = re.search(r"Serving HTTP on 0\.0\.0\.0 port (?P<port>\d+)", line)
-                        if match:
-                            port = match.group("port")
-                            return "http://localhost:{port}".format(port=port)
+                    match = re.search(r"Serving HTTP on \S+ port (?P<port>\d+) ", line)
+                    if match:
+                        port = match.group("port")
+                        print(f"Matched {port} from:{os.linesep}{line}", file=sys.stderr)
+                        return "http://localhost:{port}".format(port=port)
+                    else:
+                        print(f"Failed to match line:{os.linesep}{line}", file=sys.stderr)
         return None
 
     @classmethod
@@ -179,8 +184,12 @@ def launch(
         # Not proper daemonization, but good enough.
         daemon_kwargs = (
             {
-                # The subprocess.DETACHED_PROCESS attribute is only defined on Windows.
-                "creationflags": subprocess.DETACHED_PROCESS  # type: ignore[attr-defined]
+                # The subprocess.{DETACHED_PROCESS,CREATE_NEW_PROCESS_GROUP} attributes are only
+                # defined on Windows.
+                "creationflags": (
+                    subprocess.DETACHED_PROCESS  # type: ignore[attr-defined]
+                    | subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
+                )
             }
             if Platform.current() is Platform.Windows_x86_64
             else {"preexec_fn": os.setsid}
