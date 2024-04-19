@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.3.4
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.3.
+
 ## 0.3.3
 
 Fix `science doc open` to use a local documentation server. This works around all the problems
