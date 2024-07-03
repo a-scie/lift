@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.4.0
+
+Update dependencies and configure releases to include artifact attestations in Sigstore.
+
 ## 0.3.4
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.3.

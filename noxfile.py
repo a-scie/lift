@@ -21,7 +21,7 @@ nox.options.sessions = ["fmt", "lint", "check", "test"]
 
 REQUIRES_PYTHON_VERSION = "3.12"
 
-PEX_REQUIREMENT = "pex==2.2.2"
+PEX_REQUIREMENT = "pex==2.7.0"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
@@ -43,7 +43,7 @@ def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
         *args,
         env={"PEX_SCRIPT": script, **env},
         silent=silent,
-        stderr=subprocess.DEVNULL if silent else None,
+        stderr=subprocess.DEVNULL if silent else subprocess.STDOUT,
     )
 
 
