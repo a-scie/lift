@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.4.1
+
+This release fixes missing attestations for Linux ARM64 artifacts.
+
 ## 0.4.0
 
 Update dependencies and configure releases to include artifact attestations in Sigstore.
