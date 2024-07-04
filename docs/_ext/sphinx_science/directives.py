@@ -5,14 +5,15 @@ from __future__ import annotations
 
 import shutil
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib.metadata import EntryPoint
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Iterable, Iterator, Mapping, NewType
+from typing import Iterable, Iterator, Mapping, NewType
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
+from docutils.statemachine import StringList
 from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.environment import BuildEnvironment
@@ -60,7 +61,7 @@ class DirectiveSpec:
     name: str
     args: tuple[str, ...] = ()
     options: Mapping[str, str] = FrozenDict()
-    content: str = ""
+    content: StringList = field(default_factory=StringList)
 
     def render_markdown(self) -> str:
         content_items = [f"```{{{self.name}}} {' '.join(self.args)}"]
@@ -71,7 +72,7 @@ class DirectiveSpec:
                 else:
                     content_items.append(f":{key}: {val}")
         if self.content:
-            content_items.append(self.content)
+            content_items.extend(self.content)
         content_items.append("```")
         return "\n".join(content_items)
 
@@ -133,7 +134,7 @@ class _MultiDocGen:
 
         class Synthesized(Directive):
             has_content = getattr(doc_gen_directive, "has_content", False)
-            option_spec: Mapping[str, Callable[[str], Any]] = {
+            option_spec = {
                 **getattr(doc_gen_directive, "option_spec", {}),
                 "toctree_hidden": directives.flag,
                 "toctree_maxdepth": directives.positive_int,
