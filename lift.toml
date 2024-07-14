@@ -7,8 +7,8 @@ description = "Ship your interpreted executables using science."
 [[lift.interpreters]]
 id = "cpython"
 provider = "PythonBuildStandalone"
-release = "20240415"
-version = "3.12.3"
+release = "20240713"
+version = "3.12.4"
 # By default science ships as a "thin" scie that fetches CPython 3.12 on first run.
 # We use `science lift --invert-lazy cpython ...` when producing "fat" scies.
 lazy = true
