@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.4.2
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.4.
+
 ## 0.4.1
 
 This release fixes missing attestations for Linux ARM64 artifacts.
