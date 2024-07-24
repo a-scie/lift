@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.4.3
+
+Fix science URL fetching code to gracefully ignore a `~/.netrc` that is a directory when configuring
+authentication for the fetch.
+
 ## 0.4.2
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.4.
