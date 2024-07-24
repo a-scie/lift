@@ -75,7 +75,7 @@ def _configure_auth(url: Url) -> httpx.Auth | tuple[str, str] | None:
 
     try:
         return httpx.NetRCAuth(None)
-    except FileNotFoundError:
+    except (FileNotFoundError, IsADirectoryError):
         pass
     except NetrcParseError as e:
         logger.warning(f"Not using netrc for auth, netrc file is invalid: {e}")
