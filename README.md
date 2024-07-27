@@ -2,6 +2,7 @@
 
 [![GitHub](https://img.shields.io/github/license/a-scie/lift)](LICENSE)
 [![Github Actions CI](https://github.com/a-scie/lift/actions/workflows/ci.yml/badge.svg)](https://github.com/a-scie/lift/actions/workflows/ci.yml)
+[![Discord](https://img.shields.io/discord/1113502044922322954)](https://scie.app/discord)
 
 Delivers `science`, a high level tool to build scies with.
 
