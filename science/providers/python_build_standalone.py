@@ -92,7 +92,7 @@ class Config:
         metadata=metadata(
             """The flavor of the Python Standalone Builds release to use.
 
-            Currently only accepts 'install_only' which is the default.
+            Currently only accepts 'install_only' and 'install_only_stripped'.
             """
         ),
     )
@@ -296,7 +296,7 @@ class PythonBuildStandalone(Provider[Config]):
         )
         placeholders = {}
         match self.flavor:
-            case "install_only":
+            case "install_only" | "install_only_stripped":
                 match platform:
                     case Platform.Windows_x86_64:
                         placeholders[Identifier("python")] = "python\\python.exe"
