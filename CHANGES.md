@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.5.0
+
+Add support to the PythonBuildStandalone interpreter provider for the new `install_only_stripped`
+distribution flavor introduced in the [20240726 PBS release](
+https://github.com/indygreg/python-build-standalone/releases/tag/20240726) and use this flavor to
+ship smaller science fat binaries.
+
 ## 0.4.3
 
 Fix science URL fetching code to gracefully ignore a `~/.netrc` that is a directory when configuring
