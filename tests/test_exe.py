@@ -690,3 +690,39 @@ def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
     assert "Cannot lazy fetch local file 'exe.py'." in result.stderr.strip().splitlines(
         keepends=False
     )
+
+
+@pytest.mark.parametrize("version", ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"])
+def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        input=dedent(
+            f"""\
+            [lift]
+            name = "pypy"
+
+            [[lift.interpreters]]
+            id = "pypy"
+            provider = "PyPy"
+            version = "{version}"
+            lazy = true
+
+            [[lift.commands]]
+            exe = "#{{pypy:python}}"
+            args = ["-c", "import sys; print('.'.join(map(str, sys.version_info[:2])))"]
+            """
+        ),
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / Platform.current().binary_name("pypy")
+    assert (
+        version
+        == subprocess.run(args=[scie], text=True, stdout=subprocess.PIPE, check=True).stdout.strip()
+    )
