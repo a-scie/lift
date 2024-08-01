@@ -59,10 +59,11 @@ class Config:
         metadata=metadata(
             f"""The PyPy release to use.
 
-            Currently releases are of the form `v<major>.<minor>.<patch>`, e.g.: 'v7.3.16'.
+            Currently, stable releases are of the form `v<major>.<minor>.<patch>`, e.g.: 'v7.3.16'.
             See the [PyPy releases page][releases-page] to discover available releases.
 
-            If left unspecified the latest release providing the specified Python version is used.
+            If left unspecified the [latest release][latest-release] providing the specified Python
+            version is used.
 
             ```{{note}}
             The latest lookup is cached for 5 days. To force a fresh lookup you can remove
@@ -70,6 +71,7 @@ class Config:
             ```
 
             [releases-page]: https://downloads.python.org/pypy/
+            [latest-release]: https://pypy.org/download.html
             """
         ),
     )
@@ -81,8 +83,9 @@ class PyPy(Provider[Config]):
 
     All science platforms are supported for PyPy release v7.3.0 and up.
 
-    For all platforms, a `python` placeholder (`#{<id>:python}`) is supported and will be
-    substituted with the selected distribution's PyPy binary path.
+    For all platforms, both a `pypy` placeholder (`#{<id>:pypy}`) and a `python` placeholder
+    (`#{<id>:python}`) are supported and will be substituted with the selected distribution's PyPy
+    interpreter binary path.
 
     [PyPy]: https://pypy.org/
     """
