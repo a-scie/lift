@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.6.0
+
+Add an interpreter provider for [PyPy](https://pypy.org/) that provides the distributions they
+release at https://downloads.python.org/pypy/.
+
 ## 0.5.0
 
 Add support to the PythonBuildStandalone interpreter provider for the new `install_only_stripped`

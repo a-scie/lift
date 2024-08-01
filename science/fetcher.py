@@ -83,7 +83,7 @@ def _configure_auth(url: Url) -> httpx.Auth | tuple[str, str] | None:
     return None
 
 
-def _configured_client(url: Url, headers: Mapping[str, str] | None = None) -> httpx.Client:
+def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> httpx.Client:
     headers = dict(headers) if headers else {}
     auth = _configure_auth(url) if "Authorization" not in headers else None
     return httpx.Client(follow_redirects=True, headers=headers, auth=auth)
@@ -96,7 +96,7 @@ def _fetch_to_cache(
         match cache_result:
             case Missing(work=work):
                 with (
-                    _configured_client(url, headers).stream("GET", url) as response,
+                    configured_client(url, headers).stream("GET", url) as response,
                     work.open("wb") as cache_fp,
                 ):
                     for data in response.iter_bytes():
@@ -128,7 +128,7 @@ def _maybe_expected_digest(
         case Fingerprint(_):
             return ExpectedDigest(fingerprint=fingerprint, algorithm=algorithm)
         case Url(url):
-            with _configured_client(url, headers) as client:
+            with configured_client(url, headers) as client:
                 return ExpectedDigest(
                     fingerprint=Fingerprint(client.get(url).text.split(" ", 1)[0].strip()),
                     algorithm=algorithm,
@@ -147,7 +147,7 @@ def _expected_digest(
     if expected_digest:
         return expected_digest
 
-    with _configured_client(url, headers) as client:
+    with configured_client(url, headers) as client:
         return ExpectedDigest(
             fingerprint=Fingerprint(client.get(f"{url}.{algorithm}").text.split(" ", 1)[0].strip()),
             algorithm=algorithm,
@@ -167,7 +167,7 @@ def fetch_and_verify(
         match cache_result:
             case Missing(work=work):
                 click.secho(f"Downloading {url} ...", fg="green")
-                with _configured_client(url, headers) as client:
+                with configured_client(url, headers) as client:
                     expected_digest = _expected_digest(
                         url, headers, fingerprint, algorithm=digest_algorithm
                     )
