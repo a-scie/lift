@@ -94,7 +94,7 @@ class PyPy(Provider[Config]):
                 match arch:
                     case "aarch64-portable":
                         return 0
-                    case "aarch64" | "aarch64-portable":
+                    case "aarch64":
                         return 1
             case Platform.Linux_x86_64:
                 match arch:
