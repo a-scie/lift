@@ -211,13 +211,24 @@ class PyPy(Provider[Config]):
         pypy = (
             "pypy" if 2 == selected_asset.version.major else f"pypy{selected_asset.version.major}"
         )
+
+        # These 4 distributions are the only distributions with `-portable` in the archive name, but
+        # not in the top level archive dir name:
+        # pypy2.7-v7.3.8-aarch64-portable.tar.bz2
+        # pypy3.7-v7.3.8-aarch64-portable.tar.bz2
+        # pypy3.8-v7.3.8-aarch64-portable.tar.bz2
+        # pypy3.9-v7.3.8-aarch64-portable.tar.bz2
+        #
+        # We correct for that discrepency here:
+        top_level_archive_dir = re.sub(r"-portable$", "", selected_asset.file_stem())
+
         match platform:
             case Platform.Windows_x86_64:
-                pypy_binary = f"{selected_asset.file_stem()}\\{pypy}.exe"
+                pypy_binary = f"{top_level_archive_dir}\\{pypy}.exe"
                 placeholders[Identifier("pypy")] = pypy_binary
                 placeholders[Identifier("python")] = pypy_binary
             case _:
-                pypy_binary = f"{selected_asset.file_stem()}/bin/{pypy}"
+                pypy_binary = f"{top_level_archive_dir}/bin/{pypy}"
                 placeholders[Identifier("pypy")] = pypy_binary
                 placeholders[Identifier("python")] = pypy_binary
 
