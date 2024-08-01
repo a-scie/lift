@@ -692,7 +692,14 @@ def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("version", ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"])
+@pytest.mark.parametrize(
+    "version",
+    (
+        ["2.7", "3.8", "3.9", "3.10"]
+        if Platform.current() is Platform.Macos_aarch64
+        else ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
+    ),
+)
 def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
     dest = tmp_path / "dest"
     chroot = tmp_path / "chroot"
