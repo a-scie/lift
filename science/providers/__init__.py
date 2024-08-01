@@ -15,10 +15,10 @@ from science.dataclass import Dataclass
 from science.dataclass.reflect import FieldInfo, dataclass_info
 from science.errors import InputError
 from science.model import Provider
+from science.providers.pypy import PyPy
 from science.providers.python_build_standalone import PythonBuildStandalone
 
-_BUILTIN_PROVIDER_TYPES = (PythonBuildStandalone,)
-
+_BUILTIN_PROVIDER_TYPES: tuple[type[Provider], ...] = (PythonBuildStandalone, PyPy)
 
 ConfigDataclass = TypeVar("ConfigDataclass", bound=Dataclass)
 

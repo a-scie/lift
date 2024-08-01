@@ -1,4 +1,5 @@
 appdirs
+beautifulsoup4
 click
 click-log
 click_didyoumean
