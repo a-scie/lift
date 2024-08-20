@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.6.1
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.5.
+
 ## 0.6.0
 
 Add an interpreter provider for [PyPy](https://pypy.org/) that provides the distributions they
