@@ -11,11 +11,12 @@ import re
 import shutil
 import subprocess
 import sys
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from textwrap import dedent
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 import pytest
 import toml
@@ -153,6 +154,15 @@ def test_hash(
             ), f"The {actual_digest.name} digest did not match."
 
 
+def maybe_platform_args() -> Iterator[str]:
+    # N.B.: When running on Windows ARM64 we need to use an x86-64 PBS and so the science
+    # executable thinks its running on x86-64 as a result. We force the platform when building
+    # scies on Windows ARM64 to work around this mis-identification in dogfood-style tests.
+    if Platform.Windows_aarch64 is Platform.current():
+        yield "--platform"
+        yield Platform.Windows_aarch64.value
+
+
 def test_dogfood(
     tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
 ) -> None:
@@ -161,6 +171,7 @@ def test_dogfood(
         args=[
             str(science_exe),
             "lift",
+            *maybe_platform_args(),
             "--file",
             f"science.pyz={science_pyz}",
             "--file",
@@ -222,7 +233,7 @@ def test_nested_filenames(
 
     dest2 = tmp_path / "dest2"
     subprocess.run(
-        args=[str(science_exe1), "lift", "build", "--dest-dir", str(dest2)],
+        args=[str(science_exe1), "lift", *maybe_platform_args(), "build", "--dest-dir", str(dest2)],
         check=True,
         cwd=tmp_path,
     )
@@ -310,6 +321,9 @@ class Result:
         assert not self.scie.exists()
 
 
+_WORK_DIRS = defaultdict[Path, list[Path]](list[Path])
+
+
 def create_url_source_scie(
     tmp_path: Path,
     science_exe: Path,
@@ -321,8 +335,14 @@ def create_url_source_scie(
     extra_lift_args: Iterable[str] = (),
     **env: str,
 ) -> Result:
-    dest = tmp_path / "dest"
-    chroot = tmp_path / "chroot"
+
+    work_dirs = _WORK_DIRS[tmp_path]
+    work_dir = tmp_path / str(len(work_dirs))
+    work_dirs.append(work_dir)
+
+    dest = work_dir / "dest"
+    chroot = work_dir / "chroot"
+
     lift_toml_content = url_source_lift_toml_content(
         chroot,
         lazy=lazy,
@@ -330,6 +350,7 @@ def create_url_source_scie(
         expected_fingerprint=expected_fingerprint,
     )
     lift_toml_content = f"{lift_toml_content}\n{additional_toml}"
+
     scie = dest / Platform.current().binary_name(expected_name)
     result = subprocess.run(
         args=[str(science_exe), "lift", *extra_lift_args, "build", "--dest-dir", str(dest), "-"],

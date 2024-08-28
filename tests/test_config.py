@@ -81,7 +81,7 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
 def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
     current_platform = Platform.current()
     match current_platform:
-        case Platform.Windows_x86_64:
+        case Platform.Windows_aarch64 | Platform.Windows_x86_64:
             config_name = "scie-base.windows.toml"
             expected_base = "~\\AppData\\Local\\Temp\\custom-base"
         case _:

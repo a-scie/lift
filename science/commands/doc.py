@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import cache
 from pathlib import Path, PurePath
+from typing import Any
 
 import psutil
 
@@ -179,7 +180,7 @@ def launch(
     env = {**os.environ, "PYTHONUNBUFFERED": "1"}
     with log.open("w") as fp:
         # Not proper daemonization, but good enough.
-        daemon_kwargs = (
+        daemon_kwargs: dict[str, Any] = (
             {
                 # The subprocess.{DETACHED_PROCESS,CREATE_NEW_PROCESS_GROUP} attributes are only
                 # defined on Windows.
@@ -188,8 +189,11 @@ def launch(
                     | subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
                 )
             }
-            if Platform.current() is Platform.Windows_x86_64
-            else {"preexec_fn": os.setsid}
+            if Platform.current() in (Platform.Windows_aarch64, Platform.Windows_x86_64)
+            else {
+                # The os.setsid function is not available on Windows.
+                "preexec_fn": os.setsid  # type: ignore[attr-defined]
+            }
         )
         process = subprocess.Popen(
             args=[sys.executable, "-m", "http.server", str(port)],

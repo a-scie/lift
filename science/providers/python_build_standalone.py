@@ -104,10 +104,16 @@ class PythonBuildStandalone(Provider[Config]):
 
     All science platforms are supported for Python 3 minor versions >= 8.
 
+    ```{note}
+    Windows ARM64 uses the x86-64 binaries since there are currently no Windows ARM64 releases
+    from [Python Standalone Builds][PBS]. This means slow execution when the Windows Prism
+    emulation system has to warm up its instruction caches.
+    ```
+
     For all platforms, a `python` placeholder (`#{<id>:python}`) is supported and will be
     substituted with the selected distribution's Python binary path.
 
-    On the Linux and MacOS platforms a `pip` placeholder (`#{<id>:pip}`) is supported and will be
+    On the Linux and macOS platforms a `pip` placeholder (`#{<id>:pip}`) is supported and will be
     substituted with the selected distribution's pip script path.
 
     ```{danger}
@@ -169,9 +175,12 @@ class PythonBuildStandalone(Provider[Config]):
                 match target_triple:
                     case "x86_64-apple-darwin":
                         return 0
-            case Platform.Windows_x86_64:
+            case Platform.Windows_aarch64 | Platform.Windows_x86_64:
                 match target_triple:
-                    case "x86_64-pc-windows-msvc-shared":
+                    # N.B.: The -shared tag was removed in
+                    # https://github.com/indygreg/python-build-standalone/releases/tag/20240415
+                    # but the archive is still dynamically linked.
+                    case "x86_64-pc-windows-msvc" | "x86_64-pc-windows-msvc-shared":
                         return 0
                     case "x86_64-pc-windows-msvc-static":
                         return 1
@@ -298,7 +307,7 @@ class PythonBuildStandalone(Provider[Config]):
         match self.flavor:
             case "install_only" | "install_only_stripped":
                 match platform:
-                    case Platform.Windows_x86_64:
+                    case Platform.Windows_aarch64 | Platform.Windows_x86_64:
                         placeholders[Identifier("python")] = "python\\python.exe"
                     case _:
                         version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
