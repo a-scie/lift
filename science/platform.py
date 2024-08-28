@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import platform
 from enum import Enum
 
@@ -23,6 +24,12 @@ class Platform(Enum):
 
     @classmethod
     def current(cls) -> Platform:
+        # N.B.: Used by the science scie to seal in the correct current platform as determined by
+        # the scie-jump. This helps work around our Windows ARM64 science binary thinking its
+        # running on Windows x86-64 since we use an x86-64 PBS Cpython in that scie.
+        if current := os.environ.get("__SCIENCE_CURRENT_PLATFORM__"):
+            return cls.parse(current)
+
         match (system := platform.system().lower(), machine := platform.machine().lower()):
             case ("linux", "aarch64" | "arm64"):
                 return cls.Linux_aarch64

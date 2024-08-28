@@ -45,3 +45,4 @@ remove_re = [
 [lift.commands.env.replace]
 SHIV_ROOT = "{scie.bindings}/shiv_root"
 SCIENCE_DOC_LOCAL = "{docsite}"
+__SCIENCE_CURRENT_PLATFORM__ = "{scie.platform}"
