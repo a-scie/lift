@@ -1,15 +1,23 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+from __future__ import annotations
+
 import glob
 import hashlib
+import io
 import itertools
 import json
 import os
 import shutil
 import subprocess
+import sys
+import tarfile
+import tempfile
+import urllib.request
 from functools import wraps
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Callable, Collection, Iterable, TypeVar, cast
 
 import nox
@@ -19,7 +27,32 @@ nox.needs_version = ">=2022.11.21"
 nox.options.stop_on_first_error = True
 nox.options.sessions = ["fmt", "lint", "check", "test"]
 
-REQUIRES_PYTHON_VERSION = "3.12"
+# N.B.: Our nox version specifier above admits nox releases that support Python >=3.7, but we set
+# the floor to the oldest Python supported by python.org.
+MIN_NOX_PYTHON = (3, 8)
+MIN_NOX_PYTHON_VER = ".".join(map(str, MIN_NOX_PYTHON))
+
+if sys.version_info[:2] < MIN_NOX_PYTHON:
+    sys.exit(
+        dedent(
+            f"""\
+            This project requires nox running on Python>={MIN_NOX_PYTHON_VER}.
+
+            Your nox is currently running under Python:
+            version info: {sys.version}
+                    path: {sys.executable}
+            """
+        )
+    )
+
+
+# N.B.: When updating these, update the corresponding values for the PythonBuildStandalone provider
+# in lift.toml.
+PBS_RELEASE = "20240814"
+PBS_VERSION = "3.12.5"
+PBS_FLAVOR = "install_only_stripped"
+
+REQUIRES_PYTHON_VERSION = ".".join(PBS_VERSION.split(".")[:2])
 
 PEX_REQUIREMENT = "pex==2.7.0"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
@@ -29,6 +62,25 @@ WINDOWS_AMD64_COMPLETE_PLATFORM = BUILD_ROOT / "complete-platform.windows-amd64-
 LOCK_FILE = BUILD_ROOT / "lock.json"
 
 IS_WINDOWS = os.name == "nt"
+IS_WINDOWS_ARM64 = IS_WINDOWS and subprocess.run(
+    args=["pwsh.exe", "-c", "$Env:PROCESSOR_ARCHITECTURE.ToLower()"],
+    stdout=subprocess.PIPE,
+    text=True,
+).stdout.strip() in ("aarch64", "arm64")
+
+
+def check_lift_manifest(session: Session):
+    session.run(
+        "python",
+        BUILD_ROOT / "scripts" / "check-manifest.py",
+        "--release",
+        PBS_RELEASE,
+        "--version",
+        PBS_VERSION,
+        "--flavor",
+        PBS_FLAVOR,
+        BUILD_ROOT / "lift.toml",
+    )
 
 
 def run_pex(session: Session, script, *args, silent=False, **env) -> Any | None:
@@ -165,11 +217,50 @@ def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) ->
         )
 
 
+def ensure_windows_x86_64_python() -> str:
+    pbs_root = BUILD_ROOT / ".nox" / "PBS" / PBS_RELEASE / PBS_VERSION / PBS_FLAVOR
+    if not pbs_root.exists():
+        url = (
+            "https://github.com/indygreg/python-build-standalone/releases/download/"
+            f"{PBS_RELEASE}/"
+            f"cpython-{PBS_VERSION}+{PBS_RELEASE}-x86_64-pc-windows-msvc-{PBS_FLAVOR}.tar.gz"
+        )
+        with urllib.request.urlopen(f"{url}.sha256") as resp:
+            expected_hash = resp.read().decode().strip()
+        pbs_root.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=pbs_root.parent, prefix="PBS-prepare.") as chroot:
+            with urllib.request.urlopen(url) as resp, tempfile.TemporaryFile() as archive:
+                digest = hashlib.sha256()
+                for chunk in iter(lambda: resp.read(io.DEFAULT_BUFFER_SIZE), b""):
+                    archive.write(chunk)
+                    digest.update(chunk)
+                if expected_hash != (actual_hash := digest.hexdigest()):
+                    raise ValueError(
+                        dedent(
+                            f"""\
+                            The PBS archive downloaded from {url} had unexpected contents:
+                            Expected sha256 hash: {expected_hash}
+                            Actual sha256 hash:   {actual_hash}
+                            """
+                        )
+                    )
+                archive.flush()
+                archive.seek(0)
+                with tarfile.open(fileobj=archive) as tf:
+                    tf.extractall(chroot)
+            os.replace(chroot, str(pbs_root))
+    return str(pbs_root / "python" / "python.exe")
+
+
 T = TypeVar("T")
 
 
 def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
-    return nox.session(python=[REQUIRES_PYTHON_VERSION], reuse_venv=True)
+    # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via PBS,
+    # and we need to be able to resolve x86-64 compatible requirements (which include native deps
+    # like psutil) for our shiv.
+    python = ensure_windows_x86_64_python() if IS_WINDOWS_ARM64 else REQUIRES_PYTHON_VERSION
+    return nox.session(python=[python], reuse_venv=True)
 
 
 @nox_session()
@@ -197,8 +288,8 @@ def python_session(
                     requirements.append(session_reqs)
             if include_project:
                 requirements.append(BUILD_ROOT / "requirements.txt")
-
-            install_locked_requirements(session, input_reqs=requirements)
+            if requirements:
+                install_locked_requirements(session, input_reqs=requirements)
             return func(session)
 
         return nox_session()(wrapper)
@@ -237,6 +328,8 @@ def lint(session: Session) -> None:
 
 @python_session(include_project=True, extra_reqs=["doc", "test"])
 def check(session: Session) -> None:
+    check_lift_manifest(session)
+    session.run("mypy", "--python-version", ".".join(map(str, MIN_NOX_PYTHON)), "noxfile.py")
     session.run(
         "mypy", "--python-version", REQUIRES_PYTHON_VERSION, *PATHS_TO_CHECK, *session.posargs
     )
@@ -260,6 +353,9 @@ def create_zipapp(session: Session) -> Path:
                 "-r",
                 str(BUILD_ROOT / "requirements.windows-amd64.lock.txt"),
                 external=True,
+            )
+            session.run(
+                str(venv_dir / "Scripts" / "python.exe"), "-m", "pip", "uninstall", "--yes", "pip"
             )
             site_packages = str(venv_dir / "Lib" / "site-packages")
         else:

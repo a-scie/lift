@@ -83,6 +83,12 @@ class PyPy(Provider[Config]):
 
     All science platforms are supported for PyPy release v7.3.0 and up.
 
+    ```{note}
+    Windows ARM64 uses the x86-64 binaries since there are currently no Windows ARM64 releases
+    from [PyPy][PyPy]. This means slow execution when the Windows Prism emulation system has to
+    warm up its instruction caches.
+    ```
+
     For all platforms, both a `pypy` placeholder (`#{<id>:pypy}`) and a `python` placeholder
     (`#{<id>:python}`) are supported and will be substituted with the selected distribution's PyPy
     interpreter binary path.
@@ -113,7 +119,7 @@ class PyPy(Provider[Config]):
                         return 0
                     case "osx64":
                         return 1
-            case Platform.Windows_x86_64:
+            case Platform.Windows_aarch64 | Platform.Windows_x86_64:
                 match arch:
                     case "win64":
                         return 0
@@ -226,7 +232,7 @@ class PyPy(Provider[Config]):
         top_level_archive_dir = re.sub(r"-portable$", "", selected_asset.file_stem())
 
         match platform:
-            case Platform.Windows_x86_64:
+            case Platform.Windows_aarch64 | Platform.Windows_x86_64:
                 pypy_binary = f"{top_level_archive_dir}\\{pypy}.exe"
                 placeholders[Identifier("pypy")] = pypy_binary
                 placeholders[Identifier("python")] = pypy_binary

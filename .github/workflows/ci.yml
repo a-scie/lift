@@ -23,20 +23,25 @@ jobs:
       matrix:
         # N.B.: macos-12 is the oldest non-deprecated Intel Mac runner and macos-14 is the oldest
         # non-deprecated ARM Mac runner.
-        os: [ubuntu-22.04, linux-arm64, macos-12, macos-14, windows-2022]
+        os: [ ubuntu-22.04, linux-arm64, macos-12, macos-14, windows-2022, windows-arm64 ]
     env:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Setup Python 3.12
-        if: ${{ matrix.os != 'linux-arm64' }}
+        if: matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
       - name: Setup Python 3.12
-        if: ${{ matrix.os == 'linux-arm64' }}
+        if: matrix.os == 'linux-arm64'
         run: |
           python3.12 -m venv .venv
           echo "$(pwd)/.venv/bin" >> "${GITHUB_PATH}"
+      - name: Setup Python 3.12
+        if: matrix.os == 'windows-arm64'
+        run: |
+          py -3.12 -m venv .venv
+          echo "$(pwd)/.venv/Scripts" >> "${GITHUB_PATH}"
       - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift
@@ -44,7 +49,7 @@ jobs:
       - name: Check Formatting & Lints
         run: nox -e lint
       - name: Configure Windows pytest short tmp dir path
-        if: matrix.os == 'windows-2022'
+        if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
         run: |
           echo PYTEST_ADDOPTS="--basetemp C:\\tmp\\pytest" >> ${GITHUB_ENV}
       - name: Unit Tests

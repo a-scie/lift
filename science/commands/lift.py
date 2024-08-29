@@ -89,6 +89,7 @@ class LiftConfig:
     include_provenance: bool = False
     app_info: tuple[AppInfo, ...] = ()
     app_name: str | None = None
+    platforms: tuple[Platform, ...] = ()
 
 
 def export_manifest(

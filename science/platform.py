@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import platform
 from enum import Enum
 
@@ -14,6 +15,7 @@ class Platform(Enum):
     Linux_x86_64 = "linux-x86_64"
     Macos_aarch64 = "macos-aarch64"
     Macos_x86_64 = "macos-x86_64"
+    Windows_aarch64 = "windows-aarch64"
     Windows_x86_64 = "windows-x86_64"
 
     @classmethod
@@ -22,6 +24,12 @@ class Platform(Enum):
 
     @classmethod
     def current(cls) -> Platform:
+        # N.B.: Used by the science scie to seal in the correct current platform as determined by
+        # the scie-jump. This helps work around our Windows ARM64 science binary thinking its
+        # running on Windows x86-64 since we use an x86-64 PBS Cpython in that scie.
+        if current := os.environ.get("__SCIENCE_CURRENT_PLATFORM__"):
+            return cls.parse(current)
+
         match (system := platform.system().lower(), machine := platform.machine().lower()):
             case ("linux", "aarch64" | "arm64"):
                 return cls.Linux_aarch64
@@ -31,6 +39,8 @@ class Platform(Enum):
                 return cls.Macos_aarch64
             case ("darwin", "amd64" | "x86_64"):
                 return cls.Macos_x86_64
+            case ("windows", "aarch64" | "arm64"):
+                return cls.Windows_aarch64
             case ("windows", "amd64" | "x86_64"):
                 return cls.Windows_x86_64
             case _:
@@ -41,7 +51,7 @@ class Platform(Enum):
 
     @property
     def extension(self):
-        return ".exe" if self is self.Windows_x86_64 else ""
+        return ".exe" if self in (self.Windows_aarch64, self.Windows_x86_64) else ""
 
     def binary_name(self, binary_name: str) -> str:
         return f"{binary_name}{self.extension}"

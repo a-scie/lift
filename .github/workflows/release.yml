@@ -47,7 +47,7 @@ jobs:
       matrix:
         # N.B.: macos-12 is the oldest non-deprecated Intel Mac runner and macos-14 is the oldest
         # non-deprecated ARM Mac runner.
-        os: [ ubuntu-22.04, linux-arm64, macos-12, macos-14, windows-2022 ]
+        os: [ ubuntu-22.04, linux-arm64, macos-12, macos-14, windows-2022, windows-arm64 ]
     environment: Release
     env:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
@@ -58,15 +58,20 @@ jobs:
       discussions: write
     steps:
       - name: Setup Python 3.12
-        if: ${{ matrix.os != 'linux-arm64' }}
+        if: matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
       - name: Setup Python 3.12
-        if: ${{ matrix.os == 'linux-arm64' }}
+        if: matrix.os == 'linux-arm64'
         run: |
           python3.12 -m venv .venv
           echo "$(pwd)/.venv/bin" >> "${GITHUB_PATH}"
+      - name: Setup Python 3.12
+        if: matrix.os == 'windows-arm64'
+        run: |
+          py -3.12 -m venv .venv
+          echo "$(pwd)/.venv/Scripts" >> "${GITHUB_PATH}"
       - name: Setup Nox
         run: pip install nox
       - name: Checkout lift ${{ needs.determine-tag.outputs.release-tag }}
@@ -85,7 +90,7 @@ jobs:
         with:
           changelog-file: ${{ github.workspace }}/CHANGES.md
           version: ${{ needs.determine-tag.outputs.release-version }}
-          setup-python: ${{ matrix.os != 'linux-arm64' }}
+          setup-python: ${{ matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64' }}
       - name: Create ${{ needs.determine-tag.outputs.release-tag }} Release
         uses: softprops/action-gh-release@v2
         with:

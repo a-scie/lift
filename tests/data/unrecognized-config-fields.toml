@@ -8,7 +8,7 @@ version = "0.11.0"
 
 [lift.scie_jump]
 # N.B: `version2` is invalid, should be `version`.
-version2 = "0.11.0"
+version2 = "1.2.0"
 
 [[lift.interpreters]]
 id = "cpython310"

@@ -143,6 +143,10 @@ class _MultiDocGen:
             optional_arguments = getattr(doc_gen_directive, "optional_arguments", 0)
 
             def run(self) -> list[nodes.Node]:
+                assert self.state.document.current_source is not None, (
+                    f"We always expect documents we handle to have a source. "
+                    f"This document does not: {self.state.document}"
+                )
                 source = Path(self.state.document.current_source)
                 if generated_toc_node := generated_for.get(source):
                     # N.B.: We use the `env-get-outdated` event below to manually read doctrees

@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
@@ -310,6 +311,9 @@ class Result:
         assert not self.scie.exists()
 
 
+_WORK_DIRS = defaultdict[Path, list[Path]](list[Path])
+
+
 def create_url_source_scie(
     tmp_path: Path,
     science_exe: Path,
@@ -321,8 +325,14 @@ def create_url_source_scie(
     extra_lift_args: Iterable[str] = (),
     **env: str,
 ) -> Result:
-    dest = tmp_path / "dest"
-    chroot = tmp_path / "chroot"
+
+    work_dirs = _WORK_DIRS[tmp_path]
+    work_dir = tmp_path / str(len(work_dirs))
+    work_dirs.append(work_dir)
+
+    dest = work_dir / "dest"
+    chroot = work_dir / "chroot"
+
     lift_toml_content = url_source_lift_toml_content(
         chroot,
         lazy=lazy,
@@ -330,6 +340,7 @@ def create_url_source_scie(
         expected_fingerprint=expected_fingerprint,
     )
     lift_toml_content = f"{lift_toml_content}\n{additional_toml}"
+
     scie = dest / Platform.current().binary_name(expected_name)
     result = subprocess.run(
         args=[str(science_exe), "lift", *extra_lift_args, "build", "--dest-dir", str(dest), "-"],

@@ -1,5 +1,14 @@
 # Release Notes
 
+# 0.7.0
+
+This release adds support for Windows ARM64. 
+
+> [!NOTE]
+> The `science` binaries shipped for Windows ARM64 are powered by an x86-64 [PBS][PBS] CPython
+> that runs under Windows Prism emulation for x86-64 binaries. As such, you will experience a
+> significantly slower first run when Prism populates its instruction translation caches.
+
 ## 0.6.1
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.5.

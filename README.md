@@ -19,7 +19,7 @@ You'll need to download the correct binary for your system, mark it as executabl
 your $PATH somewhere.
 
 The binaries are released via [GitHub Releases](https://github.com/a-scie/lift/releases)
-for Windows x86_64 and Linux and macOS for both aarch64 and x86_64. For each of these platforms
+for Windows, Linux and macOS for both aarch64 and x86-64. For each of these platforms
 there are two varieties, "thin" and "fat". The "fat" varieties are named `science-fat-*`, include
 a hermetic CPython 3.12 distribution from the [Python Build Standalone]() project and are larger as
 a result. The "thin" varieties have the CPython 3.12 distribution gouged out and are smaller as a

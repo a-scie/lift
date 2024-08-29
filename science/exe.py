@@ -495,6 +495,14 @@ pass_lift = click.make_pass_decorator(LiftConfig)
         """
     ),
 )
+@click.option(
+    "--platform",
+    "platforms",
+    type=Platform.parse,
+    multiple=True,
+    default=[],
+    help="Override any configured platforms and target these platforms instead.",
+)
 @click.pass_context
 def _lift(
     ctx: click.Context,
@@ -503,6 +511,7 @@ def _lift(
     include_provenance: bool,
     app_name: str | None,
     app_info: list[AppInfo],
+    platforms: list[Platform],
 ) -> None:
     # N.B.: Help is defined above in the _lift group decorator since it's a dynamic string.
     ctx.obj = LiftConfig(
@@ -511,6 +520,7 @@ def _lift(
         include_provenance=include_provenance or bool(app_info),
         app_info=tuple(app_info),
         app_name=app_name,
+        platforms=tuple(platforms),
     )
 
 
@@ -581,7 +591,9 @@ def export(
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
     with temporary_directory(cleanup=True) as td:
-        for _, manifest_path in lift.export_manifest(lift_config, application, dest_dir=td):
+        for _, manifest_path in lift.export_manifest(
+            lift_config, application, dest_dir=td, platforms=lift_config.platforms
+        ):
             lift_manifest = dest_dir / (
                 manifest_path.relative_to(td) if platform_info.use_suffix else manifest_path.name
             )
@@ -677,7 +689,7 @@ def _build(
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
 
-    platforms = application.platforms
+    platforms = lift_config.platforms or application.platforms
     if use_jump and use_platform_suffix:
         logger.warning(f"Cannot use a custom scie jump build with a multi-platform configuration.")
         logger.warning(

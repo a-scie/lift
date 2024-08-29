@@ -7,9 +7,12 @@ description = "Ship your interpreted executables using science."
 [[lift.interpreters]]
 id = "cpython"
 provider = "PythonBuildStandalone"
+
+# N.B.: When updating these, update the corresponding PBS_* constants in noxfile.py.
 release = "20240814"
 version = "3.12.5"
 flavor = "install_only_stripped"
+
 # By default science ships as a "thin" scie that fetches CPython 3.12 on first run.
 # We use `science lift --invert-lazy cpython ...` when producing "fat" scies.
 lazy = true
@@ -42,3 +45,4 @@ remove_re = [
 [lift.commands.env.replace]
 SHIV_ROOT = "{scie.bindings}/shiv_root"
 SCIENCE_DOC_LOCAL = "{docsite}"
+__SCIENCE_CURRENT_PLATFORM__ = "{scie.platform}"
