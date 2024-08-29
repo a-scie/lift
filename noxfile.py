@@ -9,14 +9,16 @@ import io
 import itertools
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
 import urllib.request
+from enum import Enum
 from functools import wraps
-from pathlib import Path
+from pathlib import Path, PurePath
 from textwrap import dedent
 from typing import Any, Callable, Collection, Iterable, TypeVar, cast
 
@@ -61,12 +63,46 @@ BUILD_ROOT = Path().resolve()
 WINDOWS_AMD64_COMPLETE_PLATFORM = BUILD_ROOT / "complete-platform.windows-amd64-py3.12.json"
 LOCK_FILE = BUILD_ROOT / "lock.json"
 
-IS_WINDOWS = os.name == "nt"
-IS_WINDOWS_ARM64 = IS_WINDOWS and subprocess.run(
-    args=["pwsh.exe", "-c", "$Env:PROCESSOR_ARCHITECTURE.ToLower()"],
-    stdout=subprocess.PIPE,
-    text=True,
-).stdout.strip() in ("aarch64", "arm64")
+
+class OperatingSystem(Enum):
+    @classmethod
+    def current(cls) -> OperatingSystem:
+        if sys.platform == "linux":
+            return cls.LINUX
+        elif sys.platform == "darwin":
+            return cls.MAC
+        elif os.name == "nt":
+            return cls.WINDOWS
+        else:
+            expected = (
+                f"{', '.join(_os.value for _os in tuple(cls)[:-1])} or {tuple(cls)[-1].value}"
+            )
+            sys.exit(
+                dedent(
+                    f"""\
+                    Incompatible operating system. Expected {expected}:
+                     interpreter: {sys.executable}
+                    sys.platform: {sys.platform}
+                         os.name: {os.name}
+                    """
+                )
+            )
+
+    LINUX = "Linux"
+    MAC = "macOs"
+    WINDOWS = "Windows"
+
+
+OS = OperatingSystem.current()
+IS_ARM64 = (
+    subprocess.run(
+        args=["pwsh.exe", "-c", "$Env:PROCESSOR_ARCHITECTURE.ToLower()"],
+        stdout=subprocess.PIPE,
+        text=True,
+    ).stdout.strip()
+    if OperatingSystem.WINDOWS is OS
+    else platform.machine().lower()
+) in ("aarch64", "arm64")
 
 
 def check_lift_manifest(session: Session):
@@ -194,7 +230,7 @@ def maybe_create_lock(session: Session) -> bool:
 def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) -> None:
     maybe_create_lock(session)
 
-    if IS_WINDOWS:
+    if OperatingSystem.WINDOWS is OS:
         # N.B: We avoid this installation technique when not on Windows since it's a good deal
         # slower than using Pex.
         session.install(
@@ -217,13 +253,13 @@ def install_locked_requirements(session: Session, input_reqs: Iterable[Path]) ->
         )
 
 
-def ensure_windows_x86_64_python() -> str:
+def ensure_PBS_python_dist(target_triple: str) -> PurePath:
     pbs_root = BUILD_ROOT / ".nox" / "PBS" / PBS_RELEASE / PBS_VERSION / PBS_FLAVOR
     if not pbs_root.exists():
         url = (
             "https://github.com/indygreg/python-build-standalone/releases/download/"
             f"{PBS_RELEASE}/"
-            f"cpython-{PBS_VERSION}+{PBS_RELEASE}-x86_64-pc-windows-msvc-{PBS_FLAVOR}.tar.gz"
+            f"cpython-{PBS_VERSION}+{PBS_RELEASE}-{target_triple}-{PBS_FLAVOR}.tar.gz"
         )
         with urllib.request.urlopen(f"{url}.sha256") as resp:
             expected_hash = resp.read().decode().strip()
@@ -249,18 +285,36 @@ def ensure_windows_x86_64_python() -> str:
                 with tarfile.open(fileobj=archive) as tf:
                     tf.extractall(chroot)
             os.replace(chroot, str(pbs_root))
-    return str(pbs_root / "python" / "python.exe")
+    return pbs_root
 
 
 T = TypeVar("T")
 
 
 def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
-    # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via PBS,
-    # and we need to be able to resolve x86-64 compatible requirements (which include native deps
-    # like psutil) for our shiv.
-    python = ensure_windows_x86_64_python() if IS_WINDOWS_ARM64 else REQUIRES_PYTHON_VERSION
-    return nox.session(python=[python], reuse_venv=True)
+    if OperatingSystem.LINUX is OS:
+        if IS_ARM64:
+            target_triple = "aarch64-unknown-linux-gnu"
+        else:
+            target_triple = "x86_64-unknown-linux-gnu"
+    elif OperatingSystem.MAC is OS:
+        if IS_ARM64:
+            target_triple = "aarch64-apple-darwin"
+        else:
+            target_triple = "x86_64-apple-darwin"
+    else:  # Windows
+        # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via PBS,
+        # and we need to be able to resolve x86-64 compatible requirements (which include native
+        # deps like psutil) for our shiv.
+        target_triple = "x86_64-pc-windows-msvc"
+
+    dist_root = ensure_PBS_python_dist(target_triple=target_triple)
+    if OperatingSystem.WINDOWS is OS:
+        python_exe_path = dist_root / "python" / "python.exe"
+    else:
+        python_exe_path = dist_root / "python" / "bin" / f"python{REQUIRES_PYTHON_VERSION}"
+
+    return nox.session(python=[str(python_exe_path)], reuse_venv=True)
 
 
 @nox_session()
@@ -343,7 +397,7 @@ def create_zipapp(session: Session) -> Path:
     global PACKAGED
     if PACKAGED is None:
         venv_dir = Path(session.create_tmp()) / "science"
-        if IS_WINDOWS:
+        if OperatingSystem.WINDOWS is OS:
             session.run("python", "-m", "venv", str(venv_dir))
             session.run(
                 str(venv_dir / "Scripts" / "python.exe"),
@@ -355,7 +409,13 @@ def create_zipapp(session: Session) -> Path:
                 external=True,
             )
             session.run(
-                str(venv_dir / "Scripts" / "python.exe"), "-m", "pip", "uninstall", "--yes", "pip"
+                str(venv_dir / "Scripts" / "python.exe"),
+                "-m",
+                "pip",
+                "uninstall",
+                "--yes",
+                "pip",
+                external=True,
             )
             site_packages = str(venv_dir / "Lib" / "site-packages")
         else:
