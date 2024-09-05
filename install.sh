@@ -1,17 +1,42 @@
-#!/bin/bash
-#
-# A basic install wrapper for UNIX-based environments.
-#
+#!/usr/bin/env bash
+# Copyright 2023 Science project contributors.
+# Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+set -euo pipefail
+
+COLOR_RED="\x1b[31m"
+COLOR_GREEN="\x1b[32m"
+COLOR_YELLOW="\x1b[33m"
+COLOR_RESET="\x1b[0m"
+
+function log() {
+  echo -e "$@" 1>&2
+}
+
+function die() {
+  (($# > 0)) && log "${COLOR_RED}$*${COLOR_RESET}"
+  exit 1
+}
+
+function green() {
+  (($# > 0)) && log "${COLOR_GREEN}$*${COLOR_RESET}"
+}
+
+function warn() {
+  (($# > 0)) && log "${COLOR_YELLOW}$*${COLOR_RESET}"
+}
+
+function ensure_cmd() {
+  local cmd="$1"
+  command -v "$cmd" > /dev/null || die "This script requires the ${cmd} binary to be on the PATH."
+}
 
 GITHUB_DOWNLOAD_BASE="https://github.com/a-scie/lift/releases/latest/download"
 INSTALL_PREFIX="${HOME}/.local/bin"
-INSTALL_DEST="${INSTALL_PREFIX}/science"
+INSTALL_FILE="science"
+INSTALL_DEST="${INSTALL_PREFIX}/${INSTALL_FILE}"
 
-# Check if arch is available.
-if ! command -v arch &> /dev/null; then
-  echo "Error: arch command not found. Please install arch and try again." >&2
-  exit 1
-fi
+ensure_cmd arch
 
 # Map platform architecture to released binary architecture.
 READ_ARCH="$(arch)"
@@ -31,26 +56,17 @@ case "$OSTYPE" in
   *)        echo "unsupported platform: ${OSTYPE}, please download manually from https://github.com/a-scie/lift/releases/"; exit 1 ;;
 esac
 
-# Check if a sha sum checking tool is available.
-if ! command -v "${SHASUM_TOOL}" &> /dev/null; then
-  echo "Error: ${SHASUM_TOOL} command not found. Please install ${SHASUM_TOOL} and try again." >&2
-  exit 1
-fi
-
-# Check if curl is available.
-if ! command -v curl &> /dev/null; then
-  echo "Error: curl command not found. Please install curl and try again." >&2
-  exit 1
-fi
+ensure_cmd "${SHASUM_TOOL}"
+ensure_cmd curl
 
 DL_FILE="science-fat-${OS}-${ARCH}"
 DL_URL="${GITHUB_DOWNLOAD_BASE}/${DL_FILE}"
 SHA_URL="${DL_URL}.sha256"
 
-echo "Download URL is: ${DL_URL}"
-echo "Checksum URL is: ${SHA_URL}"
+green "Download URL is: ${DL_URL}"
+green "Checksum URL is: ${SHA_URL}"
 
-echo "Ensuring ${INSTALL_PREFIX}"
+log "Ensuring ${INSTALL_PREFIX}"
 mkdir -p "${INSTALL_PREFIX}"
 
 curl -fLO --progress-bar "$DL_URL" && \
@@ -58,4 +74,10 @@ curl -fLO --progress-bar "$DL_URL" && \
   chmod +x "$DL_FILE" && \
   mv -v "$DL_FILE" "${INSTALL_DEST}"
 
-echo "Installed ${DL_FILE} to ${INSTALL_DEST} - please ensure that ${INSTALL_PREFIX} is on your \$PATH"
+green "Installed ${DL_FILE} to ${INSTALL_DEST}"
+
+# Warn if the install prefix is not on $PATH.
+if ! [[ ":$PATH:" == *":${INSTALL_PREFIX}:"* ]]; then
+  warn "WARNING: ${INSTALL_PREFIX} is not detected on \$PATH"
+  warn "You'll either need to invoke ${INSTALL_DEST} explicitly or else add ${INSTALL_PREFIX} to your shell's PATH."
+fi
