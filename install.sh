@@ -67,6 +67,19 @@ function determine_os() {
 
 OS="$(determine_os)"
 
+ensure_cmd arch
+function determine_arch() {
+  # Map platform architecture to released binary architecture.
+  read_arch="$(arch)"
+  case "$read_arch" in
+    x86_64*)   echo "x86_64" ;;
+    amd64*)    echo "x86_64" ;;
+    arm64*)    echo "aarch64" ;;
+    aarch64*)  echo "aarch64" ;;
+    *)        die "unknown arch: $(read_arch)" ;;
+  esac
+}
+
 ensure_cmd basename
 ensure_cmd $([[ "${OS}" == "windows" ]] && echo "pwsh" || echo "curl")
 function fetch() {
@@ -172,17 +185,7 @@ while (($# > 0)); do
   shift
 done
 
-# Map platform architecture to released binary architecture.
-READ_ARCH="$(arch)"
-case "$READ_ARCH" in
-  x86_64*)   ARCH="x86_64" ;;
-  amd64*)    ARCH="x86_64" ;;
-  arm64*)    ARCH="aarch64" ;;
-  aarch64*)  ARCH="aarch64" ;;
-  *)        echo "unknown arch: $(READ_ARCH)"; exit 1 ;;
-esac
-
-
+ARCH="$(determine_arch)"
 GITHUB_DOWNLOAD_BASE="https://github.com/a-scie/lift/releases/${VERSION}"
 INSTALL_DEST="${INSTALL_PREFIX}/${INSTALL_FILE}"
 DL_FILE="science-fat-${OS}-${ARCH}"
