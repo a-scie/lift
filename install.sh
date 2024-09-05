@@ -93,7 +93,7 @@ function fetch() {
   if [[ "${OS}" == "windows" ]]; then
     pwsh -c "Invoke-WebRequest -OutFile ${dest} -Uri ${url}"
   else
-    curl --proto '=https' --tlsv1.2 -sSfL -o "${dest}" "${url}"
+    curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
   fi
 }
 
@@ -117,11 +117,12 @@ function install_from_url() {
   gc "${workdir}"
 
   fetch "${url}.sha256" "${workdir}"
-  fetch "${url}" "${workdir}"
+  fetch "${url}" "${workdir}" && green "Download completed successfully"
   (
     cd "${workdir}"
-    sha256 -c --status ./*.sha256 ||
-      die "Download from ${url} did not match the fingerprint at ${url}.sha256"
+    sha256 -c --status ./*.sha256 &&
+      green "Download matched it's expected sha256 fingerprint, proceeding" ||
+        die "Download from ${url} did not match the fingerprint at ${url}.sha256"
   )
   rm "${workdir}/"*.sha256
 
@@ -131,6 +132,9 @@ function install_from_url() {
   else
     install -D -m 755 "${workdir}/"* "${dest}"
   fi
+
+  green "Installed ${url} to ${dest}"
+
 }
 
 ensure_cmd cat
@@ -195,7 +199,6 @@ DL_URL="${GITHUB_DOWNLOAD_BASE}/${DL_FILE}"
 
 green "Download URL is: ${DL_URL}"
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
-green "Installed ${DL_FILE} to ${INSTALL_DEST}"
 
 # Warn if the install prefix is not on $PATH.
 if ! [[ ":$PATH:" == *":${INSTALL_PREFIX}:"* ]]; then
