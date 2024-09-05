@@ -29,7 +29,7 @@ CPython 3.12 distribution by fetching it when the "thin" `science` binary is fir
 You can install the latest `science` release using the `install.sh` script like so:
 
 ```
-$ curl -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
+$ curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
 ...
 $ ~/bin/science -V
 ```
