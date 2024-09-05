@@ -68,16 +68,15 @@ function determine_os() {
 
 OS="$(determine_os)"
 
-ensure_cmd arch
 function determine_arch() {
   # Map platform architecture to released binary architecture.
-  read_arch="$(arch)"
+  read_arch="$(uname -m)"
   case "$read_arch" in
     x86_64*)   echo "x86_64" ;;
     amd64*)    echo "x86_64" ;;
     arm64*)    echo "aarch64" ;;
     aarch64*)  echo "aarch64" ;;
-    *)        die "unknown arch: $(read_arch)" ;;
+    *)        die "unknown arch: ${read_arch}" ;;
   esac
 }
 
@@ -106,6 +105,7 @@ function sha256() {
   fi
 }
 
+ensure_cmd dirname
 ensure_cmd mktemp
 ensure_cmd install
 function install_from_url() {

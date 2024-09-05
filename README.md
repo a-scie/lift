@@ -31,7 +31,7 @@ You can install the latest `science` release using the `install.sh` script like 
 ```
 $ curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
 ...
-$ ~/bin/science -V
+$ science -V
 ```
 
 The high level documentation is currently thin! The command line help is pretty decent though; so

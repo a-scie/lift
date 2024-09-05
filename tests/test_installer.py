@@ -2,33 +2,38 @@
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 import subprocess
+from pathlib import Path
 
+import pytest
 from _pytest.tmpdir import TempPathFactory
 
-INSTALLER = "./install.sh"
+
+@pytest.fixture(scope="module")
+def installer(build_root: Path) -> Path:
+    return build_root / "install.sh"
 
 
-def test_installer_help():
+def test_installer_help(installer: Path):
     """Validates -h|--help in the installer."""
-    assert "--help" in subprocess.check_output([INSTALLER, "-h"]).decode("utf-8")
-    assert "--help" in subprocess.check_output([INSTALLER, "--help"]).decode("utf-8")
+    assert "--help" in subprocess.check_output([installer, "-h"]).decode("utf-8")
+    assert "--help" in subprocess.check_output([installer, "--help"]).decode("utf-8")
 
 
-def test_installer_fetch_latest(tmp_path_factory: TempPathFactory):
+def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: Path):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
     assert "success" in subprocess.check_output(
-        [INSTALLER, "-d", f"{test_dir}/bin"],
+        [installer, "-d", f"{test_dir}/bin"],
         stderr=subprocess.STDOUT,
     ).decode("utf-8")
     assert subprocess.check_output([f"{test_dir}/bin/science", "-V"]).strip()
 
 
-def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory):
+def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: Path):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
     output = subprocess.check_output(
-        [INSTALLER, "-V", "0.6.1", "-b", "science061", "-d", f"{test_dir}/bin"],
+        [installer, "-V", "0.6.1", "-b", "science061", "-d", f"{test_dir}/bin"],
         stderr=subprocess.STDOUT,
     ).decode("utf-8")
     assert "success" in output
