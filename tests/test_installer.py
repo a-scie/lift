@@ -1,7 +1,6 @@
 # Copyright 2024 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-import os
 import subprocess
 
 from _pytest.tmpdir import TempPathFactory
@@ -15,16 +14,18 @@ def test_installer_help():
     assert "--help" in subprocess.check_output([INSTALLER, "--help"]).decode("utf-8")
 
 
-def test_installer_fetch_default():
-    """Invokes install.sh (a shell script) to fetch the latest science release binary, then invokes it."""
-    assert "success" in subprocess.check_output([INSTALLER], stderr=subprocess.STDOUT).decode(
-        "utf-8"
-    )
-    assert subprocess.check_output([os.path.expanduser("~/.local/bin/science"), "-V"]).strip()
+def test_installer_fetch_latest(tmp_path_factory: TempPathFactory):
+    """Invokes install.sh to fetch the latest science release binary, then invokes it."""
+    test_dir = tmp_path_factory.mktemp("install-test-default")
+    assert "success" in subprocess.check_output(
+        [INSTALLER, "-d", f"{test_dir}/bin"],
+        stderr=subprocess.STDOUT,
+    ).decode("utf-8")
+    assert subprocess.check_output([f"{test_dir}/bin/science", "-V"]).strip()
 
 
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory):
-    """Validates all the other options in the installer."""
+    """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
     output = subprocess.check_output(
         [INSTALLER, "-V", "0.6.1", "-b", "science061", "-d", f"{test_dir}/bin"],
