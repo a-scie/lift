@@ -192,10 +192,8 @@ while (($# > 0)); do
 done
 
 ARCH="$(determine_arch)"
-GITHUB_DOWNLOAD_BASE="https://github.com/a-scie/lift/releases/${VERSION}"
 INSTALL_DEST="${INSTALL_PREFIX}/${INSTALL_FILE}"
-DL_FILE="science-fat-${OS}-${ARCH}"
-DL_URL="${GITHUB_DOWNLOAD_BASE}/${DL_FILE}"
+DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}"
 
 green "Download URL is: ${DL_URL}"
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
