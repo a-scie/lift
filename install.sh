@@ -134,7 +134,6 @@ function install_from_url() {
   fi
 
   green "Installed ${url} to ${dest}"
-
 }
 
 ensure_cmd cat
