@@ -39,7 +39,7 @@ function gc() {
   if (($# > 0)); then
     _GC+=("$@")
   else
-    # Check $_GC validity to avoid "unbound variable" warnings if gc w/ arguments is never called.
+    # Check if $_GC has members to avoid "unbound variable" warnings if gc w/ arguments is never called.
     if ! [ ${#_GC[@]} -eq 0 ]; then
       rm -rf "${_GC[@]}"
     fi
