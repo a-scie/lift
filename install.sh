@@ -124,6 +124,7 @@ function install_from_url() {
       die "Download from ${url} did not match the fingerprint at ${url}.sha256"
   )
   rm "${workdir}/"*.sha256
+
   if [[ "${OS}" == "macos" ]]; then
     mkdir -p "$(dirname "${dest}")"
     install -m 755 "${workdir}/"* "${dest}"
@@ -193,9 +194,6 @@ DL_FILE="science-fat-${OS}-${ARCH}"
 DL_URL="${GITHUB_DOWNLOAD_BASE}/${DL_FILE}"
 
 green "Download URL is: ${DL_URL}"
-
-log "Ensuring ${INSTALL_PREFIX}"
-mkdir -p "${INSTALL_PREFIX}"
 
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
 green "Installed ${DL_FILE} to ${INSTALL_DEST}"
