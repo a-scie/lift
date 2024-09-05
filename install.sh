@@ -194,7 +194,6 @@ DL_FILE="science-fat-${OS}-${ARCH}"
 DL_URL="${GITHUB_DOWNLOAD_BASE}/${DL_FILE}"
 
 green "Download URL is: ${DL_URL}"
-
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
 green "Installed ${DL_FILE} to ${INSTALL_DEST}"
 
