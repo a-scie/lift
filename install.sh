@@ -31,6 +31,7 @@ function ensure_cmd() {
   command -v "$cmd" > /dev/null || die "This script requires the ${cmd} binary to be on \$PATH."
 }
 
+ISSUES_URL="https://github.com/a-scie/lift/issues"
 _GC=()
 
 ensure_cmd rm
@@ -56,12 +57,12 @@ function determine_os() {
     echo linux
   elif [[ "${os}" =~ [Dd]arwin ]]; then
     echo macos
-  elif [[ "${os}" =~ [Ww]in|[Mm][Ii][Nn][Gg] ]]; then
+  elif [[ "${os}" =~ [Ww]indow|[Mm][Ii][Nn][Gg] ]]; then
     # Powershell reports something like: Windows_NT
     # Git bash reports something like: MINGW64_NT-10.0-22621
     echo windows
   else
-    die "Science is not supported on this OS (${os}). Please reach out at https://github.com/a-scie/lift/issues for help."
+    die "Science is not supported on this OS (${os}). Please reach out at ${ISSUES_URL} for help."
   fi
 }
 
