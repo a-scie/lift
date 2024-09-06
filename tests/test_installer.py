@@ -13,7 +13,7 @@ from science.os import IS_WINDOWS
 @pytest.fixture(scope="module")
 def installer(build_root: Path) -> list:
     installer = build_root / "install.sh"
-    return [r"C:\Program Files\Git\bin\bash.EXE", installer] if IS_WINDOWS else [installer]
+    return [Path(r"C:\Program Files\Git\bin\bash.EXE"), installer] if IS_WINDOWS else [installer]
 
 
 def run_captured(cmd: list):
@@ -30,11 +30,12 @@ def test_installer_help(installer: list):
 def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: list):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
+    bin_dir = test_dir / "bin"
 
-    assert (result := run_captured(installer + ["-d", f"{test_dir}/bin"])).returncode == 0
+    assert (result := run_captured(installer + ["-d", bin_dir])).returncode == 0
     assert "success" in result.stderr, "Expected 'success' in tool stderr logging"
 
-    assert (result := run_captured([f"{test_dir}/bin/science", "-V"])).returncode == 0
+    assert (result := run_captured([bin_dir / "science", "-V"])).returncode == 0
     assert result.stdout.strip(), "Expected version output in tool stdout"
 
 
@@ -42,21 +43,21 @@ def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: l
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
     test_ver = "0.6.1"
+    bin_dir = test_dir / "bin"
+    bin_file = f"science{test_ver}"
 
     assert (
-        result := run_captured(
-            installer + ["-V", test_ver, "-b", f"science{test_ver}", "-d", f"{test_dir}/bin"]
-        )
+        result := run_captured(installer + ["-V", test_ver, "-b", bin_file, "-d", bin_dir])
     ).returncode == 0
     assert "success" in result.stderr, "Expected 'success' in tool stderr logging"
 
     # Ensure missing $PATH entry warning (assumes our temp dir by nature is not on $PATH).
     assert (
-        f"WARNING: {test_dir}/bin is not detected on $PATH" in result.stderr
+        f"WARNING: {bin_dir} is not detected on $PATH" in result.stderr
     ), "Expected missing $PATH entry warning"
 
     # Check expected versioned binary exists.
-    assert (result := run_captured([f"{test_dir}/bin/science{test_ver}", "-V"])).returncode == 0
+    assert (result := run_captured([bin_dir / bin_file, "-V"])).returncode == 0
     assert (
         result.stdout.strip() == test_ver
     ), f"Expected version output in tool stdout to be {test_ver}"
