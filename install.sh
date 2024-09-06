@@ -2,6 +2,9 @@
 # Copyright 2024 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+# TEMPORARY: debug on windows
+set -x
+
 set -euo pipefail
 
 COLOR_RED="\x1b[31m"
