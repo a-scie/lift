@@ -13,7 +13,7 @@ from science.os import IS_WINDOWS
 @pytest.fixture(scope="module")
 def installer(build_root: Path) -> list:
     installer = build_root / "install.sh"
-    return ["bash", installer] if IS_WINDOWS else [installer]
+    return [r"C:\Program Files\Git\bin\bash.EXE", installer] if IS_WINDOWS else [installer]
 
 
 def run_captured(cmd: list):
