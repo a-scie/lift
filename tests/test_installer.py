@@ -8,6 +8,9 @@ import pytest
 from _pytest.tmpdir import TempPathFactory
 
 from science.os import IS_WINDOWS
+from science.platform import Platform
+
+IS_WINDOWS_X86 = Platform.current() == "windows-x86_64"
 
 
 @pytest.fixture(scope="module")
@@ -27,6 +30,7 @@ def test_installer_help(installer: list):
         assert "--help" in result.stdout, "Expected '--help' in tool output"
 
 
+@pytest.mark.skipif(IS_WINDOWS_X86, reason="no binary releases available for Windows x86_64")
 def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: list):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
@@ -39,6 +43,7 @@ def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: li
     assert result.stdout.strip(), "Expected version output in tool stdout"
 
 
+@pytest.mark.skipif(IS_WINDOWS_X86, reason="no binary releases available for Windows x86_64")
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: list):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
