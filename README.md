@@ -26,14 +26,12 @@ a result. The "thin" varieties have the CPython 3.12 distribution gouged out and
 result. In its place a [`ptex`](https://github.com/a-scie/ptex) binary is included that fills in the
 CPython 3.12 distribution by fetching it when the "thin" `science` binary is first run.
 
-I run on Linux x86_64; so I install a stable release like so:
+You can install the latest `science` release using the `install.sh` script like so:
+
 ```
-curl -fLO \
-  https://github.com/a-scie/lift/releases/download/v0.1.0/science-linux-x86_64
-curl -fL \
-  https://github.com/a-scie/lift/releases/download/v0.1.0/science-linux-x86_64.sha256 \
-  | sha256sum -c -
-chmod +x science-linux-x86_64 && mv science-linux-x86_64 ~/bin/science
+$ curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
+...
+$ science -V
 ```
 
 The high level documentation is currently thin! The command line help is pretty decent though; so
