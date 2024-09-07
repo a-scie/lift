@@ -109,6 +109,7 @@ ensure_cmd dirname
 ensure_cmd mktemp
 ensure_cmd install
 function install_from_url() {
+  set -x
   local url="$1"
   local dest="$2"
 
@@ -134,6 +135,7 @@ function install_from_url() {
   fi
 
   green "Installed ${url} to ${dest}"
+  set +x
 }
 
 ensure_cmd cat
