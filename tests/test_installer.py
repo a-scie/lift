@@ -16,7 +16,14 @@ IS_WINDOWS_X86 = Platform.current() == Platform.Windows_x86_64
 @pytest.fixture(scope="module")
 def installer(build_root: Path) -> list:
     installer = build_root / "install.sh"
-    return [Path(r"C:\Program Files\Git\bin\bash.EXE"), installer] if IS_WINDOWS else [installer]
+    # Windows has no shebang support, nor a native bash install.
+    if IS_WINDOWS:
+        # If the Windows environment has git installed, git vendors a bash we can reliably use.
+        git_bash = Path(r"C:\Program Files\Git\bin\bash.EXE")
+        # If that doesn't exist, fallback to WSL bash.
+        return [git_bash if git_bash.exists() else "bash.exe", installer]
+    else:
+        return [installer]
 
 
 def run_captured(cmd: list):
