@@ -105,6 +105,8 @@ function sha256() {
 ensure_cmd dirname
 ensure_cmd mktemp
 ensure_cmd install
+ensure_cmd tr
+ensure_cmd mv
 function install_from_url() {
   local url="$1"
   local dest="$2"
@@ -117,6 +119,13 @@ function install_from_url() {
   fetch "${url}" "${workdir}" && green "Download completed successfully"
   (
     cd "${workdir}"
+
+    if [[ "${OS}" == "windows" ]]; then
+      # N.B. Windows sha256sum is sensitive to trailing \r in files.
+      cat *.sha256 | tr -d "\r" > out.sanitized
+      mv -f out.sanitized *.sha256
+    fi
+
     sha256 -c --status ./*.sha256 &&
       green "Download matched it's expected sha256 fingerprint, proceeding" ||
         die "Download from ${url} did not match the fingerprint at ${url}.sha256"
