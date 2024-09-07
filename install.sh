@@ -192,7 +192,8 @@ done
 
 ARCH="$(determine_arch)"
 INSTALL_DEST="${INSTALL_PREFIX}/${INSTALL_FILE}"
-DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}"
+DL_EXT=$([[ "${OS}" == "macos" ]] && echo ".exe" || echo "")
+DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}${DL_EXT}"
 
 green "Download URL is: ${DL_URL}"
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
