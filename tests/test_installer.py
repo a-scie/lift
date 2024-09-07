@@ -10,7 +10,7 @@ from _pytest.tmpdir import TempPathFactory
 from science.os import IS_WINDOWS
 from science.platform import Platform
 
-IS_WINDOWS_X86 = Platform.current() == "windows-x86_64"
+IS_WINDOWS_X86 = Platform.current() == Platform.Windows_x86_64
 
 
 @pytest.fixture(scope="module")
