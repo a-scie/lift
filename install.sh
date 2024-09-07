@@ -89,6 +89,7 @@ function fetch() {
   local dest
   dest="${dest_dir}/$(basename "${url}")"
 
+  # N.B. Curl is included on Windows 10+: https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/
   curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
 }
 
@@ -114,6 +115,9 @@ function install_from_url() {
 
   fetch "${url}.sha256" "${workdir}"
   fetch "${url}" "${workdir}" && green "Download completed successfully"
+  echo "======================================"
+  ls -al "${workdir}"
+  echo "======================================"
   (
     cd "${workdir}"
     sha256 -c --status ./*.sha256 &&
