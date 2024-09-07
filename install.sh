@@ -83,6 +83,7 @@ function determine_arch() {
 ensure_cmd basename
 ensure_cmd $([[ "${OS}" == "windows" ]] && echo "pwsh" || echo "curl")
 function fetch() {
+  set -x
   local url="$1"
   local dest_dir="$2"
 
@@ -90,15 +91,14 @@ function fetch() {
   dest="${dest_dir}/$(basename "${url}")"
 
   if [[ "${OS}" == "windows" ]]; then
-    set -x
     ensure_cmd cygpath
-    local outfile
+    local windows_outfile
     windows_outfile="$(cygpath -w "${dest}")"
-    pwsh -c "Invoke-WebRequest -OutFile ${windows_outfile} -Uri ${url}"
-    set +x
+    pwsh -c "Invoke-WebRequest -OutFile '${windows_outfile}' -Uri ${url}" 2>&1
   else
     curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
   fi
+  set +x
 }
 
 ensure_cmd $([[ "${OS}" == "macos" ]] && echo "shasum" || echo "sha256sum")
