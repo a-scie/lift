@@ -109,7 +109,6 @@ ensure_cmd dirname
 ensure_cmd mktemp
 ensure_cmd install
 function install_from_url() {
-  set -x
   local url="$1"
   local dest="$2"
 
@@ -135,7 +134,6 @@ function install_from_url() {
   fi
 
   green "Installed ${url} to ${dest}"
-  set +x
 }
 
 ensure_cmd cat
@@ -193,7 +191,8 @@ while (($# > 0)); do
 done
 
 ARCH="$(determine_arch)"
-INSTALL_DEST="${INSTALL_PREFIX}/${INSTALL_FILE}"
+DIRSEP=$([[ "${OS}" == "windows" ]] && echo "\\" || echo "/")
+INSTALL_DEST="${INSTALL_PREFIX}${DIRSEP}${INSTALL_FILE}"
 DL_EXT=$([[ "${OS}" == "windows" ]] && echo ".exe" || echo "")
 DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}${DL_EXT}"
 
