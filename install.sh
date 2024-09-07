@@ -90,7 +90,7 @@ function fetch() {
   dest="${dest_dir}/$(basename "${url}")"
 
   if [[ "${OS}" == "windows" ]]; then
-    pwsh -c "Invoke-WebRequest -OutFile ${dest} -Uri ${url}"
+    pwsh -c "Invoke-WebRequest -Uri ${url}" > "${dest}"
   else
     curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
   fi
