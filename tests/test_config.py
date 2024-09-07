@@ -114,11 +114,15 @@ def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
         )
         assert expected_base == data["scie"]["lift"]["base"]
         expanded_base = os.path.expanduser(expected_base)
+
+        # Ensure our configured scie base is not over-ridden.
+        env = os.environ.copy()
+        env.pop("SCIE_BASE", None)
         try:
             assert (
                 f"Hello from {expanded_base}!"
                 == subprocess.run(
-                    args=[exe_path], stdout=subprocess.PIPE, text=True, check=True
+                    args=[exe_path], env=env, stdout=subprocess.PIPE, text=True, check=True
                 ).stdout.strip()
             )
         finally:

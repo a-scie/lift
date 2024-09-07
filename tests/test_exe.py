@@ -15,6 +15,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
+from subprocess import CalledProcessError
 from textwrap import dedent
 from typing import Any, Iterable
 
@@ -92,10 +93,16 @@ def test_use_platform_suffix(
 
 @pytest.fixture(scope="module")
 def shasum() -> str | None:
-    shasum = which("shasum")
+    if not (shasum := which("shasum")):
+        return None
+
     # N.B.: We check to see if shasum actually works since GH Actions Windows 2022 boxes come with a
     # shasum.BAT on the PATH that runs via a perl.exe not on the PATH leading to error.
-    return shasum if shasum and subprocess.run(args=[shasum, "--version"]).returncode == 0 else None
+    try:
+        subprocess.run(args=[shasum, "--version"], check=True)
+        return shasum
+    except (CalledProcessError, OSError):
+        return None
 
 
 def test_hash(
