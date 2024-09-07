@@ -90,7 +90,12 @@ function fetch() {
   dest="${dest_dir}/$(basename "${url}")"
 
   if [[ "${OS}" == "windows" ]]; then
-    pwsh -c "Invoke-WebRequest -Uri ${url}" > "${dest}"
+    set -x
+    ensure_cmd cygpath
+    local outfile
+    windows_outfile="$(cygpath -w "${dest}")"
+    pwsh -c "Invoke-WebRequest -OutFile ${windows_outfile} -Uri ${url}"
+    set +x
   else
     curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
   fi
