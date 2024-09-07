@@ -51,7 +51,8 @@ jobs:
       - name: Configure Windows pytest short tmp dir path
         if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
         run: |
-          echo PYTEST_ADDOPTS="--basetemp C:\\tmp\\pytest" >> ${GITHUB_ENV}
+          echo PYTEST_ADDOPTS="--basetemp C:/tmp/gha/pytest" >> ${GITHUB_ENV}
+          echo SCIE_BASE=C:/tmp/gha/nce >> ${GITHUB_ENV}
       - name: Unit Tests
         run: nox -e test -- -vvs
       - name: Build & Package
