@@ -115,12 +115,12 @@ function install_from_url() {
 
   fetch "${url}.sha256" "${workdir}"
   fetch "${url}" "${workdir}" && green "Download completed successfully"
-  # (
-  #   cd "${workdir}"
-  #   sha256 -c --status ./*.sha256 &&
-  #     green "Download matched it's expected sha256 fingerprint, proceeding" ||
-  #       die "Download from ${url} did not match the fingerprint at ${url}.sha256"
-  # )
+  (
+    cd "${workdir}"
+    sha256 -c --status ./*.sha256 &&
+      green "Download matched it's expected sha256 fingerprint, proceeding" ||
+        die "Download from ${url} did not match the fingerprint at ${url}.sha256"
+  )
   rm "${workdir}/"*.sha256
 
   if [[ "${OS}" == "macos" ]]; then
