@@ -78,7 +78,7 @@ def assemble_scies(
                         digest.update(chunk)
             for digest in digests:
                 checksum_file = dst_binary.with_name(f"{dst_binary_name}.{digest.name}")
-                checksum_file.write_text(f"{digest.hexdigest()} *{dst_binary_name}{os.linesep}")
+                checksum_file.write_text(f"{digest.hexdigest()} *{dst_binary_name}")
                 hashes.append(checksum_file)
         scies.append(
             ScieAssembly(lift_manifest=lift_manifest, scie=dst_binary, hashes=tuple(hashes))
