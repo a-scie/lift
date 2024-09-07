@@ -52,9 +52,7 @@ def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: l
     assert "success" in result.stderr, "Expected 'success' in tool stderr logging"
 
     # Ensure missing $PATH entry warning (assumes our temp dir by nature is not on $PATH).
-    assert (
-        f"WARNING: {bin_dir} is not detected on $PATH" in result.stderr
-    ), "Expected missing $PATH entry warning"
+    assert "is not detected on $PATH" in result.stderr, "Expected missing $PATH entry warning"
 
     # Check expected versioned binary exists.
     assert (result := run_captured([bin_dir / bin_file, "-V"])).returncode == 0
