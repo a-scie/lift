@@ -26,6 +26,9 @@
   The available versions can be seen at:
     https://github.com/a-scie/lift/releases
 
+.PARAMETER Debug
+  Enable debug logging.
+
 .INPUTS
   None
 
@@ -59,29 +62,40 @@ param (
   [switch]$NoModifyPath,
 
   [Alias('V')]
-  [string]$Version = 'latest/download'
+  [string]$Version = 'latest/download',
+
+  [switch]$Debug
 )
 
 $ErrorActionPreference = 'Stop'
+$DebugPreference = if ($Debug) { 'Continue' } else { 'SilentlyContinue' }
 
-function Green {
-  [Parameter(Position=0)]
-  param ($Message)
+$ExitActions = @()
 
+function AtExit(
+    [ScriptBlock]$Action,
+
+    [Parameter(ValueFromRemainingArguments=$true)]
+    [array]$ArgList = @()
+) {
+  $script:ExitActions +=  @{ Action = $Action; Args = $ArgList }
+}
+
+function RunWithAtExit([ScriptBlock]$Action) {
+  try {
+    & $Action
+  } finally {
+    foreach ($exitAction in $script:ExitActions) {
+      & $exitAction.Action $exitAction.Args
+    }
+  }
+}
+
+function Green($Message) {
   Write-Host $Message -ForegroundColor Green
 }
 
-function Warn {
-  [Parameter(Position=0)]
-  param ($Message)
-
-  Write-Host $Message -ForegroundColor Yellow
-}
-
-function Die {
-  [Parameter(Position=0)]
-  param ($Message)
-
+function Die($Message) {
   Write-Host $Message -ForegroundColor Red
   exit 1
 }
@@ -89,28 +103,26 @@ function Die {
 function TemporaryDirectory {
   $Tmp = [System.IO.Path]::GetTempPath()
   $Unique = (New-Guid).ToString('N')
-  $TempDir = New-Item -ItemType Directory -Path (Join-Path $Tmp $Unique)
-  trap {
-    Remove-Item $TempDir -Recurse
+  $TempDir = New-Item -ItemType Directory -Path (Join-Path $Tmp "science-install.$Unique")
+  AtExit { param($Dir) Remove-Item -Recurse -Force $Dir; Write-Debug "Removed $Dir" } $TempDir
+  $TempDir
+}
+
+function Fetch([string]$Url, [string]$DestFile) {
+  $IrmArgs = @{ Uri = $Url; OutFile = $DestFile }
+
+  # Support for protocol pinning has not always been available.
+  # See: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod?view=powershell-7.4#-sslprotocol
+  $PowerShellVersion = (Get-Host).Version
+  if ($PowerShellVersion.Major -ge 7 -and $PowerShellVersion.Minor -ge 1) {
+    $IrmArgs["SslProtocol"] = "Tls12,Tls13"
+  } elseif ($PowerShellVersion.Major -ge 6) {
+    $IrmArgs["SslProtocol"] = "Tls12"
   }
-  return $TempDir
+  Invoke-RestMethod @IrmArgs
 }
 
-function Fetch {
-  param (
-    [string]$Url,
-    [string]$DestFile
-  )
-
-  Invoke-RestMethod -Uri $Url -OutFile $DestFile
-}
-
-function InstallFromUrl {
-  param (
-    [string]$Url,
-    [string]$DestDir
-  )
-
+function InstallFromUrl([string]$Url, [string]$DestDir) {
   $Sha256Url = "$Url.sha256"
 
   $Workdir = TemporaryDirectory
@@ -136,37 +148,42 @@ function InstallFromUrl {
   Join-Path $BinDir 'science.exe'
 }
 
-if ($Help) {
-  Get-Help -Detailed $PSCommandPath
-  exit 0
-}
-
-$Version = switch ($Version) {
-  'latest/download' { 'latest/download' }
-  default { "download/v$Version" }
-}
-
-$Arch = switch -Wildcard ((Get-CimInstance Win32_operatingsystem).OSArchitecture) {
-  'arm*' { 'aarch64' }
-  default { 'x86_64' }
-}
-
-$DownloadURL = "https://github.com/a-scie/lift/releases/$Version/science-fat-windows-$Arch.exe"
-
-Green "Download URL is: $DownloadURL"
-$ScienceExe = InstallFromUrl -Url $DownloadURL -DestDir $BinDir
-
-$User = [System.EnvironmentVariableTarget]::User
-$Path = [System.Environment]::GetEnvironmentVariable('Path', $User)
-if (!(";$Path;".ToLower() -like "*;$BinDir;*".ToLower())) {
-  if ($NoModifyPath) {
-    Warn "WARNING: $BinDir is not detected on `$PATH"
-    Warn (
-      "You'll either need to invoke $ScienceExe explicitly or else add $BinDir to your " +
-      "PATH."
-    )
-  } else {
-    [System.Environment]::SetEnvironmentVariable('Path', "$Path;$BinDir", $User)
-    $Env:Path += ";$BinDir"
+function Main {
+  if ($Help) {
+    Get-Help -Detailed $PSCommandPath
+    exit 0
   }
+
+  $Version = switch ($Version) {
+    'latest/download' { 'latest/download' }
+    default { "download/v$Version" }
+  }
+
+  $Arch = switch -Wildcard ((Get-CimInstance Win32_operatingsystem).OSArchitecture) {
+    'arm*' { 'aarch64' }
+    default { 'x86_64' }
+  }
+
+  $DownloadURL = "https://github.com/a-scie/lift/releases/$Version/science-fat-windows-$Arch.exe"
+
+  Green "Download URL is: $DownloadURL"
+  $ScienceExe = InstallFromUrl -Url $DownloadURL -DestDir $BinDir
+
+  $User = [System.EnvironmentVariableTarget]::User
+  $Path = [System.Environment]::GetEnvironmentVariable('Path', $User)
+  if (!(";$Path;".ToLower() -like "*;$BinDir;*".ToLower())) {
+    if ($NoModifyPath) {
+      Write-Warning @"
+$BinDir is not detected on `$PATH
+You'll either need to invoke $ScienceExe explicitly or else add $BinDir to your PATH.
+"@
+    } else {
+      [System.Environment]::SetEnvironmentVariable('Path', "$Path;$BinDir", $User)
+      $Env:Path += ";$BinDir"
+    }
+  }
+}
+
+RunWithAtExit {
+  Main
 }
