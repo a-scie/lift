@@ -101,7 +101,7 @@ function Die($Message) {
 }
 
 function TemporaryDirectory {
-  $Tmp = [System.IO.Path]::GetTempPath()
+  $Tmp = [IO.Path]::GetTempPath()
   $Unique = (New-Guid).ToString('N')
   $TempDir = New-Item -ItemType Directory -Path (Join-Path $Tmp "science-install.$Unique")
   AtExit { param($Dir) Remove-Item -Recurse -Force $Dir; Write-Debug "Removed $Dir" } $TempDir
@@ -113,10 +113,9 @@ function Fetch([string]$Url, [string]$DestFile) {
 
   # Support for protocol pinning has not always been available.
   # See: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod?view=powershell-7.4#-sslprotocol
-  $PowerShellVersion = (Get-Host).Version
-  if ($PowerShellVersion.Major -ge 7 -and $PowerShellVersion.Minor -ge 1) {
+  if ($Host.Version -ge [Version]::new(7, 1)) {
     $IrmArgs["SslProtocol"] = "Tls12,Tls13"
-  } elseif ($PowerShellVersion.Major -ge 6) {
+  } elseif ($Host.Version.Major -ge 6) {
     $IrmArgs["SslProtocol"] = "Tls12"
   }
   Invoke-RestMethod @IrmArgs
@@ -169,8 +168,8 @@ function Main {
   Green "Download URL is: $DownloadURL"
   $ScienceExe = InstallFromUrl -Url $DownloadURL -DestDir $BinDir
 
-  $User = [System.EnvironmentVariableTarget]::User
-  $Path = [System.Environment]::GetEnvironmentVariable('Path', $User)
+  $User = [EnvironmentVariableTarget]::User
+  $Path = [Environment]::GetEnvironmentVariable('Path', $User)
   if (!(";$Path;".ToLower() -like "*;$BinDir;*".ToLower())) {
     if ($NoModifyPath) {
       Write-Warning @"
@@ -178,7 +177,7 @@ $BinDir is not detected on `$PATH
 You'll either need to invoke $ScienceExe explicitly or else add $BinDir to your PATH.
 "@
     } else {
-      [System.Environment]::SetEnvironmentVariable('Path', "$Path;$BinDir", $User)
+      [Environment]::SetEnvironmentVariable('Path', "$Path;$BinDir", $User)
       $Env:Path += ";$BinDir"
     }
   }
