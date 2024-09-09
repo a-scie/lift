@@ -121,7 +121,7 @@ function Fetch([string]$Url, [string]$DestFile) {
   Invoke-RestMethod @IrmArgs
 }
 
-function InstallFromUrl([string]$Url, [string]$DestDir) {
+function InstallFromUrl([string]$Url) {
   $Sha256Url = "$Url.sha256"
 
   $Workdir = TemporaryDirectory
@@ -141,9 +141,9 @@ function InstallFromUrl([string]$Url, [string]$DestDir) {
   }
 
   if (!(Test-Path $BinDir)) {
-    New-Item $DestDir -ItemType Directory | Out-Null
+    New-Item $BinDir -ItemType Directory | Out-Null
   }
-  Move-Item $ScienceExeFile $DestDir -Force
+  Move-Item $ScienceExeFile $BinDir -Force
   Join-Path $BinDir 'science.exe'
 }
 
@@ -166,7 +166,7 @@ function Main {
   $DownloadURL = "https://github.com/a-scie/lift/releases/$Version/science-fat-windows-$Arch.exe"
 
   Green "Download URL is: $DownloadURL"
-  $ScienceExe = InstallFromUrl -Url $DownloadURL -DestDir $BinDir
+  $ScienceExe = InstallFromUrl -Url $DownloadURL
 
   $User = [EnvironmentVariableTarget]::User
   $Path = [Environment]::GetEnvironmentVariable('Path', $User)
