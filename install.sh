@@ -39,7 +39,8 @@ function gc() {
   if (($# > 0)); then
     _GC+=("$@")
   else
-    # Check if $_GC has members to avoid "unbound variable" warnings if gc w/ arguments is never called.
+    # Check if $_GC has members to avoid "unbound variable" warnings if gc w/ arguments is never
+    # called.
     if ! [ ${#_GC[@]} -eq 0 ]; then
       rm -rf "${_GC[@]}"
     fi
@@ -76,7 +77,7 @@ function determine_arch() {
     amd64*)    echo "x86_64" ;;
     arm64*)    echo "aarch64" ;;
     aarch64*)  echo "aarch64" ;;
-    *)        die "unknown arch: ${read_arch}" ;;
+    *)         die "unknown arch: ${read_arch}" ;;
   esac
 }
 
@@ -89,7 +90,8 @@ function fetch() {
   local dest
   dest="${dest_dir}/$(basename "${url}")"
 
-  # N.B. Curl is included on Windows 10+: https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/
+  # N.B. Curl is included on Windows 10+:
+  #   https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/
   curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
 }
 
@@ -154,9 +156,6 @@ Installs the \`science\` binary.
 -d | --bin-dir:
   The directory to install the science binary in, "~/.local/bin" by default.
 
--b | --base-name:
-  The name to use for the science binary, "science" by default.
-
 -V | --version:
   The version of the science binary to install, the latest version by default.
   The available versions can be seen at:
@@ -166,7 +165,6 @@ __EOF__
 }
 
 INSTALL_PREFIX="${HOME}/.local/bin"
-INSTALL_FILE="science"
 VERSION="latest/download"
 
 # Parse arguments.
@@ -178,10 +176,6 @@ while (($# > 0)); do
       ;;
     --bin-dir | -d)
       INSTALL_PREFIX="$2"
-      shift
-      ;;
-    --base-name | -b)
-      INSTALL_FILE="$2"
       shift
       ;;
     --version | -V)
@@ -198,9 +192,10 @@ done
 
 ARCH="$(determine_arch)"
 DIRSEP=$([[ "${OS}" == "windows" ]] && echo "\\" || echo "/")
-INSTALL_DEST="${INSTALL_PREFIX}${DIRSEP}${INSTALL_FILE}"
-DL_EXT=$([[ "${OS}" == "windows" ]] && echo ".exe" || echo "")
-DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}${DL_EXT}"
+EXE_EXT=$([[ "${OS}" == "windows" ]] && echo ".exe" || echo "")
+
+INSTALL_DEST="${INSTALL_PREFIX}${DIRSEP}science${EXE_EXT}"
+DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}${EXE_EXT}"
 
 green "Download URL is: ${DL_URL}"
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
@@ -208,5 +203,6 @@ install_from_url "${DL_URL}" "${INSTALL_DEST}"
 # Warn if the install prefix is not on $PATH.
 if ! [[ ":$PATH:" == *":${INSTALL_PREFIX}:"* ]]; then
   warn "WARNING: ${INSTALL_PREFIX} is not detected on \$PATH"
-  warn "You'll either need to invoke ${INSTALL_DEST} explicitly or else add ${INSTALL_PREFIX} to your shell's PATH."
+  warn "You'll either need to invoke ${INSTALL_DEST} explicitly or else add ${INSTALL_PREFIX} \
+to your shell's PATH."
 fi
