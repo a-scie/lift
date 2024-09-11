@@ -9,8 +9,8 @@ id = "cpython"
 provider = "PythonBuildStandalone"
 
 # N.B.: When updating these, update the corresponding PBS_* constants in noxfile.py.
-release = "20240814"
-version = "3.12.5"
+release = "20240909"
+version = "3.12.6"
 flavor = "install_only_stripped"
 
 # By default science ships as a "thin" scie that fetches CPython 3.12 on first run.
