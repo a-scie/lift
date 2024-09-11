@@ -1,5 +1,9 @@
 # Release Notes
 
+# 0.7.1
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.6
+
 # 0.7.0
 
 This release adds support for Windows ARM64. 
