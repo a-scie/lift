@@ -91,6 +91,35 @@ def test_use_platform_suffix(
     assert not (tmp_path / Platform.current().binary_name("science")).exists()
 
 
+def test_no_use_platform_suffix(
+    tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
+) -> None:
+    current_platform = Platform.current()
+    foreign_platform = next(plat for plat in Platform if plat is not current_platform)
+    expected_executable = tmp_path / foreign_platform.binary_name("science")
+    assert not expected_executable.exists()
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"science.pyz={science_pyz}",
+            "--file",
+            f"docsite={docsite}",
+            "--platform",
+            foreign_platform.value,
+            "build",
+            "--dest-dir",
+            str(tmp_path),
+            "--no-use-platform-suffix",
+            config,
+        ],
+        check=True,
+    )
+    assert expected_executable.is_file()
+    assert not (tmp_path / foreign_platform.qualified_binary_name("science")).exists()
+
+
 @pytest.fixture(scope="module")
 def shasum() -> str | None:
     if not (shasum := which("shasum")):
