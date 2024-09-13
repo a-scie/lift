@@ -92,7 +92,6 @@ jobs:
           version: ${{ needs.determine-tag.outputs.release-version }}
           setup-python: ${{ matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64' }}
       - name: Create ${{ needs.determine-tag.outputs.release-tag }} Release
-        if: matrix.os == 'ubuntu-22.04'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.determine-tag.outputs.release-tag }}
@@ -103,10 +102,3 @@ jobs:
           files: dist/science-*
           fail_on_unmatched_files: true
           discussion_category_name: Announcements
-      - name: Add Binaries to ${{ needs.determine-tag.outputs.release-tag }} Release
-        if: matrix.os != 'ubuntu-22.04'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.determine-tag.outputs.release-tag }}
-          files: dist/science-*
-          fail_on_unmatched_files: true
