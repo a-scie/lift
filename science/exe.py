@@ -542,14 +542,15 @@ def dest_dir_option():
 
 def use_platform_suffix_option():
     return click.option(
-        "--use-platform-suffix",
-        is_flag=True,
+        "--use-platform-suffix/--no-use-platform-suffix",
+        default=None,
         help=dedent(
             """\
-            Force science to use a platform suffix.
+            Force science to use a platform suffix or omit one.
 
             Science will automatically use a platform suffix for disambiguation. When there is no
-            ambiguity, you can force a suffix anyway by using this flag.
+            ambiguity, you can force a suffix anyway with `--use-platform-suffix`. Likewise, you
+            can suppress inclusion of a platform suffix with `--no-use-platform-suffix`.
 
             The current platform suffixes are::
 
@@ -584,7 +585,7 @@ def export(
     lift_config: LiftConfig,
     config: BinaryIO,
     dest_dir: Path,
-    use_platform_suffix: bool,
+    use_platform_suffix: bool | None,
 ) -> None:
     """Export the lift TOML manifest as one or more scie lift JSON manifests."""
 
@@ -676,7 +677,7 @@ def _build(
     lift_config: LiftConfig,
     config: BinaryIO,
     dest_dir: Path,
-    use_platform_suffix: bool,
+    use_platform_suffix: bool | None,
     preserve_sandbox: bool,
     use_jump: Path | None,
     hash_functions: list[str],

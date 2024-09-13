@@ -66,10 +66,16 @@ class FileMapping:
 @dataclass(frozen=True)
 class PlatformInfo:
     @classmethod
-    def create(cls, application: Application, use_suffix: bool = False) -> PlatformInfo:
+    def create(cls, application: Application, use_suffix: bool | None = None) -> PlatformInfo:
         current = Platform.current()
-        use_suffix = use_suffix or application.platforms != frozenset([current])
-        return cls(current=current, use_suffix=use_suffix)
+        return cls(
+            current=current,
+            use_suffix=(
+                use_suffix
+                if use_suffix is not None
+                else application.platforms != frozenset([current])
+            ),
+        )
 
     current: Platform
     use_suffix: bool

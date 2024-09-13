@@ -1,5 +1,12 @@
 # Release Notes
 
+# 0.8.0
+
+Add support for `--no-use-platform-suffix` as a complement to `--use-platform-suffix`. Without
+specifying either, auto-disambiguation is still used to add a platform suffix whenever the
+set of target platforms is not just the current platform, but you can also now force a platform
+suffix to never be used by specifying `--no-use-platform-suffix`.
+
 # 0.7.1
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.6
