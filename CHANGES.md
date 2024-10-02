@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.8.1
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.7.
+
 ## 0.8.0
 
 Add support for `--no-use-platform-suffix` as a complement to `--use-platform-suffix`. Without
@@ -9,7 +13,7 @@ suffix to never be used by specifying `--no-use-platform-suffix`.
 
 ## 0.7.1
 
-Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.6
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.6.
 
 ## 0.7.0
 
