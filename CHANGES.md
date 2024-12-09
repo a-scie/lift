@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.8.2
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.8.
+
 ## 0.8.1
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.7.
