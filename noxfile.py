@@ -50,8 +50,8 @@ if sys.version_info[:2] < MIN_NOX_PYTHON:
 
 # N.B.: When updating these, update the corresponding values for the PythonBuildStandalone provider
 # in lift.toml.
-PBS_RELEASE = "20241002"
-PBS_VERSION = "3.12.7"
+PBS_RELEASE = "20241206"
+PBS_VERSION = "3.12.8"
 PBS_FLAVOR = "install_only_stripped"
 
 REQUIRES_PYTHON_VERSION = ".".join(PBS_VERSION.split(".")[:2])
