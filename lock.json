@@ -42,12 +42,7 @@
           ],
           "project_name": "anyio",
           "requires_dists": [
-            "Sphinx~=7.4; extra == \"doc\"",
-            "anyio[trio]; extra == \"test\"",
             "idna>=2.8",
-            "packaging; extra == \"doc\"",
-            "psutil>=5.9; extra == \"test\"",
-            "pytest>=7.0; extra == \"test\"",
             "sniffio>=1.1",
             "typing_extensions>=4.5; python_version < \"3.13\""
           ],
@@ -86,9 +81,7 @@
             }
           ],
           "project_name": "argcomplete",
-          "requires_dists": [
-            "mypy; extra == \"test\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "3.5.2"
         },
@@ -126,9 +119,7 @@
             }
           ],
           "project_name": "babel",
-          "requires_dists": [
-            "pytest>=6.0; extra == \"dev\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "2.16.0"
         },
@@ -147,7 +138,6 @@
           ],
           "project_name": "beautifulsoup4",
           "requires_dists": [
-            "charset-normalizer; extra == \"charset-normalizer\"",
             "soupsieve>1.2"
           ],
           "requires_python": ">=3.6.0",
@@ -189,7 +179,6 @@
           "project_name": "black",
           "requires_dists": [
             "click>=8.0.0",
-            "colorama>=0.4.3; extra == \"colorama\"",
             "mypy-extensions>=0.4.3",
             "packaging>=22.0",
             "pathspec>=0.9.0",
@@ -403,10 +392,7 @@
           ],
           "project_name": "colorlog",
           "requires_dists": [
-            "black; extra == \"development\"",
-            "colorama; sys_platform == \"win32\"",
-            "mypy; extra == \"development\"",
-            "pytest; extra == \"development\""
+            "colorama; sys_platform == \"win32\""
           ],
           "requires_python": ">=3.6",
           "version": "6.9.0"
@@ -461,9 +447,7 @@
             }
           ],
           "project_name": "execnet",
-          "requires_dists": [
-            "pytest; extra == \"testing\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "2.1.1"
         },
@@ -481,12 +465,7 @@
             }
           ],
           "project_name": "filelock",
-          "requires_dists": [
-            "pytest>=8.3.3; extra == \"testing\"",
-            "sphinx>=8.0.2; extra == \"docs\"",
-            "typing-extensions>=4.12.2; python_version < \"3.11\" and extra == \"typing\"",
-            "virtualenv>=20.26.4; extra == \"testing\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "3.16.1"
         },
@@ -525,7 +504,6 @@
           ],
           "project_name": "httpcore",
           "requires_dists": [
-            "anyio<5.0,>=4.0; extra == \"asyncio\"",
             "certifi",
             "h11<0.15,>=0.13"
           ],
@@ -549,10 +527,8 @@
           "requires_dists": [
             "anyio",
             "certifi",
-            "click==8.*; extra == \"cli\"",
             "httpcore==1.*",
-            "idna",
-            "pygments==2.*; extra == \"cli\""
+            "idna"
           ],
           "requires_python": ">=3.8",
           "version": "0.28.1"
@@ -571,10 +547,7 @@
             }
           ],
           "project_name": "idna",
-          "requires_dists": [
-            "mypy>=1.11.2; extra == \"all\"",
-            "pytest>=8.3.2; extra == \"all\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.6",
           "version": "3.10"
         },
@@ -628,9 +601,7 @@
             }
           ],
           "project_name": "isort",
-          "requires_dists": [
-            "colorama>=0.4.6; extra == \"colors\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8.0",
           "version": "5.13.2"
         },
@@ -649,7 +620,6 @@
           ],
           "project_name": "jinja2",
           "requires_dists": [
-            "Babel>=2.7; extra == \"i18n\"",
             "MarkupSafe>=2.0"
           ],
           "requires_python": ">=3.7",
@@ -670,12 +640,6 @@
           ],
           "project_name": "linkify-it-py",
           "requires_dists": [
-            "black; extra == \"dev\"",
-            "isort; extra == \"dev\"",
-            "myst-parser; extra == \"doc\"",
-            "pytest; extra == \"benchmark\"",
-            "pytest; extra == \"test\"",
-            "sphinx; extra == \"doc\"",
             "uc-micro-py"
           ],
           "requires_python": ">=3.7",
@@ -696,16 +660,7 @@
           ],
           "project_name": "markdown-it-py",
           "requires_dists": [
-            "linkify-it-py<3,>=1; extra == \"linkify\"",
-            "mdit-py-plugins; extra == \"plugins\"",
-            "mdit-py-plugins; extra == \"rtd\"",
-            "mdurl~=0.1",
-            "myst-parser; extra == \"rtd\"",
-            "psutil; extra == \"benchmarking\"",
-            "pytest; extra == \"benchmarking\"",
-            "pytest; extra == \"testing\"",
-            "pyyaml; extra == \"rtd\"",
-            "sphinx; extra == \"rtd\""
+            "mdurl~=0.1"
           ],
           "requires_python": ">=3.8",
           "version": "3.0.0"
@@ -788,9 +743,7 @@
           ],
           "project_name": "mdit-py-plugins",
           "requires_dists": [
-            "markdown-it-py<4.0.0,>=1.0.0",
-            "myst-parser; extra == \"rtd\"",
-            "pytest; extra == \"testing\""
+            "markdown-it-py<4.0.0,>=1.0.0"
           ],
           "requires_python": ">=3.8",
           "version": "0.4.2"
@@ -854,9 +807,6 @@
           "project_name": "mypy",
           "requires_dists": [
             "mypy-extensions>=1.0.0",
-            "pip; extra == \"install-types\"",
-            "psutil>=4.0; extra == \"dmypy\"",
-            "setuptools>=50; extra == \"mypyc\"",
             "typing-extensions>=4.6.0"
           ],
           "requires_python": ">=3.8",
@@ -895,18 +845,13 @@
           ],
           "project_name": "myst-parser",
           "requires_dists": [
-            "beautifulsoup4; extra == \"testing\"",
             "docutils<0.22,>=0.19",
             "jinja2",
             "linkify-it-py~=2.0; extra == \"linkify\"",
             "markdown-it-py~=3.0",
             "mdit-py-plugins>=0.4.1,~=0.4",
-            "pygments; extra == \"testing-docutils\"",
-            "pytest<9,>=8; extra == \"testing\"",
-            "pytest<9,>=8; extra == \"testing-docutils\"",
             "pyyaml",
-            "sphinx<9,>=7",
-            "sphinx>=7; extra == \"rtd\""
+            "sphinx<9,>=7"
           ],
           "requires_python": ">=3.10",
           "version": "4.0.0"
@@ -928,7 +873,6 @@
           "requires_dists": [
             "argcomplete<4,>=1.9.4",
             "colorlog<7,>=2.6.1",
-            "jinja2; extra == \"tox-to-nox\"",
             "packaging>=20.9",
             "virtualenv>=20.14.1"
           ],
@@ -1003,12 +947,7 @@
             }
           ],
           "project_name": "platformdirs",
-          "requires_dists": [
-            "appdirs==1.4.4; extra == \"test\"",
-            "mypy>=1.11.2; extra == \"type\"",
-            "pytest>=8.3.2; extra == \"test\"",
-            "sphinx>=8.0.2; extra == \"docs\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "4.3.6"
         },
@@ -1026,9 +965,7 @@
             }
           ],
           "project_name": "pluggy",
-          "requires_dists": [
-            "pytest; extra == \"testing\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "1.5.0"
         },
@@ -1076,16 +1013,7 @@
             }
           ],
           "project_name": "psutil",
-          "requires_dists": [
-            "black; extra == \"dev\"",
-            "packaging; extra == \"dev\"",
-            "pytest-xdist; extra == \"test\"",
-            "pytest; extra == \"test\"",
-            "requests; extra == \"dev\"",
-            "setuptools; extra == \"test\"",
-            "sphinx; extra == \"dev\"",
-            "virtualenv; extra == \"dev\""
-          ],
+          "requires_dists": [],
           "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7",
           "version": "6.1.0"
         },
@@ -1121,9 +1049,7 @@
             }
           ],
           "project_name": "pygments",
-          "requires_dists": [
-            "colorama>=0.4.6; extra == \"windows-terminal\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.8",
           "version": "2.18.0"
         },
@@ -1142,14 +1068,10 @@
           ],
           "project_name": "pytest",
           "requires_dists": [
-            "argcomplete; extra == \"dev\"",
             "colorama; sys_platform == \"win32\"",
             "iniconfig",
             "packaging",
-            "pluggy<2,>=1.5",
-            "pygments>=2.7.2; extra == \"dev\"",
-            "requests; extra == \"dev\"",
-            "setuptools; extra == \"dev\""
+            "pluggy<2,>=1.5"
           ],
           "requires_python": ">=3.8",
           "version": "8.3.4"
@@ -1170,8 +1092,6 @@
           "project_name": "pytest-xdist",
           "requires_dists": [
             "execnet>=2.1",
-            "filelock; extra == \"testing\"",
-            "psutil>=3.0; extra == \"psutil\"",
             "pytest>=7.0.0"
           ],
           "requires_python": ">=3.8",
@@ -1272,19 +1192,7 @@
             }
           ],
           "project_name": "setuptools",
-          "requires_dists": [
-            "filelock>=3.4.0; extra == \"test\"",
-            "mypy<1.14,>=1.12; extra == \"type\"",
-            "packaging; extra == \"core\"",
-            "packaging>=24.2; extra == \"core\"",
-            "packaging>=24.2; extra == \"test\"",
-            "pip>=19.1; extra == \"test\"",
-            "platformdirs>=4.2.2; extra == \"core\"",
-            "pytest!=8.1.*,>=6; extra == \"test\"",
-            "pytest-xdist>=3; extra == \"test\"",
-            "sphinx>=3.5; extra == \"doc\"",
-            "virtualenv>=13.0.0; extra == \"test\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.9",
           "version": "75.6.0"
         },
@@ -1305,8 +1213,7 @@
           "requires_dists": [
             "click!=7.0,>=6.7",
             "pip>=9.0.3",
-            "setuptools",
-            "sphinx-click; extra == \"rtd\""
+            "setuptools"
           ],
           "requires_python": ">=3.6",
           "version": "1.0.8"
@@ -1387,22 +1294,15 @@
             "colorama>=0.4.6; sys_platform == \"win32\"",
             "docutils<0.22,>=0.20",
             "imagesize>=1.3",
-            "mypy==1.11.1; extra == \"lint\"",
             "packaging>=23.0",
-            "pytest>=6.0; extra == \"lint\"",
-            "pytest>=8.0; extra == \"test\"",
             "requests>=2.30.0",
-            "setuptools>=70.0; extra == \"test\"",
             "snowballstemmer>=2.2",
             "sphinxcontrib-applehelp>=1.0.7",
             "sphinxcontrib-devhelp>=1.0.6",
             "sphinxcontrib-htmlhelp>=2.0.6",
             "sphinxcontrib-jsmath>=1.0.1",
             "sphinxcontrib-qthelp>=1.0.6",
-            "sphinxcontrib-serializinghtml>=1.1.9",
-            "types-docutils==0.21.0.20241005; extra == \"lint\"",
-            "types-requests==2.32.0.20240914; extra == \"lint\"",
-            "typing_extensions>=4.9; extra == \"test\""
+            "sphinxcontrib-serializinghtml>=1.1.9"
           ],
           "requires_python": ">=3.10",
           "version": "8.1.3"
@@ -1456,12 +1356,7 @@
             }
           ],
           "project_name": "sphinxcontrib-applehelp",
-          "requires_dists": [
-            "Sphinx>=5; extra == \"standalone\"",
-            "mypy; extra == \"lint\"",
-            "pytest; extra == \"test\"",
-            "types-docutils; extra == \"lint\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.9",
           "version": "2.0.0"
         },
@@ -1479,12 +1374,7 @@
             }
           ],
           "project_name": "sphinxcontrib-devhelp",
-          "requires_dists": [
-            "Sphinx>=5; extra == \"standalone\"",
-            "mypy; extra == \"lint\"",
-            "pytest; extra == \"test\"",
-            "types-docutils; extra == \"lint\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.9",
           "version": "2.0.0"
         },
@@ -1502,12 +1392,7 @@
             }
           ],
           "project_name": "sphinxcontrib-htmlhelp",
-          "requires_dists": [
-            "Sphinx>=5; extra == \"standalone\"",
-            "mypy; extra == \"lint\"",
-            "pytest; extra == \"test\"",
-            "types-docutils; extra == \"lint\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.9",
           "version": "2.1.0"
         },
@@ -1525,10 +1410,7 @@
             }
           ],
           "project_name": "sphinxcontrib-jsmath",
-          "requires_dists": [
-            "mypy; extra == \"test\"",
-            "pytest; extra == \"test\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.5",
           "version": "1.0.1"
         },
@@ -1546,12 +1428,7 @@
             }
           ],
           "project_name": "sphinxcontrib-qthelp",
-          "requires_dists": [
-            "Sphinx>=5; extra == \"standalone\"",
-            "mypy; extra == \"lint\"",
-            "pytest; extra == \"test\"",
-            "types-docutils; extra == \"lint\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.9",
           "version": "2.0.0"
         },
@@ -1569,12 +1446,7 @@
             }
           ],
           "project_name": "sphinxcontrib-serializinghtml",
-          "requires_dists": [
-            "Sphinx>=5; extra == \"standalone\"",
-            "mypy; extra == \"lint\"",
-            "pytest; extra == \"test\"",
-            "types-docutils; extra == \"lint\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.9",
           "version": "2.0.0"
         },
@@ -1611,10 +1483,7 @@
           ],
           "project_name": "tqdm",
           "requires_dists": [
-            "colorama; platform_system == \"Windows\"",
-            "pytest>=6; extra == \"dev\"",
-            "requests; extra == \"discord\"",
-            "requests; extra == \"telegram\""
+            "colorama; platform_system == \"Windows\""
           ],
           "requires_python": ">=3.7",
           "version": "4.67.1"
@@ -1801,9 +1670,7 @@
             }
           ],
           "project_name": "uc-micro-py",
-          "requires_dists": [
-            "pytest; extra == \"test\""
-          ],
+          "requires_dists": [],
           "requires_python": ">=3.7",
           "version": "1.0.3"
         },
@@ -1842,11 +1709,7 @@
           "requires_dists": [
             "distlib<1,>=0.3.7",
             "filelock<4,>=3.12.2",
-            "packaging>=23.1; extra == \"test\"",
-            "platformdirs<5,>=3.9.1",
-            "pytest>=7.4; extra == \"test\"",
-            "setuptools>=68; extra == \"test\"",
-            "sphinx!=7.3,>=7.1.2; extra == \"docs\""
+            "platformdirs<5,>=3.9.1"
           ],
           "requires_python": ">=3.8",
           "version": "20.28.0"
@@ -1859,7 +1722,7 @@
   "only_wheels": [],
   "overridden": [],
   "path_mappings": {},
-  "pex_version": "2.25.1",
+  "pex_version": "2.25.2",
   "pip_version": "24.3.1",
   "prefer_older_binary": false,
   "requirements": [
