@@ -16,38 +16,69 @@ jobs:
       - name: Noop
         run: "true"
   ci:
-    name: (${{ matrix.os }}) CI
+    name: (${{ matrix.name }}) CI
     needs: org-check
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         # N.B.: macos-13 is the oldest non-deprecated Intel Mac runner and macos-14 is the oldest
         # non-deprecated ARM Mac runner.
-        os: [ ubuntu-22.04, linux-arm64, macos-13, macos-14, windows-2022, windows-arm64 ]
+        include:
+          - os: ubuntu-24.04
+            name: Linux x86-64
+            docker-platform: linux/amd64
+          - os: ubuntu-24.04
+            name: Linux aarch64
+            docker-platform: linux/arm64
+          - os: ubuntu-24.04
+            name: Linux armv7l
+            docker-platform: linux/arm/v7
+          - os: macos-13
+            name: macOS x86-64
+          - os: macos-14
+            name: macOS aarch64
+          - os: windows-2022
+            name: Windows x86-64
+          - os: windows-arm64
+            name: Windows aarch64
     env:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Setup Python 3.12
-        if: matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64'
+        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
-      - name: Setup Python 3.12
-        if: matrix.os == 'linux-arm64'
-        run: |
-          python3.12 -m venv .venv
-          echo "$(pwd)/.venv/bin" >> "${GITHUB_PATH}"
       - name: Setup Python 3.12
         if: matrix.os == 'windows-arm64'
         run: |
           py -3.12 -m venv .venv
           echo "$(pwd)/.venv/Scripts" >> "${GITHUB_PATH}"
       - name: Setup Nox
+        if: matrix.docker-platform == ''
         run: pip install nox
+      - name: Installing emulators
+        if: matrix.docker-platform != ''
+        run: docker run --privileged --rm tonistiigi/binfmt --install all
       - name: Checkout Lift
         uses: actions/checkout@v4
       - name: Check Formatting & Lints
+        if: matrix.docker-platform == ''
         run: nox -e lint
+      - name: Check Formatting & Lints
+        if: matrix.docker-platform != ''
+        run: |
+          docker run --rm \
+            -v $PWD:/code \
+            -w /code \
+            --platform ${{ matrix.docker-platform }} \
+            python:3.12-bookworm \
+              bash -c "
+                pip install nox &&
+                addgroup --gid $(id -g) build &&
+                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
+                su build -c 'nox -e lint'
+              "
       - name: Configure Windows pytest short tmp dir path
         if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
         run: |
@@ -55,8 +86,53 @@ jobs:
           echo PYTEST_ADDOPTS="--basetemp C:/tmp/gha/pytest" >> ${GITHUB_ENV}
           echo SCIE_BASE=C:/tmp/gha/nce >> ${GITHUB_ENV}
       - name: Unit Tests
+        if: matrix.docker-platform == ''
         run: nox -e test -- -vvs
+      - name: Unit Tests
+        if: matrix.docker-platform != ''
+        run: |
+          docker run --rm \
+            -v $PWD:/code \
+            -w /code \
+            --platform ${{ matrix.docker-platform }} \
+            python:3.12-bookworm \
+              bash -c "
+                pip install nox &&
+                addgroup --gid $(id -g) build &&
+                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
+                su build -c 'nox -e test -- -vvs'
+              "
       - name: Build & Package
+        if: matrix.docker-platform == ''
         run: nox -e package
+      - name: Build & Package
+        if: matrix.docker-platform != ''
+        run: |
+          docker run --rm \
+            -v $PWD:/code \
+            -w /code \
+            --platform ${{ matrix.docker-platform }} \
+            python:3.12-bookworm \
+              bash -c "
+                pip install nox &&
+                addgroup --gid $(id -g) build &&
+                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
+                su build -c 'nox -e package'
+              "
       - name: Generate Doc Site
+        if: matrix.docker-platform == ''
         run: nox -e doc linkcheck
+      - name: Generate Doc Site
+        if: matrix.docker-platform != ''
+        run: |
+          docker run --rm \
+            -v $PWD:/code \
+            -w /code \
+            --platform ${{ matrix.docker-platform }} \
+            python:3.12-bookworm \
+              bash -c "
+                pip install nox &&
+                addgroup --gid $(id -g) build &&
+                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
+                su build -c 'nox -e doc linkcheck'
+              "

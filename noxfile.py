@@ -103,6 +103,7 @@ IS_ARM64 = (
     if OperatingSystem.WINDOWS is OS
     else platform.machine().lower()
 ) in ("aarch64", "arm64")
+IS_ARMV7L = platform.machine().lower() in ("armv7l", "armv8l")
 
 
 def check_lift_manifest(session: Session):
@@ -296,6 +297,8 @@ def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
     if OperatingSystem.LINUX is OS:
         if IS_ARM64:
             target_triple = "aarch64-unknown-linux-gnu"
+        elif IS_ARMV7L:
+            target_triple = "armv7-unknown-linux-gnueabihf"
         else:
             target_triple = "x86_64-unknown-linux-gnu"
     elif OperatingSystem.MAC is OS:

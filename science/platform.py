@@ -12,6 +12,7 @@ from science.errors import InputError
 
 class Platform(Enum):
     Linux_aarch64 = "linux-aarch64"
+    Linux_armv7l = "linux-armv7l"
     Linux_x86_64 = "linux-x86_64"
     Macos_aarch64 = "macos-aarch64"
     Macos_x86_64 = "macos-x86_64"
@@ -33,6 +34,8 @@ class Platform(Enum):
         match (system := platform.system().lower(), machine := platform.machine().lower()):
             case ("linux", "aarch64" | "arm64"):
                 return cls.Linux_aarch64
+            case ("linux", "armv7l" | "armv8l"):
+                return cls.Linux_armv7l
             case ("linux", "amd64" | "x86_64"):
                 return cls.Linux_x86_64
             case ("darwin", "aarch64" | "arm64"):

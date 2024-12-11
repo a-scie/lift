@@ -77,6 +77,8 @@ function determine_arch() {
     amd64*)    echo "x86_64" ;;
     arm64*)    echo "aarch64" ;;
     aarch64*)  echo "aarch64" ;;
+    armv7l*)   echo "armv7l" ;;
+    armv8l*)   echo "armv7l" ;;
     *)         die "unknown arch: ${read_arch}" ;;
   esac
 }

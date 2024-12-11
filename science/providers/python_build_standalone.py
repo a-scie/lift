@@ -155,6 +155,12 @@ class PythonBuildStandalone(Provider[Config]):
                 match target_triple:
                     case "aarch64-unknown-linux-gnu":
                         return 0
+            case Platform.Linux_armv7l:
+                match target_triple:
+                    case "armv7-unknown-linux-gnueabihf":
+                        return 0
+                    case "armv7-unknown-linux-gnueabi":
+                        return 1
             case Platform.Linux_x86_64:
                 match target_triple:
                     case "x86_64-unknown-linux-gnu":
