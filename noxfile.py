@@ -56,7 +56,7 @@ PBS_FLAVOR = "install_only_stripped"
 
 REQUIRES_PYTHON_VERSION = ".".join(PBS_VERSION.split(".")[:2])
 
-PEX_REQUIREMENT = "pex==2.25.1"
+PEX_REQUIREMENT = "pex==2.25.2"
 PEX_PEX = f"pex-{hashlib.sha1(PEX_REQUIREMENT.encode('utf-8')).hexdigest()}.pex"
 
 BUILD_ROOT = Path().resolve()
