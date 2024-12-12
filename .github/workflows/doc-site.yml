@@ -4,6 +4,10 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Ref of the commit to deploy."
+        default: "main"
 
 permissions:
   contents: read
@@ -28,12 +32,17 @@ jobs:
       - name: Setup Nox
         run: pip install nox
       - name: Checkout Lift
+        if: inputs.ref == ''
         uses: actions/checkout@v4
+      - name: Checkout Lift
+        if: inputs.ref != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - name: Build Doc Site
         env:
           # N.B.: This makes default paths in generated docs generic.
-          XDG_CACHE_HOME: "<USER CACHE DIR>"
-          PEX_VERBOSE: 1
+          XDG_CACHE_HOME: "<USER_CACHE_DIR>"
         run: nox -e doc linkcheck
       - name: Setup Pages
         uses: actions/configure-pages@v4
