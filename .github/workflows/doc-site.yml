@@ -33,6 +33,7 @@ jobs:
         env:
           # N.B.: This makes default paths in generated docs generic.
           XDG_CACHE_HOME: "<USER CACHE DIR>"
+          PEX_VERBOSE: 1
         run: nox -e doc linkcheck
       - name: Setup Pages
         uses: actions/configure-pages@v4
