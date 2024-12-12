@@ -8,6 +8,7 @@ import pytest
 from _pytest.tmpdir import TempPathFactory
 
 from science.os import IS_WINDOWS
+from science.platform import Platform
 
 
 @pytest.fixture(scope="module")
@@ -30,6 +31,10 @@ def test_installer_help(installer: list):
         assert long_help in result.stdout, f"Expected '{long_help}' in tool output"
 
 
+@pytest.mark.skipif(
+    Platform.current() == Platform.Linux_armv7l,
+    reason="TODO: Remove once 0.9.0 is released",
+)
 def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: list):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
@@ -44,6 +49,10 @@ def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: li
     assert result.stdout.strip(), "Expected version output in tool stdout"
 
 
+@pytest.mark.skipif(
+    Platform.current() == Platform.Linux_armv7l,
+    reason="TODO: Remove once 0.9.0 is released",
+)
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: list):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")

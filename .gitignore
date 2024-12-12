@@ -16,3 +16,6 @@ __pycache__/
 
 # Our Sphinx extension (see: docs/_ext/) dynamically generates doc sources here.
 /docs/_/
+
+# IntelliJ projects.
+.idea/

@@ -40,14 +40,31 @@ jobs:
             exit 1
           fi
   github-release:
-    name: (${{ matrix.os }}) Create Github Release
+    name: (${{ matrix.name }}) Create Github Release
     needs: determine-tag
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         # N.B.: macos-13 is the oldest non-deprecated Intel Mac runner and macos-14 is the oldest
         # non-deprecated ARM Mac runner.
-        os: [ ubuntu-22.04, linux-arm64, macos-13, macos-14, windows-2022, windows-arm64 ]
+        include:
+          - os: ubuntu-24.04
+            name: Linux x86-64
+            docker-platform: linux/amd64
+          - os: ubuntu-24.04
+            name: Linux aarch64
+            docker-platform: linux/arm64
+          - os: ubuntu-24.04
+            name: Linux armv7l
+            docker-platform: linux/arm/v7
+          - os: macos-13
+            name: macOS x86-64
+          - os: macos-14
+            name: macOS aarch64
+          - os: windows-2022
+            name: Windows x86-64
+          - os: windows-arm64
+            name: Windows aarch64
     environment: Release
     env:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
@@ -58,28 +75,42 @@ jobs:
       discussions: write
     steps:
       - name: Setup Python 3.12
-        if: matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64'
+        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
-      - name: Setup Python 3.12
-        if: matrix.os == 'linux-arm64'
-        run: |
-          python3.12 -m venv .venv
-          echo "$(pwd)/.venv/bin" >> "${GITHUB_PATH}"
       - name: Setup Python 3.12
         if: matrix.os == 'windows-arm64'
         run: |
           py -3.12 -m venv .venv
           echo "$(pwd)/.venv/Scripts" >> "${GITHUB_PATH}"
       - name: Setup Nox
+        if: matrix.docker-platform == ''
         run: pip install nox
+      - name: Installing emulators
+        if: matrix.docker-platform != ''
+        run: docker run --privileged --rm tonistiigi/binfmt --install all
       - name: Checkout lift ${{ needs.determine-tag.outputs.release-tag }}
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.determine-tag.outputs.release-tag }}
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
+        if: matrix.docker-platform == ''
         run: nox -e package
+      - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
+        if: matrix.docker-platform != ''
+        run: |
+          docker run --rm \
+            -v $PWD:/code \
+            -w /code \
+            --platform ${{ matrix.docker-platform }} \
+            python:3.12-bookworm \
+              bash -c "
+                pip install nox &&
+                addgroup --gid $(id -g) build &&
+                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
+                su build -c 'nox -e package'
+              "
       - name: Generate science ${{ needs.determine-tag.outputs.release-tag }} artifact attestations
         uses: actions/attest-build-provenance@v1
         with:
@@ -90,7 +121,7 @@ jobs:
         with:
           changelog-file: ${{ github.workspace }}/CHANGES.md
           version: ${{ needs.determine-tag.outputs.release-version }}
-          setup-python: ${{ matrix.os != 'linux-arm64' && matrix.os != 'windows-arm64' }}
+          setup-python: ${{ matrix.os != 'windows-arm64' }}
       - name: Create ${{ needs.determine-tag.outputs.release-tag }} Release
         uses: softprops/action-gh-release@v2
         with:

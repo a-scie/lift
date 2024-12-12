@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.9.0
+
+This release adds support for Linux ARM (armv7l and armv8l 32 bit mode).
+
 ## 0.8.2
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.8.
