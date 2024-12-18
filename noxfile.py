@@ -261,7 +261,7 @@ def ensure_PBS_python_dist(target_triple: str) -> PurePath:
     pbs_root = BUILD_ROOT / ".nox" / "PBS" / PBS_RELEASE / PBS_VERSION / PBS_FLAVOR
     if not pbs_root.exists():
         url = (
-            "https://github.com/indygreg/python-build-standalone/releases/download/"
+            "https://github.com/astral-sh/python-build-standalone/releases/download/"
             f"{PBS_RELEASE}/"
             f"cpython-{PBS_VERSION}+{PBS_RELEASE}-{target_triple}-{PBS_FLAVOR}.tar.gz"
         )

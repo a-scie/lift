@@ -49,7 +49,7 @@ release at https://downloads.python.org/pypy/.
 
 Add support to the PythonBuildStandalone interpreter provider for the new `install_only_stripped`
 distribution flavor introduced in the [20240726 PBS release](
-https://github.com/indygreg/python-build-standalone/releases/tag/20240726) and use this flavor to
+https://github.com/astral-sh/python-build-standalone/releases/tag/20240726) and use this flavor to
 ship smaller science fat binaries.
 
 ## 0.4.3
@@ -128,4 +128,4 @@ the science binary used to build the scie.
 
 The 1st public release of the project.
 
-[PBS]: https://github.com/indygreg/python-build-standalone/
+[PBS]: https://github.com/astral-sh/python-build-standalone/
