@@ -741,6 +741,10 @@ def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
 
 def working_pypy_versions() -> list[str]:
     match Platform.current():
+        case Platform.Linux_s390x:
+            return ["2.7", "3.8", "3.9", "3.10"]
+        case Platform.Linux_powerpc64le:
+            return []
         case Platform.Linux_armv7l:
             return []
         case Platform.Macos_aarch64:

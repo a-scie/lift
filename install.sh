@@ -79,6 +79,8 @@ function determine_arch() {
     aarch64*)  echo "aarch64" ;;
     armv7l*)   echo "armv7l" ;;
     armv8l*)   echo "armv7l" ;;
+    s390x*)    echo "s390x" ;;
+    ppc64le*)  echo "powerpc64" ;;
     *)         die "unknown arch: ${read_arch}" ;;
   esac
 }

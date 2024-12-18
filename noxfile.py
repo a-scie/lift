@@ -104,6 +104,8 @@ IS_ARM64 = (
     else platform.machine().lower()
 ) in ("aarch64", "arm64")
 IS_ARMV7L = platform.machine().lower() in ("armv7l", "armv8l")
+IS_S390X = platform.machine().lower() == "s390x"
+IS_POWERPC64LE = platform.machine().lower() == "ppc64le"
 
 
 def check_lift_manifest(session: Session):
@@ -259,7 +261,7 @@ def ensure_PBS_python_dist(target_triple: str) -> PurePath:
     pbs_root = BUILD_ROOT / ".nox" / "PBS" / PBS_RELEASE / PBS_VERSION / PBS_FLAVOR
     if not pbs_root.exists():
         url = (
-            "https://github.com/indygreg/python-build-standalone/releases/download/"
+            "https://github.com/astral-sh/python-build-standalone/releases/download/"
             f"{PBS_RELEASE}/"
             f"cpython-{PBS_VERSION}+{PBS_RELEASE}-{target_triple}-{PBS_FLAVOR}.tar.gz"
         )
@@ -299,6 +301,10 @@ def nox_session() -> Callable[[Callable[[Session], T]], Callable[[Session], T]]:
             target_triple = "aarch64-unknown-linux-gnu"
         elif IS_ARMV7L:
             target_triple = "armv7-unknown-linux-gnueabihf"
+        elif IS_S390X:
+            target_triple = "s390x-unknown-linux-gnu"
+        elif IS_POWERPC64LE:
+            target_triple = "ppc64le-unknown-linux-gnu"
         else:
             target_triple = "x86_64-unknown-linux-gnu"
     elif OperatingSystem.MAC is OS:

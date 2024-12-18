@@ -22,7 +22,7 @@ def test_distribution() -> None:
             ),
             source=Fetch(
                 url=Url(
-                    "https://github.com/indygreg/python-build-standalone/releases/download/"
+                    "https://github.com/astral-sh/python-build-standalone/releases/download/"
                     "20221220/"
                     "cpython-3.10.9%2B20221220-x86_64-unknown-linux-gnu-install_only.tar.gz"
                 )
