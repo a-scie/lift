@@ -161,6 +161,14 @@ class PythonBuildStandalone(Provider[Config]):
                         return 0
                     case "armv7-unknown-linux-gnueabi":
                         return 1
+            case Platform.Linux_powerpc64le:
+                match target_triple:
+                    case "ppc64le-unknown-linux-gnu":
+                        return 0
+            case Platform.Linux_s390x:
+                match target_triple:
+                    case "s390x-unknown-linux-gnu":
+                        return 0
             case Platform.Linux_x86_64:
                 match target_triple:
                     case "x86_64-unknown-linux-gnu":

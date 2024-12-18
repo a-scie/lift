@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.10.0
+
+This release adds support for Linux powerpc64le and Linux s390x.
+
 ## 0.9.0
 
 This release adds support for Linux ARM (armv7l and armv8l 32 bit mode).

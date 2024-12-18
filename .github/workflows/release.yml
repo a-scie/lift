@@ -57,6 +57,12 @@ jobs:
           - os: ubuntu-24.04
             name: Linux armv7l
             docker-platform: linux/arm/v7
+          - os: ubuntu-24.04
+            name: Linux s390x
+            docker-platform: linux/s390x
+          - os: ubuntu-24.04
+            name: Linux powerpc64le
+            docker-platform: linux/ppc64le
           - os: macos-13
             name: macOS x86-64
           - os: macos-14
