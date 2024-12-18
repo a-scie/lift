@@ -141,7 +141,7 @@ class PythonBuildStandalone(Provider[Config]):
     partially applied OpenSSL config. This may have security implications for your application.
 
     For more on this see:
-    https://github.com/astral-sh/python-build-standalone/issues/207#issuecomment-1936500903
+    https://github.com/astral-sh/python-build-standalone/issues/207
     ```
 
     [PBS]: https://gregoryszorc.com/docs/python-build-standalone/main
