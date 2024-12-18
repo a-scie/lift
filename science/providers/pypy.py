@@ -99,6 +99,10 @@ class PyPy(Provider[Config]):
     @staticmethod
     def rank_compatibility(platform: Platform, arch: str) -> int | None:
         match platform:
+            case Platform.Linux_s390x:
+                match arch:
+                    case "s390x":
+                        return 0
             case Platform.Linux_aarch64:
                 match arch:
                     case "aarch64-portable":
