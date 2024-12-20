@@ -15,10 +15,11 @@ class Shell(Enum):
     @cache
     def current(cls) -> Self | None:
         known_shells = tuple(shell.value for shell in cls)
-        process = psutil.Process()
-        while process := process.parent():
-            if (exe := process.name().rstrip(EXE_EXT).lower()) in known_shells:
-                return cls(exe)
+        process: psutil.Process | None = psutil.Process()
+        if process:
+            while process and (process := process.parent()):
+                if (exe := process.name().rstrip(EXE_EXT).lower()) in known_shells:
+                    return cls(exe)
         return None
 
     Bash = "bash"

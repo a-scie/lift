@@ -62,7 +62,7 @@ class Config:
 
             ```{caution}
             Python Standalone Builds does not provide all patch versions; so you should check
-            [their releases](https://github.com/indygreg/python-build-standalone/releases) if you
+            [their releases](https://github.com/astral-sh/python-build-standalone/releases) if you
             wish to pin down to the patch level.
             ```
             """
@@ -83,7 +83,7 @@ class Config:
             the cache at `{download_cache().base_dir}`.
             ```
 
-            [releases-page]: https://github.com/indygreg/python-build-standalone/releases
+            [releases-page]: https://github.com/astral-sh/python-build-standalone/releases
             """
         ),
     )
@@ -141,7 +141,7 @@ class PythonBuildStandalone(Provider[Config]):
     partially applied OpenSSL config. This may have security implications for your application.
 
     For more on this see:
-    https://github.com/indygreg/python-build-standalone/issues/207#issuecomment-1936500903
+    https://github.com/astral-sh/python-build-standalone/issues/207
     ```
 
     [PBS]: https://gregoryszorc.com/docs/python-build-standalone/main
@@ -161,6 +161,14 @@ class PythonBuildStandalone(Provider[Config]):
                         return 0
                     case "armv7-unknown-linux-gnueabi":
                         return 1
+            case Platform.Linux_powerpc64le:
+                match target_triple:
+                    case "ppc64le-unknown-linux-gnu":
+                        return 0
+            case Platform.Linux_s390x:
+                match target_triple:
+                    case "s390x-unknown-linux-gnu":
+                        return 0
             case Platform.Linux_x86_64:
                 match target_triple:
                     case "x86_64-unknown-linux-gnu":
@@ -184,7 +192,7 @@ class PythonBuildStandalone(Provider[Config]):
             case Platform.Windows_aarch64 | Platform.Windows_x86_64:
                 match target_triple:
                     # N.B.: The -shared tag was removed in
-                    # https://github.com/indygreg/python-build-standalone/releases/tag/20240415
+                    # https://github.com/astral-sh/python-build-standalone/releases/tag/20240415
                     # but the archive is still dynamically linked.
                     case "x86_64-pc-windows-msvc" | "x86_64-pc-windows-msvc-shared":
                         return 0

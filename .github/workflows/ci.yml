@@ -33,6 +33,12 @@ jobs:
           - os: ubuntu-24.04
             name: Linux armv7l
             docker-platform: linux/arm/v7
+          - os: ubuntu-24.04
+            name: Linux s390x
+            docker-platform: linux/s390x
+          - os: ubuntu-24.04
+            name: Linux powerpc64le
+            docker-platform: linux/ppc64le
           - os: macos-13
             name: macOS x86-64
           - os: macos-14
@@ -91,17 +97,28 @@ jobs:
       - name: Unit Tests
         if: matrix.docker-platform != ''
         run: |
+          cat << EOF > _ci_test.sh
+          set -euo pipefail
+          if [[ "${{ matrix.docker-platform }}" == "linux/s390x" ]]; then
+            # This hack gets the PyPy provider tests working on this image. The old PyPy s390x
+            # distributions dynamically link libffi at an older version than I've been able to
+            # find a multi-platform image with s390x support for.
+            ln -s /usr/lib/s390x-linux-gnu/libffi.so.8 /usr/lib/s390x-linux-gnu/libffi.so.6
+          elif [[ "${{ matrix.docker-platform }}" == "linux/ppc64le" ]]; then
+            echo "Skipping tests on ppc64le."
+            exit 0
+          fi
+          pip install nox
+          addgroup --gid $(id -g) build
+          adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
+          su build -c "nox -e test -- -vvs"
+          EOF
+
           docker run --rm \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm \
-              bash -c "
-                pip install nox &&
-                addgroup --gid $(id -g) build &&
-                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'nox -e test -- -vvs'
-              "
+            python:3.12-bookworm bash _ci_test.sh
       - name: Build & Package
         if: matrix.docker-platform == ''
         run: nox -e package
