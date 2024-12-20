@@ -101,7 +101,7 @@ jobs:
           set -euo pipefail
           if [[ "${{ matrix.docker-platform }}" == "linux/s390x" ]]; then
             # This hack gets the PyPy provider tests working on this image. The old PyPy s390x
-            # distributions dynmaically link libffi at an older version than I've been able to
+            # distributions dynamically link libffi at an older version than I've been able to
             # find a multi-platform image with s390x support for.
             ln -s /usr/lib/s390x-linux-gnu/libffi.so.8 /usr/lib/s390x-linux-gnu/libffi.so.6
           elif [[ "${{ matrix.docker-platform }}" == "linux/ppc64le" ]]; then
