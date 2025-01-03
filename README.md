@@ -31,15 +31,11 @@ like so:
 
 + Linux and macOS:
     ```
-    $ curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
-    ...
-    $ science -V
+    curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
     ```
 + Windows PowerShell:
     ```
-    > irm https://raw.githubusercontent.com/a-scie/lift/main/install.ps1 | iex
-    ...
-    > science -V
+    irm https://raw.githubusercontent.com/a-scie/lift/main/install.ps1 | iex
     ```
 
 The high level documentation is currently thin! The command line help is pretty decent though; so
