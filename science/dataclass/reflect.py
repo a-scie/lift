@@ -51,7 +51,9 @@ def metadata(
     hidden: bool = False,
 ) -> Mapping[str, FieldMetadata]:
     if isinstance(doc, str):
-        doc_func = lambda: doc
+
+        def doc_func() -> str:
+            return doc
     else:
         doc_func = doc
 
@@ -125,7 +127,9 @@ def documented_dataclass(
                 return ""
 
         elif isinstance(doc, str):
-            doc_func = lambda: cast(str, doc)
+
+            def doc_func() -> str:
+                return cast(str, doc)
         else:
             doc_func = doc
 

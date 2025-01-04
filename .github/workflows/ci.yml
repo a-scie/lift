@@ -58,21 +58,25 @@ jobs:
           - os: windows-arm64
             name: Windows aarch64
     env:
+      FORCE_COLOR: 1
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Setup Python 3.12
+      - name: Install the latest version of uv
         if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Setup Python 3.12
+        uses: astral-sh/setup-uv@v4
+      - name: Install the latest version of uv
+        if: matrix.os == 'windows-arm64'
+        shell: cmd
+        run: |
+          "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
+          cargo install --git https://github.com/astral-sh/uv uv
+          uv -V
+      - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
         run: |
-          py -3.12 -m venv .venv
-          echo "$(pwd)/.venv/Scripts" >> "${GITHUB_PATH}"
-      - name: Setup Nox
-        if: matrix.docker-platform == ''
-        run: pip install nox
+          UV_PYTHON_VERSION=cpython-3.12.8-windows-x86_64-none
+          uv python install ${UV_PYTHON_VERSION}
+          echo UV_PYTHON_ARGS="--python ${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
         if: matrix.docker-platform != ''
         run: docker run --privileged --rm tonistiigi/binfmt --install all
@@ -80,20 +84,22 @@ jobs:
         uses: actions/checkout@v4
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
-        run: nox -e lint
+        run: uv run ${UV_PYTHON_ARGS} dev-cmd ci --skip test
       - name: Check Formatting & Lints
         if: matrix.docker-platform != ''
         run: |
           docker run --rm \
+            -e FORCE_COLOR \
+            -e SCIENCE_AUTH_API_GITHUB_COM_BEARER \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
             python:3.12-bookworm \
               bash -c "
-                pip install nox &&
+                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'nox -e lint'
+                su build -c 'uv run dev-cmd ci --skip test'
               "
       - name: Configure Windows pytest short tmp dir path
         if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
@@ -103,7 +109,7 @@ jobs:
           echo SCIE_BASE=C:/tmp/gha/nce >> ${GITHUB_ENV}
       - name: Unit Tests
         if: matrix.docker-platform == ''
-        run: nox -e test -- -vvs
+        run: uv run ${UV_PYTHON_ARGS} dev-cmd test -- -vvs
       - name: Unit Tests
         if: matrix.docker-platform != ''
         run: |
@@ -118,48 +124,54 @@ jobs:
             echo "Skipping tests on ppc64le."
             exit 0
           fi
-          pip install nox
+          pip install --root-user-action ignore uv
           addgroup --gid $(id -g) build
           adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
-          su build -c "nox -e test -- -vvs"
+          su build -c "uv run dev-cmd test -- -vvs"
           EOF
 
           docker run --rm \
+            -e FORCE_COLOR \
+            -e SCIENCE_AUTH_API_GITHUB_COM_BEARER \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
             python:3.12-bookworm bash _ci_test.sh
       - name: Build & Package
         if: matrix.docker-platform == ''
-        run: nox -e package
+        run: uv run ${UV_PYTHON_ARGS} dev-cmd package
       - name: Build & Package
         if: matrix.docker-platform != ''
         run: |
           docker run --rm \
+            -e FORCE_COLOR \
+            -e SCIENCE_AUTH_API_GITHUB_COM_BEARER \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
             python:3.12-bookworm \
               bash -c "
-                pip install nox &&
+                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'nox -e package'
+                su build -c 'uv run dev-cmd package'
               "
       - name: Generate Doc Site
         if: matrix.docker-platform == ''
-        run: nox -e doc linkcheck
+        run: uv run ${UV_PYTHON_ARGS} dev-cmd doc linkcheck
       - name: Generate Doc Site
         if: matrix.docker-platform != ''
         run: |
           docker run --rm \
+            -e FORCE_COLOR \
+            -e SCIENCE_AUTH_API_GITHUB_COM_BEARER \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
             python:3.12-bookworm \
               bash -c "
-                pip install nox &&
+                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'nox -e doc linkcheck'
+                su build -c 'uv run dev-cmd doc linkcheck'
               "

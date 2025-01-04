@@ -5,6 +5,10 @@ import dataclasses
 from typing import Iterator, cast
 
 from docutils import nodes
+
+from science.dataclass import Dataclass
+from science.dataclass.reflect import DataclassInfo, iter_dataclass_info
+from science.frozendict import FrozenDict
 from sphinx_science import directives
 from sphinx_science.directives import (
     DirectiveSpec,
@@ -14,10 +18,6 @@ from sphinx_science.directives import (
     parse_type_reference,
 )
 from sphinx_science.toml import TOMLTypeRenderer
-
-from science.dataclass import Dataclass
-from science.dataclass.reflect import DataclassInfo, iter_dataclass_info
-from science.frozendict import FrozenDict
 
 
 class RenderDataclass(DocGenDirective):

@@ -12,9 +12,6 @@ from types import NoneType
 from typing import Any, Callable, Collection, Iterator, Mapping, Self
 
 from docutils import nodes
-from sphinx_science import directives
-from sphinx_science.directives import bool_option
-from sphinx_science.render import MarkdownParser, Section
 
 from science.dataclass import Dataclass
 from science.dataclass.reflect import (
@@ -25,6 +22,9 @@ from science.dataclass.reflect import (
 )
 from science.frozendict import FrozenDict
 from science.types import TypeInfo
+from sphinx_science import directives
+from sphinx_science.directives import bool_option
+from sphinx_science.render import MarkdownParser, Section
 
 
 @dataclass(frozen=True)
@@ -131,7 +131,7 @@ class MissingDocError(ValueError):
                 (
                     f"Missing doc is not allowed and the field {field.name!r} in {type_} "
                     f"has none.",
-                    f"Use dataclasses.field(metadata=science.dataclass.reflect.metadata(...)) to "
+                    "Use dataclasses.field(metadata=science.dataclass.reflect.metadata(...)) to "
                     "add doc for the field.",
                 )
             )

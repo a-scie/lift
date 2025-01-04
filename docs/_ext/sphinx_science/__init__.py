@@ -4,6 +4,7 @@
 from typing import Any
 
 from sphinx.application import Sphinx
+
 from sphinx_science.dataclass import RenderDataclass
 from sphinx_science.providers import RenderProviders
 

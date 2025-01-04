@@ -23,14 +23,12 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-22.04
+    env:
+      FORCE_COLOR: 1
+    runs-on: ubuntu-24.04
     steps:
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Setup Nox
-        run: pip install nox
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v4
       - name: Checkout Lift
         if: inputs.ref == ''
         uses: actions/checkout@v4
@@ -43,7 +41,7 @@ jobs:
         env:
           # N.B.: This makes default paths in generated docs generic.
           XDG_CACHE_HOME: "<USER_CACHE_DIR>"
-        run: nox -e doc linkcheck
+        run: uv run dev-cmd doc linkcheck
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

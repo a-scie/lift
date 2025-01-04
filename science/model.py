@@ -145,7 +145,7 @@ class File:
     digest: Digest | None = dataclasses.field(
         default=None,
         metadata=metadata(
-            f"""The expected digest of the file.
+            """The expected digest of the file.
 
             The digest will be checked at scie build-time if the file has no `source` and it will be
             checked again upon extraction from the scie at runtime.

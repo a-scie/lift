@@ -5,7 +5,7 @@
 ### Version Bump and Changelog
 
 1. Bump the version in at [`science/__init__.py`](science/__init__.py).
-2. Run `nox && nox -e linkcheck package` as a sanity check on the state of the project.
+2. Run `uv run dev-cmd checks linkcheck package` as a sanity check on the state of the project.
 3. Update [`CHANGES.md`](CHANGES.md) with any changes that are likely to be useful to consumers.
 4. Open a PR with these changes and land it on https://github.com/a-scie/lift main.
 

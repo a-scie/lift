@@ -1,7 +1,7 @@
-# Nox venvs.
-/.nox/
+# The uv venv.
+/.venv/
 
-# Sdist build artifacts dirs.
+# Build artifacts dirs.
 /*.egg-info/
 /build/
 
@@ -11,7 +11,7 @@ __pycache__/
 # Sphinx doc site (html) builds are generated here.
 /docs/build/
 
-# Our noxfile is setup to output artifacts here by default.
+# Our dev-cmds are setup to output artifacts here by default.
 /dist/
 
 # Our Sphinx extension (see: docs/_ext/) dynamically generates doc sources here.

@@ -1,8 +1,0 @@
-mypy
-nox
-types-appdirs
-types-beautifulsoup4
-types-docutils
-types-psutil
-types-toml
-types-tqdm

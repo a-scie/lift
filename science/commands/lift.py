@@ -128,7 +128,8 @@ def export_manifest(
                         inverted.append(file.id)
                         # MyPy does not handle dataclass_transform yet: https://github.com/python/mypy/issues/14293
                         return dataclasses.replace(
-                            file, source=dataclasses.replace(fetch, lazy=not lazy)  # type: ignore[misc]
+                            file,
+                            source=dataclasses.replace(fetch, lazy=not lazy),  # type: ignore[misc]
                         )  # type: ignore[misc]
                     case Binding(name):
                         raise InputError(f"Cannot make binding {name!r} non-lazy.")
