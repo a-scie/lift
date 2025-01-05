@@ -47,8 +47,9 @@ def main() -> Any:
         version_list = ", ".join(map(str, python_interpreter_versions))
         return os.linesep.join((error_message_lead_in, f"Found {versions}: {version_list}"))
 
+    prefix = f"Science lift manifest {science_lift_manifest} matches {python_version_file}"
     print(
-        f"{colors.green(f'Science lift manifest {science_lift_manifest} matches {python_version_file}')}: {colors.color(str(python_version), fg='green', style='bold')}",
+        f"{colors.green(prefix)}: {colors.color(str(python_version), fg='green', style='bold')}",
         file=sys.stderr,
     )
     return 0
