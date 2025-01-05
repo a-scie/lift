@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.10.1
+
+This release fixes `science` to retry failed HTTP(S) fetches when appropriate.
+
 ## 0.10.0
 
 This release adds support for Linux powerpc64le and Linux s390x.
