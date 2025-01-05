@@ -7,7 +7,7 @@ import dataclasses
 import os
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Collection, Iterator, Mapping, TypeVar
+from typing import Any, Iterator, Mapping, TypeVar
 
 from science.errors import InputError
 from science.frozendict import FrozenDict
@@ -72,7 +72,10 @@ class Data:
         self, key: str, default: dict[str, Any] | Required = REQUIRED, used: bool = False
     ) -> Data:
         raw_data = self.get_value(
-            key, expected_type=Mapping, default=default, used=used  # type: ignore[type-abstract]
+            key,
+            expected_type=dict,
+            default=default,
+            used=used,  # type: ignore[type-abstract]
         )
         data = Data(
             provenance=self.provenance,
@@ -103,7 +106,10 @@ class Data:
         used: bool = True,
     ) -> list[_T]:
         value = self.get_value(
-            key, expected_type=Collection, default=default, used=used  # type: ignore[type-abstract]
+            key,
+            expected_type=list,
+            default=default,
+            used=used,  # type: ignore[type-abstract]
         )
 
         items = []

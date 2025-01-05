@@ -73,6 +73,7 @@ jobs:
             name: Windows aarch64
     environment: Release
     env:
+      FORCE_COLOR: 1
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       id-token: write
@@ -80,19 +81,25 @@ jobs:
       contents: write
       discussions: write
     steps:
-      - name: Setup Python 3.12
+      - name: Install the latest version of uv
         if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Setup Python 3.12
+        uses: astral-sh/setup-uv@v4
+      - name: Install the latest version of uv
+        if: matrix.os == 'windows-arm64'
+        shell: cmd
+        run: |
+          "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
+          cargo install --git https://github.com/astral-sh/uv uv
+          uv -V
+      - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
         run: |
-          py -3.12 -m venv .venv
-          echo "$(pwd)/.venv/Scripts" >> "${GITHUB_PATH}"
-      - name: Setup Nox
-        if: matrix.docker-platform == ''
-        run: pip install nox
+          # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via
+          # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
+          # native deps like psutil) for our shiv.
+          UV_PYTHON_VERSION=cpython-3.12.8-windows-x86_64-none
+          uv python install ${UV_PYTHON_VERSION}
+          echo UV_PYTHON_ARGS="--python ${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
         if: matrix.docker-platform != ''
         run: docker run --privileged --rm tonistiigi/binfmt --install all
@@ -102,20 +109,22 @@ jobs:
           ref: ${{ needs.determine-tag.outputs.release-tag }}
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
         if: matrix.docker-platform == ''
-        run: nox -e package
+        run: uv run ${UV_PYTHON_ARGS} dev-cmd package
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
         if: matrix.docker-platform != ''
         run: |
           docker run --rm \
+            -e FORCE_COLOR \
+            -e SCIENCE_AUTH_API_GITHUB_COM_BEARER \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
             python:3.12-bookworm \
               bash -c "
-                pip install nox &&
+                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'nox -e package'
+                su build -c 'uv run dev-cmd package'
               "
       - name: Generate science ${{ needs.determine-tag.outputs.release-tag }} artifact attestations
         uses: actions/attest-build-provenance@v1

@@ -1,19 +1,18 @@
 [lift]
 # Name can be over-ridden with `science lift --app-name ...` which we do when producing "fat" scies.
 name = "science"
-# We do this here and dogfood ourself!
+# We do this here and dogfood ourselves!
 description = "Ship your interpreted executables using science."
 
 [[lift.interpreters]]
 id = "cpython"
 provider = "PythonBuildStandalone"
 
-# N.B.: When updating these, update the corresponding PBS_* constants in noxfile.py.
 release = "20241206"
 version = "3.12.8"
 flavor = "install_only_stripped"
 
-# By default science ships as a "thin" scie that fetches CPython 3.12 on first run.
+# By default, science ships as a "thin" scie that fetches CPython 3.12 on first run.
 # We use `science lift --invert-lazy cpython ...` when producing "fat" scies.
 lazy = true
 
@@ -23,8 +22,8 @@ lazy = true
 name = "docsite"
 
 [[lift.files]]
-# The nox build emits this at `dist/science.pyz` and so our packaging process maps that path using
-# `science lift --file science.pyz=dist/science.pyz ...`.
+# The dev-cmd build emits this at `dist/science.pyz` and so our packaging process maps
+# that path using `science lift --file science.pyz=dist/science.pyz ...`.
 name = "science.pyz"
 
 [[lift.commands]]

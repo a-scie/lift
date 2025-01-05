@@ -37,7 +37,7 @@ def _maybe_gather_git_state() -> str | None:
     if git_info.returncode == 0:
         return git_info.stdout.strip()
 
-    logger.warning(f"Failed to gather git state for provenance.")
+    logger.warning("Failed to gather git state for provenance.")
     logger.info(f"Got exit code {git_info.returncode} for command: {shlex.join(git_info.args)}")
     logger.debug(f"Got STDERR:\n{git_info.stderr}")
     return None

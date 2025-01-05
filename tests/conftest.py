@@ -20,17 +20,17 @@ def pytest_sessionstart(session: pytest.Session) -> None:
 @pytest.fixture(scope="session")
 def build_root() -> Path:
     try:
-        return Path(os.environ["BUILD_ROOT"])
+        return Path(os.environ["BUILD_ROOT"]).resolve()
     except KeyError:
-        pytest.fail("Tests must be run via `nox` or `nox -etest`.")
+        pytest.fail("Tests must be run via `uv run dev-cmd` or `uv run dev-cmd test`.")
 
 
 @pytest.fixture(scope="session")
 def science_pyz() -> Path:
     try:
-        return Path(os.environ["SCIENCE_TEST_PYZ_PATH"])
+        return Path(os.environ["SCIENCE_TEST_PYZ_PATH"]).resolve()
     except KeyError:
-        pytest.fail("Test must be run via `nox` or `nox -etest`.")
+        pytest.fail("Tests must be run via `uv run dev-cmd` or `uv run dev-cmd test`.")
 
 
 @pytest.fixture

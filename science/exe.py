@@ -465,9 +465,7 @@ pass_lift = click.make_pass_decorator(LiftConfig)
              ]
            }
          }
-        """.replace(
-            "$DOC_SITE_URL$", DOC_SITE_URL
-        )  # A few too many {} to escape them all.
+        """.replace("$DOC_SITE_URL$", DOC_SITE_URL)  # A few too many {} to escape them all.
     ),
 )
 @click.option(
@@ -692,7 +690,7 @@ def _build(
 
     platforms = lift_config.platforms or application.platforms
     if use_jump and use_platform_suffix:
-        logger.warning(f"Cannot use a custom scie jump build with a multi-platform configuration.")
+        logger.warning("Cannot use a custom scie jump build with a multi-platform configuration.")
         logger.warning(
             "Restricting requested platforms of "
             f"{', '.join(sorted(platform.value for platform in platforms))} to "

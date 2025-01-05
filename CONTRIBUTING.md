@@ -13,9 +13,8 @@ Thank you in advance for your time and effort.
 
 ## Development Environment
 
-You'll need just a few tools to hack on the scie-jump:
-+ A Python 3.12 interpreter
-+ The [`nox`](https://nox.thea.codes/en/stable/) tool.
+Development uses [`uv`](https://docs.astral.sh/uv/getting-started/installation/). Install as you
+best see fit.
 
 ## Development Cycle
 
@@ -23,18 +22,21 @@ You might want to open a [discussion](https://github.com/a-scie/lift/discussions
 https://github.com/a-scie/lift/issues) to vet your idea first. It can often save overall effort and
 lead to a better end result.
 
-Before sending off changes you should run `nox`. This formats, lints, typecheck and tests the code.
+Before sending off changes you should run `uv run dev-cmd`. This formats, lints, type checks and
+tests the code.
 
-To test changes to the `science` binary you can either use `nox -e run -- <args>` or else run \
-`nox -e package` and test the resulting science binaries in `dist/`. Four files will be produced
-there:
+To test changes to the `science` binary you can either use `uv run dev-cmd run -- <args>` or else
+run `uv run dev-cmd package` and test the resulting science binaries in `dist/`. Four files will be
+produced there:
 1. The science "thin" binary: `science-<os>-<arch>(.<ext>)`
 2. The science "thin" binary fingerprint file: `science-<os>-<arch>(.<ext>).sha256`
 3. The science "fat" binary: `science-fat-<os>-<arch>(.<ext>)`
 4. The science "fat" binary fingerprint file: `science-fat-<os>-<arch>(.<ext>).sha256`
 
-If you've made doc changes you can either run `nox -e doc` and open `docs/build/html/index.html` or
-else run `nox -e package` and then run the resulting science binary passing `doc open`.
+If you've made doc changes you can preview these with any of:
++ Run `uv run dev-cmd run -- doc open`.
++ Run `uv run dev-cmd doc` and open `docs/build/html/index.html`.
++ Run `uv run dev-cmd package` and then run the resulting science binary passing `doc open`.
 
 When you're ready to get additional eyes on your changes, submit a [pull request](
 https://github.com/a-scie/lift/pulls).

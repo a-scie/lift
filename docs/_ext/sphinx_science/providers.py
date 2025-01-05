@@ -7,13 +7,13 @@ import dataclasses
 from typing import Iterator
 
 from docutils import nodes
-from sphinx_science.directives import DirectiveSpec, Doc, DocGenDirective, type_id
-from sphinx_science.render import MarkdownParser, Section
-from sphinx_science.toml import TOMLTypeRenderer
 
 from science import providers
 from science.frozendict import FrozenDict
 from science.providers import ProviderInfo
+from sphinx_science.directives import DirectiveSpec, Doc, DocGenDirective, type_id
+from sphinx_science.render import MarkdownParser, Section
+from sphinx_science.toml import TOMLTypeRenderer
 
 
 class RenderProviders(MarkdownParser, DocGenDirective):

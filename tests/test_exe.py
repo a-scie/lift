@@ -361,7 +361,6 @@ def create_url_source_scie(
     extra_lift_args: Iterable[str] = (),
     **env: str,
 ) -> Result:
-
     work_dirs = _WORK_DIRS[tmp_path]
     work_dir = tmp_path / str(len(work_dirs))
     work_dirs.append(work_dir)

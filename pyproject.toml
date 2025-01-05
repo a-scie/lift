@@ -11,28 +11,57 @@ description = "A high level tool to build scies with."
 readme = "README.md"
 requires-python = "==3.12.*"
 license = {file = "LICENSE"}
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
+dependencies = [
+    "appdirs",
+    "beautifulsoup4",
+    "click",
+    "click-log",
+    "click-didyoumean",
+    "filelock",
+    "httpx",
+    "packaging",
+    "psutil",
+    "tqdm",
+]
 
 [project.scripts]
 science = "science.exe:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "science.__version__"}
-dependencies = {file = "requirements.txt"}
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["science*"]
 
-[tool.black]
-line-length = 100
-target-version = ["py312"]
+[dependency-groups]
+dev = [
+    "ansicolors",
+    "dev-cmd",
+    "docutils",
+    "mypy",
+    "myst-parser[linkify]",
+    "packaging",
+    "pytest",
+    "pytest-xdist",
+    "ruff",
+    "shiv",
+    "sphinx",
+    "sphinx-click",
 
-[tool.isort]
-profile = "black"
+    # We need https://github.com/vsalvino/sphinx-library/pull/3 for working html_logo support in modern
+    # Sphinx. It has been merged but not released to PyPI yet.
+    "sphinx-library @ git+https://github.com/vsalvino/sphinx-library@5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b",
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
+    "toml",
+    "types-appdirs",
+    "types-beautifulsoup4",
+    "types-docutils",
+    "types-psutil",
+    "types-toml",
+    "types-tqdm",
+]
 
 [tool.mypy]
 explicit_package_bases = true
@@ -40,8 +69,98 @@ mypy_path = "docs/_ext"
 
 [[tool.mypy.overrides]]
 module = "click_didyoumean"
-ignore_missing_imports = true
+follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
 module = "click_log"
-ignore_missing_imports = true
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = ["colors.*"]
+follow_untyped_imports = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.dev-cmd.commands]
+check-python-version = ["scripts/check-python-version-alignment.py"]
+
+fmt = ["ruff", "format"]
+check-fmt = ["ruff", "format", "--diff"]
+
+lint = ["ruff", "check", "--fix"]
+check-lint = ["ruff", "check"]
+
+type-check = ["mypy", "docs/_ext", "science", "scripts", "tests", "test-support"]
+
+doc = ["sphinx-build", "-b", "html", "-aEW", "docs", "docs/build/html"]
+linkcheck = ["sphinx-build", "-b", "linkcheck", "-aEW", "docs", "docs/build/linkcheck"]
+
+create-zipapp = ["scripts/create-zipapp.py"]
+
+package-thin-scie = [
+    "python",
+    "dist/science.pyz",
+    "lift",
+    "--file",
+    "science.pyz=dist/science.pyz",
+    "--file",
+    "docsite=docs/build/html",
+    "--include-provenance",
+    "build",
+    "--hash",
+    "sha256",
+    "--use-platform-suffix",
+    "--dest-dir",
+    "dist",
+]
+
+package-fat-scie = [
+    "python",
+    "dist/science.pyz",
+    "lift",
+    "--file",
+    "science.pyz=dist/science.pyz",
+    "--file",
+    "docsite=docs/build/html",
+    "--include-provenance",
+    "--invert-lazy",
+    "cpython",
+    "--app-name",
+    "science-fat",
+    "build",
+    "--hash",
+    "sha256",
+    "--use-platform-suffix",
+    "--dest-dir",
+    "dist",
+]
+
+[tool.dev-cmd.commands.run-zipapp]
+env = {"SCIENCE_DOC_LOCAL" = "docs/build/html"}
+args = ["python", "dist/science.pyz"]
+accepts-extra-args = true
+
+[tool.dev-cmd.commands.pytest]
+args = ["pytest", "-n", "auto"]
+cwd = "tests"
+accepts-extra-args = true
+[tool.dev-cmd.commands.pytest.env]
+BUILD_ROOT = ".."
+PYTHONPATH = "../test-support"
+SCIENCE_TEST_PYZ_PATH = "../dist/science.pyz"
+
+[tool.dev-cmd.tasks]
+test = ["create-zipapp", "pytest"]
+checks = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
+ci = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]
+run = [["doc", "create-zipapp"], "run-zipapp"]
+
+package = [["doc", "create-zipapp"], ["package-thin-scie", "package-fat-scie"]]
+
+[tool.dev-cmd]
+default = "checks"
+exit-style = "immediate"

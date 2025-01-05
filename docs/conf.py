@@ -1,5 +1,6 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
+
 import os
 import sys
 from datetime import datetime
@@ -56,7 +57,8 @@ templates_path = [
 # https://myst-parser.readthedocs.io/en/latest/configuration.html
 # https://vsalvino.github.io/sphinx-library/customize.html
 
-from sphinx_science.render import Icon, Link, MarkdownParser
+# N.B.: We need to do this import _after_ sys.path adjustments above.
+from sphinx_science.render import Icon, Link, MarkdownParser  # noqa E402
 
 myst_enable_extensions = [*MarkdownParser.ENABLE_EXTENSIONS]
 

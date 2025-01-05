@@ -185,10 +185,11 @@ class PyPy(Provider[Config]):
                     )
                 )
 
-        return PyPy(id=identifier, lazy=lazy, assets=tuple(assets))
+        return PyPy(id=identifier, lazy=lazy, version=configured_version, assets=tuple(assets))
 
     id: Identifier
     lazy: bool
+    version: Version
     assets: tuple[FingerprintedAsset, ...]
 
     def distribution(self, platform: Platform) -> Distribution | None:
