@@ -37,10 +37,12 @@ include = ["science*"]
 
 [dependency-groups]
 dev = [
+    "ansicolors",
     "dev-cmd",
     "docutils",
     "mypy",
     "myst-parser[linkify]",
+    "packaging",
     "pytest",
     "pytest-xdist",
     "ruff",
@@ -67,11 +69,15 @@ mypy_path = "docs/_ext"
 
 [[tool.mypy.overrides]]
 module = "click_didyoumean"
-ignore_missing_imports = true
+follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
 module = "click_log"
-ignore_missing_imports = true
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = ["colors.*"]
+follow_untyped_imports = true
 
 [tool.ruff]
 line-length = 100
@@ -80,22 +86,22 @@ line-length = 100
 extend-select = ["I"]
 
 [tool.dev-cmd.commands]
+check-python-version = ["python", "scripts/check-python-version-alignment.py"]
+
 fmt = ["ruff", "format"]
 check-fmt = ["ruff", "format", "--diff"]
 
 lint = ["ruff", "check", "--fix"]
 check-lint = ["ruff", "check"]
 
-type-check = ["mypy", "science", "tests", "test-support", "scripts"]
+type-check = ["mypy", "docs/_ext", "science", "scripts", "tests", "test-support"]
 
 doc = ["sphinx-build", "-b", "html", "-aEW", "docs", "docs/build/html"]
 linkcheck = ["sphinx-build", "-b", "linkcheck", "-aEW", "docs", "docs/build/linkcheck"]
 
 create-zipapp = ["python", "scripts/create-zipapp.py"]
 
-[tool.dev-cmd.commands.package-thin-scie]
-env = {"SCIENCE_LIFT_BUILD_DEST_DIR" = "dist"}
-args = [
+package-thin-scie = [
     "python",
     "dist/science.pyz",
     "lift",
@@ -108,11 +114,11 @@ args = [
     "--hash",
     "sha256",
     "--use-platform-suffix",
+    "--dest-dir",
+    "dist",
 ]
 
-[tool.dev-cmd.commands.package-fat-scie]
-env = {"SCIENCE_LIFT_BUILD_DEST_DIR" = "dist"}
-args = [
+package-fat-scie = [
     "python",
     "dist/science.pyz",
     "lift",
@@ -129,11 +135,13 @@ args = [
     "--hash",
     "sha256",
     "--use-platform-suffix",
+    "--dest-dir",
+    "dist",
 ]
 
 [tool.dev-cmd.commands.run-zipapp]
 env = {"SCIENCE_DOC_LOCAL" = "docs/build/html"}
-args = ["dist/science.pyz"]
+args = ["python", "dist/science.pyz"]
 accepts-extra-args = true
 
 [tool.dev-cmd.commands.pytest]
@@ -147,8 +155,8 @@ SCIENCE_TEST_PYZ_PATH = "../dist/science.pyz"
 
 [tool.dev-cmd.tasks]
 test = ["create-zipapp", "pytest"]
-checks = ["fmt", "lint", "type-check", "test"]
-ci = [["check-fmt", "check-lint", "type-check", "test"]]
+checks = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
+ci = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]
 run = [["doc", "create-zipapp"], "run-zipapp"]
 
 package = [["doc", "create-zipapp"], ["package-thin-scie", "package-fat-scie"]]

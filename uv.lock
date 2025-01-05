@@ -534,10 +534,12 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "ansicolors" },
     { name = "dev-cmd" },
     { name = "docutils" },
     { name = "mypy" },
     { name = "myst-parser", extra = ["linkify"] },
+    { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-xdist" },
     { name = "ruff" },
@@ -570,10 +572,12 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ansicolors" },
     { name = "dev-cmd" },
     { name = "docutils" },
     { name = "mypy" },
     { name = "myst-parser", extras = ["linkify"] },
+    { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-xdist" },
     { name = "ruff" },
