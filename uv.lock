@@ -150,7 +150,7 @@ wheels = [
 
 [[package]]
 name = "dev-cmd"
-version = "0.10.4"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioconsole" },
@@ -158,9 +158,9 @@ dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/0a/1b8fddadf62feae0ac705926cf3350d2998ee273966e594d28d955d8e95f/dev_cmd-0.10.4.tar.gz", hash = "sha256:4806e5c14b2da723b07c3e1e072b0113c0945ec1673469f0a6db6ff7228b73ba", size = 39987 }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/75/afc5c7ffdfd032b767e87740b958425ca87bfe1b5c59aa91a531db16fad0/dev_cmd-0.11.0.tar.gz", hash = "sha256:51f7c85be17260d619ac87486300445c2f1e627ecb276d6be31f5ad164948f86", size = 41139 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/84/8252735984970a9b34decd7f339a88ba48b7b6910a1c57cffd2c6415d97f/dev_cmd-0.10.4-py3-none-any.whl", hash = "sha256:f30c33808767f8d172685e2a30c81eddca654d315e493d86a9f2cf7f78b83bae", size = 26881 },
+    { url = "https://files.pythonhosted.org/packages/ae/a3/2ee093e18ecf270c302a0cde5bd66f9143d5f97664d5e650aa820866ff6b/dev_cmd-0.11.0-py3-none-any.whl", hash = "sha256:1d75671e59d04b996039f345cc233eb642326c23e1ad5662f5e889f01366c3e1", size = 27038 },
 ]
 
 [[package]]

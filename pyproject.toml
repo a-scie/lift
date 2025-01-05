@@ -86,7 +86,7 @@ line-length = 100
 extend-select = ["I"]
 
 [tool.dev-cmd.commands]
-check-python-version = ["python", "scripts/check-python-version-alignment.py"]
+check-python-version = ["scripts/check-python-version-alignment.py"]
 
 fmt = ["ruff", "format"]
 check-fmt = ["ruff", "format", "--diff"]
@@ -99,7 +99,7 @@ type-check = ["mypy", "docs/_ext", "science", "scripts", "tests", "test-support"
 doc = ["sphinx-build", "-b", "html", "-aEW", "docs", "docs/build/html"]
 linkcheck = ["sphinx-build", "-b", "linkcheck", "-aEW", "docs", "docs/build/linkcheck"]
 
-create-zipapp = ["python", "scripts/create-zipapp.py"]
+create-zipapp = ["scripts/create-zipapp.py"]
 
 package-thin-scie = [
     "python",
