@@ -22,6 +22,7 @@ dependencies = [
     "httpx",
     "packaging",
     "psutil",
+    "tenacity",
     "tqdm",
 ]
 
@@ -157,7 +158,7 @@ SCIENCE_TEST_PYZ_PATH = "../dist/science.pyz"
 test = ["create-zipapp", "pytest"]
 checks = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
 ci = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]
-run = [["doc", "create-zipapp"], "run-zipapp"]
+science = [["doc", "create-zipapp"], "run-zipapp"]
 
 package = [["doc", "create-zipapp"], ["package-thin-scie", "package-fat-scie"]]
 

@@ -12,6 +12,14 @@ from typing import Any, Mapping
 
 import click
 import httpx
+from httpx import HTTPStatusError, TimeoutException
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 from tqdm import tqdm
 
 from science import hashing
@@ -21,6 +29,33 @@ from science.hashing import Digest, ExpectedDigest, Fingerprint
 from science.model import Url
 
 logger = logging.getLogger(__name__)
+
+
+retry_fetch = retry(
+    # Raise the final exception in a retry chain if all retries fail.
+    reraise=True,
+    retry=retry_if_exception(
+        lambda ex: (
+            isinstance(ex, TimeoutException)
+            or (
+                # See: https://tools.ietf.org/html/rfc2616#page-39
+                isinstance(ex, HTTPStatusError)
+                and ex.response.status_code
+                in (
+                    408,  # Request Time-out
+                    500,  # Internal Server Error
+                    502,  # Bad Gateway
+                    503,  # Service Unavailable
+                    504,  # Gateway Time-out
+                )
+            )
+        )
+    ),
+    stop=stop_after_attempt(3),
+    wait=wait_exponential_jitter(initial=0.5, exp_base=2, jitter=0.5),
+    # This logs the retries since there is a sleep before each (see wait above).
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+)
 
 
 class AmbiguousAuthError(InputError):
@@ -89,6 +124,7 @@ def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> htt
     return httpx.Client(follow_redirects=True, headers=headers, auth=auth)
 
 
+@retry_fetch
 def _fetch_to_cache(
     url: Url, ttl: timedelta | None = None, headers: Mapping[str, str] | None = None
 ) -> Path:
@@ -99,6 +135,7 @@ def _fetch_to_cache(
                     configured_client(url, headers).stream("GET", url) as response,
                     work.open("wb") as cache_fp,
                 ):
+                    response.raise_for_status()
                     for data in response.iter_bytes():
                         cache_fp.write(data)
     return cache_result.path
@@ -154,6 +191,7 @@ def _expected_digest(
         )
 
 
+@retry_fetch
 def fetch_and_verify(
     url: Url,
     fingerprint: Digest | Fingerprint | Url | None = None,
@@ -174,6 +212,7 @@ def fetch_and_verify(
                     digest = hashlib.new(digest_algorithm)
                     total_bytes = 0
                     with client.stream("GET", url) as response, work.open("wb") as cache_fp:
+                        response.raise_for_status()
                         total = (
                             int(content_length)
                             if (content_length := response.headers.get("Content-Length"))
