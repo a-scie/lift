@@ -8,6 +8,9 @@ on:
       tag:
         description: The tag to manually run a deploy for.
         required: true
+defaults:
+  run:
+    shell: bash
 jobs:
   org-check:
     name: Check GitHub Organization
