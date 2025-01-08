@@ -11,17 +11,15 @@ from science.model import Ptex
 
 
 def test_ptex_latest(tmp_path_factory: TempPathFactory) -> None:
-    dest_dir = tmp_path_factory.mktemp("staging")
-    latest = a_scie.ptex(dest_dir=dest_dir)
-    subprocess.run(args=[str(dest_dir / latest.name), "-V"], check=True)
+    latest = a_scie.ptex()
+    subprocess.run(args=[latest.path, "-V"], check=True)
 
 
 def test_ptex_version(tmp_path_factory: TempPathFactory) -> None:
-    dest_dir = tmp_path_factory.mktemp("staging")
-    latest = a_scie.ptex(dest_dir=dest_dir, specification=Ptex(version=version.parse("1.5.0")))
+    latest = a_scie.ptex(specification=Ptex(version=version.parse("1.5.0")))
     assert (
         "1.5.0"
         == subprocess.run(
-            args=[str(dest_dir / latest.name), "-V"], stdout=subprocess.PIPE, text=True, check=True
+            args=[latest.path, "-V"], stdout=subprocess.PIPE, text=True, check=True
         ).stdout.strip()
     )

@@ -11,6 +11,7 @@ from click import Command, Context
 from click.globals import pop_context, push_context
 
 from science.context import ScienceConfig
+from science.platform import CURRENT_PLATFORM, Platform
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -41,3 +42,8 @@ def cache_dir(tmp_path: Path) -> Iterator[Path]:
         yield cache_dir
     finally:
         pop_context()
+
+
+@pytest.fixture
+def current_platform() -> Platform:
+    return CURRENT_PLATFORM

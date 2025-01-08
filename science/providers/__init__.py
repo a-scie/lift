@@ -34,6 +34,10 @@ class ProviderInfo(Generic[ConfigDataclass]):
         return f"{self.type.__module__}.{self.type.__qualname__}"
 
     @cached_property
+    def name(self) -> str:
+        return self.short_name or self.fully_qualified_name
+
+    @cached_property
     def summary(self) -> str | None:
         if doc := inspect.getdoc(self.type):
             return inspect.cleandoc(doc).splitlines()[0].strip()
@@ -116,3 +120,11 @@ def get_provider(name: str) -> ProviderInfo | None:
         if name in (provider_info.short_name, provider_info.fully_qualified_name):
             return provider_info
     return None
+
+
+def name(provider: Provider) -> str:
+    provider_type = type(provider)
+    for provider_info in ALL_PROVIDERS:
+        if provider_type is provider_info.type:
+            return provider_info.name
+    raise AssertionError(f"Provider of type {provider_type} is not registered!")

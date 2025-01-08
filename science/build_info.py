@@ -18,7 +18,7 @@ from science.dataclass.reflect import metadata
 from science.doc import DOC_SITE_URL
 from science.frozendict import FrozenDict
 from science.hashing import Digest, Provenance
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class BuildInfo:
             version=__version__,
             url=(
                 f"https://github.com/a-scie/lift/releases/download/v{__version__}/"
-                f"{Platform.current().qualified_binary_name('science')}"
+                f"{CURRENT_PLATFORM.qualified_binary_name("science")}"
             ),
         )
         if self.digest:

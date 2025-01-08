@@ -150,7 +150,7 @@ wheels = [
 
 [[package]]
 name = "dev-cmd"
-version = "0.11.0"
+version = "0.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioconsole" },
@@ -158,9 +158,9 @@ dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/75/afc5c7ffdfd032b767e87740b958425ca87bfe1b5c59aa91a531db16fad0/dev_cmd-0.11.0.tar.gz", hash = "sha256:51f7c85be17260d619ac87486300445c2f1e627ecb276d6be31f5ad164948f86", size = 41139 }
+sdist = { url = "https://files.pythonhosted.org/packages/71/05/9fd907b1ad956cd8979faa2e5bd00c4866c03e97b42172702c8f29dc0bc4/dev_cmd-0.11.1.tar.gz", hash = "sha256:4a9d30bb399b7cb6e1948c882ad883d54a6e8b77cb65f0c377220ccf7927ace3", size = 41158 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/a3/2ee093e18ecf270c302a0cde5bd66f9143d5f97664d5e650aa820866ff6b/dev_cmd-0.11.0-py3-none-any.whl", hash = "sha256:1d75671e59d04b996039f345cc233eb642326c23e1ad5662f5e889f01366c3e1", size = 27038 },
+    { url = "https://files.pythonhosted.org/packages/70/0f/c4c66db5807a9a1527982eebd4ba62a2f76efcc6fb8b7e9d2c63bc3b4cc2/dev_cmd-0.11.1-py3-none-any.whl", hash = "sha256:395f0ac099e8ec40736b3865602c809082b84bb28c9bd062fd06ba35e7b9954e", size = 27068 },
 ]
 
 [[package]]
@@ -517,7 +517,7 @@ wheels = [
 
 [[package]]
 name = "science"
-version = "0.10.1"
+version = "0.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
@@ -553,6 +553,7 @@ dev = [
     { name = "types-beautifulsoup4" },
     { name = "types-docutils" },
     { name = "types-psutil" },
+    { name = "types-setuptools" },
     { name = "types-toml" },
     { name = "types-tqdm" },
 ]
@@ -592,6 +593,7 @@ dev = [
     { name = "types-beautifulsoup4" },
     { name = "types-docutils" },
     { name = "types-psutil" },
+    { name = "types-setuptools" },
     { name = "types-toml" },
     { name = "types-tqdm" },
 ]
@@ -834,6 +836,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fa/3c/4f2a430c01a22abd49a583b6b944173e39e7d01b688190a5618bd59a2e22/types-requests-2.32.0.20241016.tar.gz", hash = "sha256:0d9cad2f27515d0e3e3da7134a1b6f28fb97129d86b867f24d9c726452634d95", size = 18065 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/01/485b3026ff90e5190b5e24f1711522e06c79f4a56c8f4b95848ac072e20f/types_requests-2.32.0.20241016-py3-none-any.whl", hash = "sha256:4195d62d6d3e043a4eaaf08ff8a62184584d2e8684e9d2aa178c7915a7da3747", size = 15836 },
+]
+
+[[package]]
+name = "types-setuptools"
+version = "75.6.0.20241223"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/48/a89068ef20e3bbb559457faf0fd3c18df6df5df73b4b48ebf466974e1f54/types_setuptools-75.6.0.20241223.tar.gz", hash = "sha256:d9478a985057ed48a994c707f548e55aababa85fe1c9b212f43ab5a1fffd3211", size = 48063 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/41/2f/051d5d23711209d4077d95c62fa8ef6119df7298635e3a929e50376219d1/types_setuptools-75.6.0.20241223-py3-none-any.whl", hash = "sha256:7cbfd3bf2944f88bbcdd321b86ddd878232a277be95d44c78a53585d78ebc2f6", size = 71377 },
 ]
 
 [[package]]

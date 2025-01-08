@@ -1,10 +1,6 @@
 # The uv venv.
 /.venv/
 
-# Build artifacts dirs.
-/*.egg-info/
-/build/
-
 # Python bytecode.
 __pycache__/
 
@@ -17,5 +13,3 @@ __pycache__/
 # Our Sphinx extension (see: docs/_ext/) dynamically generates doc sources here.
 /docs/_/
 
-# IntelliJ projects.
-.idea/

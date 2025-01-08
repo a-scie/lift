@@ -21,7 +21,7 @@ import psutil
 
 from science import __version__
 from science.cache import science_cache
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +189,7 @@ def launch(
                     | subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
                 )
             }
-            if Platform.current() in (Platform.Windows_aarch64, Platform.Windows_x86_64)
+            if CURRENT_PLATFORM.is_windows
             else {
                 # The os.setsid function is not available on Windows.
                 "preexec_fn": os.setsid  # type: ignore[attr-defined]
