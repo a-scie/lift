@@ -166,7 +166,7 @@ class _MultiDocGen:
                     self.options.pop("toctree_hidden")
 
                 docnames = tuple(
-                    str(doc.write(dest_dir).relative_to(app.srcdir).with_suffix(""))
+                    doc.write(dest_dir).relative_to(app.srcdir).with_suffix("").as_posix()
                     for doc in doc_gen_directive.enumerate_docs(
                         DirectiveSpec(
                             name=doc_gen_directive_name,

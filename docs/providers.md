@@ -7,7 +7,7 @@ similar small set of configuration, and then injects the file in your configurat
 referencable by the interpreter `id` you supply in [command](science-model-command) `#{id}`
 substitutions. Additionally, interpreter providers can provide keyed access to important files and
 binaries within the distribution archives that you can reference via `{#id:<key>}`. The
-documentation for each interpreter provider will detail both the distibution archive file keys
+documentation for each interpreter provider will detail both the distribution archive file keys
 supported and the configuration information required.
 
 (built-in-providers)=
