@@ -6,9 +6,9 @@ This release brings two fixes for `science` on Windows:
 + Previously the default `science` cache location was
   `%USERPROFILE%\AppData\Local\science\science\Cache`. The redundant `science` subdirectory is now
   removed, resulting in a default of `%USERPROFILE%\AppData\Local\science\Cache`.
-+ The intra-site links in the local docs served via `science doc open` are now work. Previously
-  they mistakenly contained `\` in some URL path components causing deep links to return to the
-  home page.
++ The intra-site links in the local docs served via `science doc open` now work. Previously they
+  mistakenly contained `\` in some URL path components causing deep links to return to the home
+  page.
 
 ## 0.10.1
 
