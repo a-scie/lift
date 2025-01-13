@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.11.2
+
+This release fixes a bug introduced in the 0.11.0 release whereby a `ptex` binary was always
+included in each built scie even when the scie did not use `ptex`. This was functionally harmless
+but did bloat the size of the resulting scie binary by ~5MB.
+
 ## 0.11.1
 
 This release brings two fixes for `science` on Windows:
