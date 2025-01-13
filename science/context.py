@@ -26,7 +26,7 @@ def active_context_config(config_type: type[_T]) -> _T | None:
 
 @dataclass(frozen=True)
 class ScienceConfig(ContextConfig):
-    DEFAULT_CACHE_DIR = Path(user_cache_dir("science"))
+    DEFAULT_CACHE_DIR = Path(user_cache_dir("science", appauthor=False))
 
     @classmethod
     def active(cls) -> ScienceConfig:
