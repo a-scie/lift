@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.10.2
+## 0.11.1
 
 This release brings two fixes for `science` on Windows:
 + Previously the default `science` cache location was
@@ -9,6 +9,13 @@ This release brings two fixes for `science` on Windows:
 + The intra-site links in the local docs served via `science doc open` now work. Previously they
   mistakenly contained `\` in some URL path components causing deep links to return to the home
   page.
+
+## 0.11.0
+
+This release brings a new `science download` family of commands for downloading `ptex` binaries,
+`scie-jump` binaries and provider distributions for offline use. To complement this, the
+corresponding lift manifest configuration tables now accept a `base_url` option to point to the
+location of these offline downloads.
 
 ## 0.10.1
 

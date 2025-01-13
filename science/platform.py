@@ -23,7 +23,7 @@ class Platform(Enum):
 
     @classmethod
     def parse(cls, value: str) -> Platform:
-        return Platform.current() if "current" == value else Platform(value)
+        return CURRENT_PLATFORM if "current" == value else Platform(value)
 
     @classmethod
     def current(cls) -> Platform:
@@ -59,11 +59,21 @@ class Platform(Enum):
                 )
 
     @property
+    def is_windows(self) -> bool:
+        return self in (self.Windows_aarch64, self.Windows_x86_64)
+
+    @property
     def extension(self):
-        return ".exe" if self in (self.Windows_aarch64, self.Windows_x86_64) else ""
+        return ".exe" if self.is_windows else ""
 
     def binary_name(self, binary_name: str) -> str:
         return f"{binary_name}{self.extension}"
 
     def qualified_binary_name(self, binary_name: str) -> str:
         return f"{binary_name}-{self.value}{self.extension}"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+CURRENT_PLATFORM = Platform.current()

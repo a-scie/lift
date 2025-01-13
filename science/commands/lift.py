@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, TextIO
 
-from science import a_scie
+from science import a_scie, providers
 from science.build_info import BuildInfo
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
@@ -25,7 +25,7 @@ from science.model import (
     InterpreterGroup,
     ScieJump,
 )
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM, Platform
 
 
 @dataclass(frozen=True)
@@ -67,17 +67,14 @@ class FileMapping:
 class PlatformInfo:
     @classmethod
     def create(cls, application: Application, use_suffix: bool | None = None) -> PlatformInfo:
-        current = Platform.current()
         return cls(
-            current=current,
             use_suffix=(
                 use_suffix
                 if use_suffix is not None
-                else application.platforms != frozenset([current])
+                else application.platforms != frozenset([CURRENT_PLATFORM])
             ),
         )
 
-    current: Platform
     use_suffix: bool
 
     def binary_name(self, name: str, target_platform: Platform) -> str:
@@ -139,6 +136,11 @@ def export_manifest(
 
         for interpreter in application.interpreters:
             distribution = interpreter.provider.distribution(platform)
+            if distribution is None:
+                raise InputError(
+                    f"No compatible {providers.name(interpreter.provider)} distribution was found "
+                    f"for {platform}."
+                )
             if distribution:
                 distributions.append(distribution)
                 requested_files.append(maybe_invert_lazy(distribution.file))
@@ -146,19 +148,29 @@ def export_manifest(
         if (actually_inverted := frozenset(inverted)) != lift_config.invert_lazy_ids:
             raise InputError(
                 "There following files were not present to invert laziness for: "
-                f"{', '.join(sorted(lift_config.invert_lazy_ids - actually_inverted))}"
+                f"{", ".join(sorted(lift_config.invert_lazy_ids - actually_inverted))}"
             )
 
-        if any(isinstance(file.source, Fetch) and file.source.lazy for file in requested_files):
-            ptex = a_scie.ptex(chroot, specification=application.ptex, platform=platform)
-            file_paths_by_id[ptex.id] = chroot / ptex.name
-            requested_files.appendleft(ptex)
-            argv1 = (
-                application.ptex.argv1
-                if application.ptex and application.ptex.argv1
-                else "{scie.lift}"
+        fetches_present = any(
+            isinstance(file.source, Fetch) and file.source.lazy for file in requested_files
+        )
+        if application.ptex or fetches_present:
+            ptex = a_scie.ptex(specification=application.ptex, platform=platform)
+            (chroot / ptex.binary_name).symlink_to(ptex.path)
+            ptex_key = application.ptex.id if application.ptex and application.ptex.id else "ptex"
+            ptex_file = File(
+                name=ptex.binary_name, key=ptex_key, digest=ptex.digest, is_executable=True
             )
-            bindings.append(Fetch.create_binding(fetch_exe=ptex, argv1=argv1))
+
+            file_paths_by_id[ptex_file.id] = chroot / ptex_file.name
+            requested_files.appendleft(ptex_file)
+            if fetches_present:
+                argv1 = (
+                    application.ptex.argv1
+                    if application.ptex and application.ptex.argv1
+                    else "{scie.lift}"
+                )
+                bindings.append(Fetch.create_binding(fetch_exe=ptex_file, argv1=argv1))
         bindings.extend(application.bindings)
 
         files = list[File]()
@@ -176,16 +188,21 @@ def export_manifest(
                         url,
                         fingerprint=requested_file.digest,
                         executable=requested_file.is_executable,
-                    )
+                    ).path
                 case None:
                     file_path = (
                         file_paths_by_id.get(requested_file.id) or Path.cwd() / requested_file.name
                     )
                     if not file_path.exists():
+                        if file_path.is_relative_to(Path.cwd()):
+                            raise InputError(
+                                f"The file for {requested_file.id} is not mapped or cannot be "
+                                f"found at {file_path.relative_to(Path.cwd())} relative to the cwd "
+                                f"of {Path.cwd()}."
+                            )
                         raise InputError(
                             f"The file for {requested_file.id} is not mapped or cannot be found at "
-                            f"{file_path.relative_to(Path.cwd())} relative to the cwd of "
-                            f"{Path.cwd()}."
+                            f"{file_path}."
                         )
             files.append(file)
 

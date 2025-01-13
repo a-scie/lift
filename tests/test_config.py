@@ -12,7 +12,7 @@ from textwrap import dedent
 
 from science.config import parse_config_file
 from science.model import Identifier
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM
 
 
 def test_parse(build_root: Path) -> None:
@@ -21,7 +21,7 @@ def test_parse(build_root: Path) -> None:
     assert 1 == len(interpreters), "Expected science to ship on a single fixed interpreter."
 
     interpreter = interpreters[0]
-    distribution = interpreter.provider.distribution(Platform.current())
+    distribution = interpreter.provider.distribution(CURRENT_PLATFORM)
     assert (
         distribution is not None
     ), "Expected a Python interpreter distribution to be available for each platform tests run on."
@@ -48,7 +48,7 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
             check=True,
         )
 
-        exe_path = tmp_path / Platform.current().binary_name("igs")
+        exe_path = tmp_path / CURRENT_PLATFORM.binary_name("igs")
         subprocess.run(args=[exe_path], env={**os.environ, "SCIE": "inspect"}, check=True)
 
         scie_base = tmp_path / "scie-base"
@@ -79,14 +79,13 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
 
 
 def test_scie_base(tmp_path: Path, science_pyz: Path) -> None:
-    current_platform = Platform.current()
-    match current_platform:
-        case Platform.Windows_aarch64 | Platform.Windows_x86_64:
-            config_name = "scie-base.windows.toml"
-            expected_base = "~\\AppData\\Local\\Temp\\custom-base"
-        case _:
-            config_name = "scie-base.unix.toml"
-            expected_base = "/tmp/custom-base"
+    current_platform = CURRENT_PLATFORM
+    if current_platform.is_windows:
+        config_name = "scie-base.windows.toml"
+        expected_base = "~\\AppData\\Local\\Temp\\custom-base"
+    else:
+        config_name = "scie-base.unix.toml"
+        expected_base = "/tmp/custom-base"
 
     with resources.as_file(resources.files("data") / config_name) as config:
         subprocess.run(
@@ -144,7 +143,7 @@ def test_command_descriptions(tmp_path: Path, science_pyz: Path) -> None:
             check=True,
         )
 
-        exe_path = tmp_path / Platform.current().binary_name("command-descriptions")
+        exe_path = tmp_path / CURRENT_PLATFORM.binary_name("command-descriptions")
         scie_base = tmp_path / "scie-base"
         data = json.loads(
             subprocess.run(

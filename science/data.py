@@ -132,7 +132,7 @@ class Data:
             ]
             expected_values = ""
             if issubclass(expected_item_type, Enum):
-                expected_values = f" from {{{', '.join(repr(expected.value) for expected in expected_item_type)}}}"
+                expected_values = f" from {{{", ".join(repr(expected.value) for expected in expected_item_type)}}}"
 
             raise InputError(
                 f"Expected {self.config(key)} defined in {self.provenance.source} to be a list "

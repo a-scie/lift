@@ -79,7 +79,7 @@ jobs:
           # native deps like psutil) for our shiv.
           UV_PYTHON_VERSION=cpython-3.12.8-windows-x86_64-none
           uv python install ${UV_PYTHON_VERSION}
-          echo UV_PYTHON_ARGS="--python ${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
+          echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
         if: matrix.docker-platform != ''
         run: docker run --privileged --rm tonistiigi/binfmt --install all
@@ -87,7 +87,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
-        run: uv run ${UV_PYTHON_ARGS} dev-cmd ci --skip test
+        run: uv run dev-cmd ci --skip test
       - name: Check Formatting & Lints
         if: matrix.docker-platform != ''
         run: |
@@ -112,7 +112,7 @@ jobs:
           echo SCIE_BASE=C:/tmp/gha/nce >> ${GITHUB_ENV}
       - name: Unit Tests
         if: matrix.docker-platform == ''
-        run: uv run ${UV_PYTHON_ARGS} dev-cmd test -- -vvs
+        run: uv run dev-cmd test -- -vvs
       - name: Unit Tests
         if: matrix.docker-platform != ''
         run: |
@@ -142,7 +142,7 @@ jobs:
             python:3.12-bookworm bash _ci_test.sh
       - name: Build & Package
         if: matrix.docker-platform == ''
-        run: uv run ${UV_PYTHON_ARGS} dev-cmd package
+        run: uv run dev-cmd package
       - name: Build & Package
         if: matrix.docker-platform != ''
         run: |
@@ -161,7 +161,7 @@ jobs:
               "
       - name: Generate Doc Site
         if: matrix.docker-platform == ''
-        run: uv run ${UV_PYTHON_ARGS} dev-cmd doc linkcheck
+        run: uv run dev-cmd doc linkcheck
       - name: Generate Doc Site
         if: matrix.docker-platform != ''
         run: |

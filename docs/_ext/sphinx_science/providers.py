@@ -24,10 +24,9 @@ class RenderProviders(MarkdownParser, DocGenDirective):
         )
 
         for provider_info in providers.iter_builtin_providers():
-            slug = provider_info.short_name or provider_info.fully_qualified_name
             yield Doc(
                 id=type_id(provider_info.type),
-                name=slug,
+                name=provider_info.name,
                 directive=dataclasses.replace(
                     directive_spec,
                     args=tuple([provider_info.fully_qualified_name]),

@@ -14,17 +14,19 @@ import subprocess
 import sys
 import textwrap
 import traceback
+from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path, PurePath
 from textwrap import dedent
 from types import TracebackType
-from typing import BinaryIO
+from typing import Any, BinaryIO, Callable
 from urllib.parse import urlparse, urlunparse
 
 import click
 import click_log
 from click_didyoumean import DYMGroup
 from packaging import version
+from packaging.version import Version
 
 from science import __version__, providers
 from science.commands import build, lift
@@ -32,6 +34,7 @@ from science.commands.complete import Shell
 from science.commands.doc import SERVER_NAME, LaunchError
 from science.commands.doc import launch as launch_doc_server
 from science.commands.doc import shutdown as shutdown_doc_server
+from science.commands.download import download_a_scie_executables, download_provider_distribution
 from science.commands.lift import AppInfo, FileMapping, LiftConfig, PlatformInfo
 from science.config import parse_config
 from science.context import DocConfig, ScienceConfig
@@ -39,8 +42,10 @@ from science.doc import DOC_SITE_URL
 from science.errors import InputError
 from science.fs import temporary_directory
 from science.model import Application
+from science.options import OptionDescriptor, mutually_exclusive, to_option_string
 from science.os import EXE_EXT
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM, Platform
+from science.providers import ALL_PROVIDERS, ProviderInfo
 
 logger = logging.getLogger(__name__)
 
@@ -259,6 +264,154 @@ def _close_doc() -> None:
         click.secho(f"Shut down the {SERVER_NAME} at {server_info}.", fg="green", err=True)
     else:
         click.secho("No documentation server was running.", fg="cyan", err=True)
+
+
+@dataclass(frozen=True)
+class DownloadConfig:
+    platforms: tuple[Platform, ...]
+    explicit_set: bool
+
+
+pass_download = click.make_pass_decorator(DownloadConfig)
+
+platform_mutex_check = mutually_exclusive(
+    OptionDescriptor("platforms", flag="--platform"), "all_platforms"
+)
+
+
+@_main.group(cls=DYMGroup, name="download")
+@click.option(
+    "--platform",
+    "platforms",
+    type=Platform.parse,
+    multiple=True,
+    default=[],
+    callback=platform_mutex_check,
+    help=(
+        "Download binaries for the specified platform(s). Mutually exclusive with "
+        "`--all-platforms`. By default, only binaries for the current platform are downloaded."
+    ),
+)
+@click.option(
+    "--all-platforms",
+    is_flag=True,
+    default=False,
+    callback=platform_mutex_check,
+    help=(
+        "Download binaries for all platforms science supports. Mutually exclusive with "
+        "`--platform`. By default, only binaries for the current platform are downloaded."
+    ),
+)
+@click.pass_context
+def _download(ctx: click.Context, platforms: list[Platform], all_platforms: bool) -> None:
+    """Download binaries for offline use."""
+
+    if platforms:
+        platforms = list(dict.fromkeys(platforms))
+        explicit_set = True
+    elif all_platforms:
+        platforms = list(Platform)
+        explicit_set = False
+    else:
+        platforms = [CURRENT_PLATFORM]
+        explicit_set = True
+
+    ctx.obj = DownloadConfig(platforms=tuple(platforms), explicit_set=explicit_set)
+
+
+download_dest_dir = click.argument("dest_dir", metavar="DEST_DIR", type=Path)
+
+
+@_download.group(cls=DYMGroup, name="provider")
+def _download_provider() -> None:
+    """Download distributions from providers for offline use."""
+
+
+def _create_provider_download_func(
+    provider_info: ProviderInfo,
+) -> Callable[[DownloadConfig, Path], None]:
+    @_download_provider.command(name=provider_info.short_name)
+    @download_dest_dir
+    @pass_download
+    def func(download_config: DownloadConfig, dest_dir: Path, **kwargs: Any) -> None:
+        download_provider_distribution(
+            provider_info=provider_info,
+            platforms=download_config.platforms,
+            explicit_platforms=download_config.explicit_set,
+            dest_dir=dest_dir,
+            **kwargs,
+        )
+
+    setattr(func, "__name__", provider_info.name.replace(".", "_"))
+    func.__doc__ = f"Download {provider_info.name} distributions for offline use."
+
+    for field in provider_info.config_fields():
+        assert field.type.has_origin_type or callable(getattr(field.type, "parse", None)), (
+            f"Expected {provider_info.name} config fields to be simple scalar types or else have a "
+            f"`parse(str)` factory function. Field {field.name} has type {field.type} which is "
+            f"neither."
+        )
+        func = click.option(
+            to_option_string(field.name),
+            type=field.type.origin_type,
+            required=field.default is dataclasses.MISSING,
+            multiple=True,
+            default=[],
+            help=(
+                f"{field.doc} [default: {field.default}]"
+                if (field.default and field.default is not dataclasses.MISSING)
+                else field.doc
+            ),
+        )(func)
+
+    return func
+
+
+for _provider_info in ALL_PROVIDERS:
+    _create_provider_download_func(_provider_info)
+
+download_a_scie_versions = click.option(
+    "--version",
+    "versions",
+    type=Version,
+    multiple=True,
+    default=[],
+    help="One or more versions to download. By default, the latest version is downloaded.",
+)
+
+
+@_download.command(name="ptex")
+@download_dest_dir
+@download_a_scie_versions
+@pass_download
+def _download_ptex(
+    download_config: DownloadConfig, dest_dir: Path, versions: list[Version]
+) -> None:
+    """Download ptex binaries for offline use."""
+    download_a_scie_executables(
+        project_name="ptex",
+        binary_name="ptex",
+        versions=versions,
+        platforms=download_config.platforms,
+        dest_dir=dest_dir,
+    )
+
+
+@_download.command(name="scie-jump")
+@download_dest_dir
+@download_a_scie_versions
+@pass_download
+def _download_scie_jump(
+    download_config: DownloadConfig, dest_dir: Path, versions: list[Version]
+) -> None:
+    """Download scie-jump binaries for offline use."""
+    download_a_scie_executables(
+        project_name="jump",
+        binary_name="scie-jump",
+        versions=versions,
+        platforms=download_config.platforms,
+        dest_dir=dest_dir,
+    )
 
 
 @_main.group(cls=DYMGroup, name="provider")
@@ -559,7 +712,7 @@ def use_platform_suffix_option():
             """
         ).format(
             suffixes="\n ".join(
-                f"{'*' if platform == Platform.current() else ' '} {platform.value}"
+                f"{"*" if platform == CURRENT_PLATFORM else " "} {platform.value}"
                 for platform in Platform
             )
         ),
@@ -693,10 +846,9 @@ def _build(
         logger.warning("Cannot use a custom scie jump build with a multi-platform configuration.")
         logger.warning(
             "Restricting requested platforms of "
-            f"{', '.join(sorted(platform.value for platform in platforms))} to "
-            f"{platform_info.current.value}",
+            f"{", ".join(sorted(platform.value for platform in platforms))} to {CURRENT_PLATFORM}",
         )
-        platforms = frozenset([platform_info.current])
+        platforms = frozenset([CURRENT_PLATFORM])
 
     scie_jump_version = application.scie_jump.version if application.scie_jump else None
     if scie_jump_version and scie_jump_version < version.parse("0.9.0"):

@@ -11,8 +11,9 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import (
+    Any,
     ClassVar,
     Collection,
     Iterable,
@@ -23,6 +24,7 @@ from typing import (
     TypeVar,
     runtime_checkable,
 )
+from urllib.parse import ParseResult
 
 from packaging.version import Version
 
@@ -33,7 +35,7 @@ from science.doc import Ref
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM, Platform
 
 
 class FileType(Enum):
@@ -233,27 +235,81 @@ class File:
         return expected_digest.check_path(path)
 
 
+class Url(str):
+    @staticmethod
+    def __new__(cls, value, *args: Any, **kwargs: Any) -> Url:
+        return super().__new__(cls, value)
+
+    def __init__(self, _url, base: str | None = None) -> None:
+        self._base = base
+
+    @cached_property
+    def info(self) -> ParseResult:
+        return urllib.parse.urlparse(self)
+
+    @cached_property
+    def base_url(self) -> ParseResult:
+        if self._base:
+            return urllib.parse.urlparse(self._base)
+        return self.info._replace(path="", params="", query="", fragment="")
+
+    @cached_property
+    def rel_path(self) -> PurePath:
+        path = PurePath(urllib.parse.unquote_plus(self.info.path))
+        if not self.base_url.path:
+            return path.relative_to("/")
+        base_path = PurePath(urllib.parse.unquote_plus(self.base_url.path))
+        assert path.is_relative_to(
+            base_path
+        ), f"The base for Url {self} is configured as {self._base} which is not a not a sub-path."
+        return path.relative_to(base_path)
+
+
 @documented_dataclass(frozen=True, alias="scie_jump")
 class ScieJump:
+    _DEFAULT_BASE_URL: ClassVar[Url] = Url("https://github.com/a-scie/jump/releases")
+
     version: Version | None = dataclasses.field(default=None, metadata=metadata(reference=True))
     digest: Digest | None = None
+    base_url: Url = dataclasses.field(
+        default=_DEFAULT_BASE_URL,
+        metadata=metadata(
+            f"""The base URL to download scie-jump binaries from.
+
+            Defaults to {_DEFAULT_BASE_URL} but can be configured to the `jump` sub-directory of a
+            mirror created with the `science download scie-jump` command.
+            """
+        ),
+    )
 
 
 class Identifier(str):
     def __new__(cls, value: str) -> Identifier:
         if any(char in value for char in ("{", "}", ":")):
             raise InputError(
-                f"An identifier can not contain any of '{', '}' or ':', given: {value}"
+                f"An identifier can not contain any of '{", "}' or ':', given: {value}"
             )
         return super().__new__(cls, value)
 
 
 @documented_dataclass(frozen=True, alias="ptex")
 class Ptex:
+    _DEFAULT_BASE_URL: ClassVar[Url] = Url("https://github.com/a-scie/ptex/releases")
+
     id: Identifier = Identifier("ptex")
     argv1: str = "{scie.lift}"
     version: Version | None = dataclasses.field(default=None, metadata=metadata(reference=True))
     digest: Digest | None = None
+    base_url: Url = dataclasses.field(
+        default=_DEFAULT_BASE_URL,
+        metadata=metadata(
+            f"""The base URL to download ptex binaries from.
+
+            Defaults to {_DEFAULT_BASE_URL} but can be configured to the `ptex` sub-directory of a
+            mirror created with the `science download ptex` command.
+            """
+        ),
+    )
 
     @property
     def placeholder(self) -> str:
@@ -277,12 +333,6 @@ class Command:
     env: Env | None = None
 
 
-class Url(str):
-    @cached_property
-    def info(self):
-        return urllib.parse.urlparse(self)
-
-
 @dataclass(frozen=True)
 class Distribution:
     id: Identifier
@@ -302,16 +352,26 @@ class Distribution:
         )
 
 
+class DistributionsManifest(Protocol):
+    def serialize(self, base_dir: Path) -> None: ...
+
+
 ConfigDataclass = TypeVar("ConfigDataclass", bound=Dataclass)
 
 
 @runtime_checkable
 class Provider(Protocol[ConfigDataclass]):
     @classmethod
+    def supported_platforms(cls) -> frozenset[Platform]:
+        return frozenset(Platform)
+
+    @classmethod
     def config_dataclass(cls) -> type[ConfigDataclass]: ...
 
     @classmethod
     def create(cls, identifier: Identifier, lazy: bool, config: ConfigDataclass) -> Provider: ...
+
+    def distributions(self) -> DistributionsManifest: ...
 
     def distribution(self, platform: Platform) -> Distribution | None: ...
 
@@ -476,7 +536,7 @@ class Application(Dataclass):
     description: str | None = None
     load_dotenv: bool = False
     build_info: BuildInfo | None = dataclasses.field(default=None, metadata=metadata(inline=True))
-    platforms: frozenset[Platform] = frozenset([Platform.current()])
+    platforms: frozenset[Platform] = frozenset([CURRENT_PLATFORM])
     base: str | None = dataclasses.field(
         default=None,
         metadata=metadata("An alternate path to use for the scie base `nce` CAS."),
@@ -515,7 +575,7 @@ class Application(Dataclass):
             )
         if reserved_conflicts:
             raise InputError(
-                f"{subject} cannot use the reserved binding names: {', '.join(reserved_conflicts)}"
+                f"{subject} cannot use the reserved binding names: {", ".join(reserved_conflicts)}"
             )
 
     def __post_init__(self) -> None:
