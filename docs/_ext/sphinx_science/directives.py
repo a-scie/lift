@@ -64,7 +64,7 @@ class DirectiveSpec:
     content: StringList = field(default_factory=StringList)
 
     def render_markdown(self) -> str:
-        content_items = [f"```{{{self.name}}} {' '.join(self.args)}"]
+        content_items = [f"```{{{self.name}}} {" ".join(self.args)}"]
         for key, val in self.options.items():
             if val is not None:
                 if isinstance(val, bool):

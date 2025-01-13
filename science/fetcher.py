@@ -1,18 +1,26 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+from __future__ import annotations
+
 import hashlib
+import io
 import json
 import logging
 import os
+import urllib.parse
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import timedelta
+from json import JSONDecodeError
 from netrc import NetrcParseError
 from pathlib import Path
-from typing import Any, Mapping
+from types import TracebackType
+from typing import Any, BinaryIO, ClassVar, Iterator, Mapping, Protocol
 
 import click
 import httpx
-from httpx import HTTPStatusError, TimeoutException
+from httpx import HTTPStatusError, Request, Response, SyncByteStream, TimeoutException, codes
 from tenacity import (
     before_sleep_log,
     retry,
@@ -22,11 +30,12 @@ from tenacity import (
 )
 from tqdm import tqdm
 
-from science import hashing
-from science.cache import Missing, download_cache
+from science import VERSION, hashing
+from science.cache import CacheEntry, Missing, download_cache
 from science.errors import InputError
 from science.hashing import Digest, ExpectedDigest, Fingerprint
 from science.model import Url
+from science.platform import CURRENT_PLATFORM
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +87,7 @@ def _configure_auth(url: Url) -> httpx.Auth | tuple[str, str] | None:
         if env_auth:
             raise AmbiguousAuthError(
                 f"{auth_type.capitalize()} auth was configured for {url} via env var but so was: "
-                f"{', '.join(env_auth)}"
+                f"{", ".join(env_auth)}"
             )
 
     def get_username(auth_type: str) -> str | None:
@@ -118,8 +127,119 @@ def _configure_auth(url: Url) -> httpx.Auth | tuple[str, str] | None:
     return None
 
 
-def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> httpx.Client:
+class Client(Protocol):
+    def __enter__(self) -> Client: ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
+    ) -> None: ...
+
+    def get(self, url: Url) -> Response: ...
+
+    def head(self, url: Url) -> Response: ...
+
+    @contextmanager
+    def stream(self, method: str, url: Url) -> Iterator[Response]: ...
+
+
+class FileClient:
+    def __enter__(self) -> Client:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
+    ) -> None:
+        return None
+
+    @staticmethod
+    def _vet_request(url: Url, method: str = "GET") -> tuple[Request, Path] | Response:
+        request = Request(method=method, url=url)
+        if request.method not in ("GET", "HEAD"):
+            return Response(status_code=codes.METHOD_NOT_ALLOWED, request=request)
+
+        raw_path = urllib.parse.unquote_plus(url.info.path)
+        if CURRENT_PLATFORM.is_windows:
+            # Handle `file:///C:/a/path` -> `C:/a/path`.
+            parts = raw_path.split("/")
+            if ":" == parts[1][-1]:
+                parts.pop(0)
+            path = Path("/".join(parts))
+        else:
+            path = Path(raw_path)
+
+        if not path.exists():
+            return Response(status_code=codes.NOT_FOUND, request=request)
+        if not path.is_file():
+            return Response(status_code=codes.BAD_REQUEST, request=request)
+        if not os.access(path, os.R_OK):
+            return Response(status_code=codes.FORBIDDEN, request=request)
+
+        return request, path
+
+    def head(self, url: Url) -> Response:
+        result = self._vet_request(url)
+        if isinstance(result, Response):
+            return result
+
+        request, path = result
+        return httpx.Response(
+            status_code=codes.OK,
+            headers={"Content-Length": str(path.stat().st_size)},
+            request=request,
+        )
+
+    def get(self, url: Url) -> Response:
+        result = self._vet_request(url)
+        if isinstance(result, Response):
+            return result
+
+        request, path = result
+        content = path.read_bytes()
+        return httpx.Response(
+            status_code=codes.OK,
+            headers={"Content-Length": str(len(content))},
+            content=content,
+            request=request,
+        )
+
+    @dataclass(frozen=True)
+    class FileByteStream(SyncByteStream):
+        stream: BinaryIO
+
+        def __iter__(self) -> Iterator[bytes]:
+            return iter(lambda: self.stream.read(io.DEFAULT_BUFFER_SIZE), b"")
+
+        def close(self) -> None:
+            self.stream.close()
+
+    @contextmanager
+    def stream(self, method: str, url: Url) -> Iterator[httpx.Response]:
+        result = self._vet_request(url, method=method)
+        if isinstance(result, Response):
+            yield result
+            return
+
+        request, path = result
+        with path.open("rb") as fp:
+            yield httpx.Response(
+                status_code=codes.OK,
+                headers={"Content-Length": str(path.stat().st_size)},
+                stream=self.FileByteStream(fp),
+                request=request,
+            )
+
+
+def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> Client:
+    if "file" == url.info.scheme:
+        return FileClient()
     headers = dict(headers) if headers else {}
+    headers.setdefault("User-Agent", f"science/{VERSION}")
     auth = _configure_auth(url) if "Authorization" not in headers else None
     return httpx.Client(follow_redirects=True, headers=headers, auth=auth)
 
@@ -130,10 +250,10 @@ def _fetch_to_cache(
 ) -> Path:
     with download_cache().get_or_create(url, ttl=ttl) as cache_result:
         match cache_result:
-            case Missing(work=work):
+            case Missing(_) as cache_entry:
                 with (
                     configured_client(url, headers).stream("GET", url) as response,
-                    work.open("wb") as cache_fp,
+                    cache_entry.work_path.open("wb") as cache_fp,
                 ):
                     response.raise_for_status()
                     for data in response.iter_bytes():
@@ -186,8 +306,38 @@ def _expected_digest(
 
     with configured_client(url, headers) as client:
         return ExpectedDigest(
-            fingerprint=Fingerprint(client.get(f"{url}.{algorithm}").text.split(" ", 1)[0].strip()),
+            fingerprint=Fingerprint(
+                client.get(Url(f"{url}.{algorithm}")).text.split(" ", 1)[0].strip()
+            ),
             algorithm=algorithm,
+        )
+
+
+@dataclass(frozen=True)
+class FetchResult:
+    class LoadError(Exception):
+        """Indicates an error loading a cached fetch result."""
+
+    _DIGEST_FILE: ClassVar[str] = "digest.json"
+
+    @classmethod
+    def load(cls, cache_entry: CacheEntry) -> FetchResult:
+        try:
+            digest = json.loads((cache_entry.aux_dir / cls._DIGEST_FILE).read_text())
+        except (OSError, JSONDecodeError) as e:
+            raise cls.LoadError() from e
+        try:
+            digest = Digest(size=digest["size"], fingerprint=Fingerprint(digest["hash"]))
+        except (KeyError, TypeError, ValueError) as e:
+            raise cls.LoadError() from e
+        return cls(path=cache_entry.path, digest=digest)
+
+    path: Path
+    digest: Digest
+
+    def dump(self, cache_entry: Missing) -> None:
+        (cache_entry.work_aux_dir / self._DIGEST_FILE).write_text(
+            json.dumps({"size": self.digest.size, "hash": self.digest.fingerprint})
         )
 
 
@@ -199,65 +349,71 @@ def fetch_and_verify(
     executable: bool = False,
     ttl: timedelta | None = None,
     headers: Mapping[str, str] | None = None,
-) -> Path:
-    verified_fingerprint = False
-    with download_cache().get_or_create(url, ttl=ttl) as cache_result:
-        match cache_result:
-            case Missing(work=work):
-                click.secho(f"Downloading {url} ...", fg="green")
-                with configured_client(url, headers) as client:
-                    expected_digest = _expected_digest(
-                        url, headers, fingerprint, algorithm=digest_algorithm
+) -> FetchResult:
+    with download_cache().get_or_create(url, ttl=ttl) as cache_entry:
+        if isinstance(cache_entry, Missing):
+            click.secho(f"Downloading {url} ...", fg="green")
+            with configured_client(url, headers) as client:
+                expected_digest = _expected_digest(
+                    url, headers, fingerprint, algorithm=digest_algorithm
+                )
+                digest = hashlib.new(digest_algorithm)
+                total_bytes = 0
+                with (
+                    client.stream("GET", url) as response,
+                    cache_entry.work_path.open("wb") as cache_fp,
+                ):
+                    response.raise_for_status()
+                    total = (
+                        int(content_length)
+                        if (content_length := response.headers.get("Content-Length"))
+                        else None
                     )
-                    digest = hashlib.new(digest_algorithm)
-                    total_bytes = 0
-                    with client.stream("GET", url) as response, work.open("wb") as cache_fp:
-                        response.raise_for_status()
-                        total = (
-                            int(content_length)
-                            if (content_length := response.headers.get("Content-Length"))
-                            else None
+                    if expected_digest.is_too_big(total):
+                        raise InputError(
+                            f"The content at {url} is expected to be {expected_digest.size} "
+                            f"bytes, but advertises a Content-Length of {total} bytes."
                         )
-                        if expected_digest.is_too_big(total):
-                            raise InputError(
-                                f"The content at {url} is expected to be {expected_digest.size} "
-                                f"bytes, but advertises a Content-Length of {total} bytes."
-                            )
-                        with tqdm(
-                            total=total, unit_scale=True, unit_divisor=1024, unit="B"
-                        ) as progress:
-                            num_bytes_downloaded = response.num_bytes_downloaded
-                            for data in response.iter_bytes():
-                                total_bytes += len(data)
-                                if expected_digest.is_too_big(total_bytes):
-                                    raise InputError(
-                                        f"The download from {url} was expected to be "
-                                        f"{expected_digest.size} bytes, but downloaded "
-                                        f"{total_bytes} so far."
-                                    )
-                                digest.update(data)
-                                cache_fp.write(data)
-                                progress.update(
-                                    response.num_bytes_downloaded - num_bytes_downloaded
+                    with tqdm(
+                        total=total, unit_scale=True, unit_divisor=1024, unit="B"
+                    ) as progress:
+                        num_bytes_downloaded = response.num_bytes_downloaded
+                        for data in response.iter_bytes():
+                            total_bytes += len(data)
+                            if expected_digest.is_too_big(total_bytes):
+                                raise InputError(
+                                    f"The download from {url} was expected to be "
+                                    f"{expected_digest.size} bytes, but downloaded "
+                                    f"{total_bytes} so far."
                                 )
-                                num_bytes_downloaded = response.num_bytes_downloaded
-                    expected_digest.check(
-                        subject=f"download from {url}",
-                        actual_fingerprint=Fingerprint(digest.hexdigest()),
-                        actual_size=total_bytes,
-                    )
-                    verified_fingerprint = True
-                    if executable:
-                        work.chmod(0o755)
+                            digest.update(data)
+                            cache_fp.write(data)
+                            progress.update(response.num_bytes_downloaded - num_bytes_downloaded)
+                            num_bytes_downloaded = response.num_bytes_downloaded
+                fingerprint = Fingerprint(digest.hexdigest())
+                expected_digest.check(
+                    subject=f"download from {url}",
+                    actual_fingerprint=fingerprint,
+                    actual_size=total_bytes,
+                )
+                fetch_result = FetchResult(
+                    path=cache_entry.path, digest=Digest(size=total_bytes, fingerprint=fingerprint)
+                )
+                if executable:
+                    cache_entry.work_path.chmod(0o755)
+                fetch_result.dump(cache_entry)
+                return fetch_result
 
-    if not verified_fingerprint:
-        expected_cached_digest = _maybe_expected_digest(
-            fingerprint, headers=headers, algorithm=digest_algorithm
+    try:
+        return FetchResult.load(cache_entry)
+    except FetchResult.LoadError as e:
+        logger.warning(f"Re-creating unreadable cache entry for {url}: {e}")
+        cache_entry.delete()
+        return fetch_and_verify(
+            url=url,
+            fingerprint=fingerprint,
+            digest_algorithm=digest_algorithm,
+            executable=executable,
+            ttl=ttl,
+            headers=headers,
         )
-        if expected_cached_digest:
-            expected_cached_digest.check_path(
-                subject=f"cached download from {url}",
-                path=cache_result.path,
-            )
-
-    return cache_result.path

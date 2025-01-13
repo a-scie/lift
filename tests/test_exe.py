@@ -21,13 +21,13 @@ from typing import Any, Iterable
 
 import pytest
 import toml
-from _pytest.tmpdir import TempPathFactory
+from pytest import TempPathFactory
 from testing import issue
 
 from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
-from science.platform import Platform
+from science.platform import CURRENT_PLATFORM, Platform
 
 
 @pytest.fixture(scope="module")
@@ -61,7 +61,7 @@ def science_exe(
         check=True,
         cwd=build_root,
     )
-    science_exe = dest / Platform.current().binary_name("science")
+    science_exe = dest / CURRENT_PLATFORM.binary_name("science")
     assert science_exe.is_file()
     return science_exe
 
@@ -69,7 +69,7 @@ def science_exe(
 def test_use_platform_suffix(
     tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
 ) -> None:
-    expected_executable = tmp_path / Platform.current().qualified_binary_name("science")
+    expected_executable = tmp_path / CURRENT_PLATFORM.qualified_binary_name("science")
     assert not expected_executable.exists()
     subprocess.run(
         args=[
@@ -88,13 +88,13 @@ def test_use_platform_suffix(
         check=True,
     )
     assert expected_executable.is_file()
-    assert not (tmp_path / Platform.current().binary_name("science")).exists()
+    assert not (tmp_path / CURRENT_PLATFORM.binary_name("science")).exists()
 
 
 def test_no_use_platform_suffix(
     tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
 ) -> None:
-    current_platform = Platform.current()
+    current_platform = CURRENT_PLATFORM
     foreign_platform = next(plat for plat in Platform if plat is not current_platform)
     expected_executable = tmp_path / foreign_platform.binary_name("science")
     assert not expected_executable.exists()
@@ -142,7 +142,7 @@ def test_hash(
     docsite: Path,
     shasum: str | None,
 ) -> None:
-    expected_executable = tmp_path / Platform.current().binary_name("science")
+    expected_executable = tmp_path / CURRENT_PLATFORM.binary_name("science")
     algorithms = "sha1", "sha256", "sha512"
     expected_checksum_paths = [
         Path(f"{expected_executable}.{algorithm}") for algorithm in algorithms
@@ -376,7 +376,7 @@ def create_url_source_scie(
     )
     lift_toml_content = f"{lift_toml_content}\n{additional_toml}"
 
-    scie = dest / Platform.current().binary_name(expected_name)
+    scie = dest / CURRENT_PLATFORM.binary_name(expected_name)
     result = subprocess.run(
         args=[str(science_exe), "lift", *extra_lift_args, "build", "--dest-dir", str(dest), "-"],
         input=lift_toml_content,
@@ -672,7 +672,7 @@ def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
         expected_name="skinny",
     )
     result.assert_success()
-    assert result.scie.name == Platform.current().binary_name("skinny")
+    assert result.scie.name == CURRENT_PLATFORM.binary_name("skinny")
     skinny_scie = result.scie
 
     result = create_url_source_scie(
@@ -683,7 +683,7 @@ def test_invert_lazy(tmp_path: Path, science_exe: Path) -> None:
         expected_name="fat",
     )
     result.assert_success()
-    assert result.scie.name == Platform.current().binary_name("fat")
+    assert result.scie.name == CURRENT_PLATFORM.binary_name("fat")
     fat_scie = result.scie
 
     assert skinny_scie.stat().st_size < fat_scie.stat().st_size
@@ -739,7 +739,7 @@ def test_invert_lazy_non_lazy(tmp_path: Path, science_exe: Path) -> None:
 
 
 def working_pypy_versions() -> list[str]:
-    match Platform.current():
+    match CURRENT_PLATFORM:
         case Platform.Linux_s390x:
             return ["2.7", "3.8", "3.9", "3.10"]
         case Platform.Linux_powerpc64le:
@@ -782,7 +782,7 @@ def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
         check=True,
     )
 
-    scie = dest / Platform.current().binary_name("pypy")
+    scie = dest / CURRENT_PLATFORM.binary_name("pypy")
     assert (
         version
         == subprocess.run(args=[scie], text=True, stdout=subprocess.PIPE, check=True).stdout.strip()

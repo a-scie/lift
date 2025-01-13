@@ -4,26 +4,47 @@
 from __future__ import annotations
 
 import dataclasses
-import os
+import json
 import re
+import urllib.parse
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
+from typing import Any
 
 from bs4 import BeautifulSoup
 from packaging.version import Version
 
-from science.cache import download_cache
+from science.cache import Missing, download_cache
 from science.dataclass.reflect import metadata
-from science.errors import InputError
-from science.fetcher import configured_client, fetch_text
+from science.fetcher import configured_client, fetch_json, fetch_text
 from science.frozendict import FrozenDict
 from science.hashing import Digest, Fingerprint
-from science.model import Distribution, Fetch, File, FileType, Identifier, Provider, Url
+from science.model import (
+    Distribution,
+    DistributionsManifest,
+    Fetch,
+    File,
+    FileType,
+    Identifier,
+    Provider,
+    Url,
+)
 from science.platform import Platform
 
 
 @dataclass(frozen=True)
 class FingerprintedAsset:
+    @classmethod
+    def from_dict(cls, data: dict[str, Any], base_url: Url) -> FingerprintedAsset:
+        data["url"] = Url(
+            f"{base_url.rstrip("/")}/{urllib.parse.quote_plus(data.pop("rel_path"), safe="/")}"
+        )
+        data["version"] = Version(data["version"])
+        data["fingerprint"] = Fingerprint(data["fingerprint"])
+        data["file_type"] = FileType(data["file_type"])
+        return cls(**data)
+
     url: Url
     name: str
     extension: str
@@ -35,6 +56,47 @@ class FingerprintedAsset:
 
     def file_stem(self) -> str:
         return self.name[: -(len(self.extension) + 1)]
+
+    def as_dict(self) -> dict[str, Any]:
+        data = dataclasses.asdict(self)
+        data["rel_path"] = data.pop("url").rel_path.as_posix()
+        data["version"] = str(data["version"])
+        data["file_type"] = data["file_type"].value
+        return data
+
+
+@dataclass(frozen=True)
+class Distributions:
+    @classmethod
+    def fetch(cls, base_url: Url, version: Version, release: str | None = None) -> Distributions:
+        data = fetch_json(
+            Url(f"{base_url.rstrip("/")}/distributions-{version}-{release or "any"}.json")
+        )
+        return cls(
+            base_url=base_url,
+            version=version,
+            release=release,
+            assets=tuple(
+                FingerprintedAsset.from_dict(asset, base_url=base_url) for asset in data["assets"]
+            ),
+        )
+
+    base_url: Url
+    version: Version
+    release: str | None
+    assets: tuple[FingerprintedAsset, ...]
+
+    def serialize(self, base_dir: Path) -> None:
+        base_dir.mkdir(parents=True, exist_ok=True)
+        with (base_dir / f"distributions-{self.version}-{self.release or "any"}.json").open(
+            "w"
+        ) as fp:
+            json.dump(
+                {"base_url": self.base_url, "assets": [asset.as_dict() for asset in self.assets]},
+                fp,
+                sort_keys=True,
+                indent=2,
+            )
 
 
 @dataclass(frozen=True)
@@ -75,6 +137,17 @@ class Config:
             """
         ),
     )
+    base_url: Url | None = dataclasses.field(
+        default=None,
+        metadata=metadata(
+            """The base URL to download distributions from.
+
+            Defaults to https://downloads.python.org/pypy/ but can be configured to the
+            `providers/PyPy` sub-directory of a mirror created with the
+            `science download provider PyPy` command.
+            """
+        ),
+    )
 
 
 @dataclass(frozen=True)
@@ -95,6 +168,20 @@ class PyPy(Provider[Config]):
 
     [PyPy]: https://pypy.org/
     """
+
+    @classmethod
+    def supported_platforms(cls) -> frozenset[Platform]:
+        return frozenset(
+            (
+                Platform.Linux_aarch64,
+                Platform.Linux_s390x,
+                Platform.Linux_x86_64,
+                Platform.Macos_aarch64,
+                Platform.Macos_x86_64,
+                Platform.Windows_aarch64,
+                Platform.Windows_x86_64,
+            )
+        )
 
     @staticmethod
     def rank_compatibility(platform: Platform, arch: str) -> int | None:
@@ -138,8 +225,18 @@ class PyPy(Provider[Config]):
     @classmethod
     def create(cls, identifier: Identifier, lazy: bool, config: Config) -> PyPy:
         configured_version = Version(config.version)
+        if config.base_url:
+            return cls(
+                id=identifier,
+                lazy=lazy,
+                _distributions=Distributions.fetch(
+                    base_url=config.base_url, version=configured_version, release=config.release
+                ),
+            )
+
         configured_release = config.release
 
+        base_url = Url("https://downloads.python.org/pypy")
         checksums_html = BeautifulSoup(
             fetch_text(url=Url("https://pypy.org/checksums.html"), ttl=timedelta(days=5)),
             features="html.parser",
@@ -174,7 +271,7 @@ class PyPy(Provider[Config]):
                 extension = match["extension"]
                 assets.append(
                     FingerprintedAsset(
-                        url=Url(f"https://downloads.python.org/pypy/{name}"),
+                        url=Url(f"https://downloads.python.org/pypy/{name}", base=base_url),
                         name=name,
                         extension=extension,
                         version=version,
@@ -185,31 +282,48 @@ class PyPy(Provider[Config]):
                     )
                 )
 
-        return PyPy(id=identifier, lazy=lazy, version=configured_version, assets=tuple(assets))
+        return cls(
+            id=identifier,
+            lazy=lazy,
+            _distributions=Distributions(
+                base_url=base_url,
+                version=configured_version,
+                release=configured_release,
+                assets=tuple(assets),
+            ),
+        )
 
     id: Identifier
     lazy: bool
-    version: Version
-    assets: tuple[FingerprintedAsset, ...]
+    _distributions: Distributions
+
+    @property
+    def version(self) -> Version:
+        return self._distributions.version
+
+    def distributions(self) -> DistributionsManifest:
+        return self._distributions
 
     def distribution(self, platform: Platform) -> Distribution | None:
         selected_asset: FingerprintedAsset | None = None
         asset_rank: int | None = None
-        for asset in self.assets:
+        for asset in self._distributions.assets:
             if (rank := self.rank_compatibility(platform, asset.arch)) is not None and (
                 asset_rank is None or rank < asset_rank
             ):
                 asset_rank = rank
                 selected_asset = asset
         if selected_asset is None:
-            raise InputError(
-                f"No compatible distribution was found for {platform} from amongst:\n"
-                f"{os.linesep.join(asset.name for asset in self.assets)}"
-            )
+            return None
 
-        size = int(
-            configured_client(selected_asset.url).head(selected_asset.url).headers["Content-Length"]
-        )
+        with download_cache().get_or_create(url=Url(f"{selected_asset.url}.size")) as cache_result:
+            if isinstance(cache_result, Missing):
+                with configured_client(selected_asset.url) as client:
+                    response = client.head(selected_asset.url)
+                size = int(response.headers["Content-Length"].strip())
+                cache_result.work_path.write_text(str(size))
+            else:
+                size = int(cache_result.path.read_text())
 
         file = File(
             name=selected_asset.name,
@@ -218,7 +332,9 @@ class PyPy(Provider[Config]):
             type=selected_asset.file_type,
             is_executable=False,
             eager_extract=False,
-            source=Fetch(url=Url(selected_asset.url), lazy=self.lazy),
+            source=Fetch(
+                url=Url(selected_asset.url, base=self._distributions.base_url), lazy=self.lazy
+            ),
         )
 
         placeholders = {}
@@ -236,14 +352,13 @@ class PyPy(Provider[Config]):
         # We correct for that discrepency here:
         top_level_archive_dir = re.sub(r"-portable$", "", selected_asset.file_stem())
 
-        match platform:
-            case Platform.Windows_aarch64 | Platform.Windows_x86_64:
-                pypy_binary = f"{top_level_archive_dir}\\{pypy}.exe"
-                placeholders[Identifier("pypy")] = pypy_binary
-                placeholders[Identifier("python")] = pypy_binary
-            case _:
-                pypy_binary = f"{top_level_archive_dir}/bin/{pypy}"
-                placeholders[Identifier("pypy")] = pypy_binary
-                placeholders[Identifier("python")] = pypy_binary
+        if platform.is_windows:
+            pypy_binary = f"{top_level_archive_dir}\\{pypy}.exe"
+            placeholders[Identifier("pypy")] = pypy_binary
+            placeholders[Identifier("python")] = pypy_binary
+        else:
+            pypy_binary = f"{top_level_archive_dir}/bin/{pypy}"
+            placeholders[Identifier("pypy")] = pypy_binary
+            placeholders[Identifier("python")] = pypy_binary
 
         return Distribution(id=self.id, file=file, placeholders=FrozenDict(placeholders))

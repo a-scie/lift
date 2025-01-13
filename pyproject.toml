@@ -60,6 +60,7 @@ dev = [
     "types-beautifulsoup4",
     "types-docutils",
     "types-psutil",
+    "types-setuptools",
     "types-toml",
     "types-tqdm",
 ]
@@ -95,7 +96,7 @@ check-fmt = ["ruff", "format", "--diff"]
 lint = ["ruff", "check", "--fix"]
 check-lint = ["ruff", "check"]
 
-type-check = ["mypy", "docs/_ext", "science", "scripts", "tests", "test-support"]
+type-check = ["mypy", "docs/_ext", "science", "scripts", "setup.py", "tests", "test-support"]
 
 doc = ["sphinx-build", "-b", "html", "-aEW", "docs", "docs/build/html"]
 linkcheck = ["sphinx-build", "-b", "linkcheck", "-aEW", "docs", "docs/build/linkcheck"]

@@ -4,10 +4,13 @@
 from __future__ import annotations
 
 import dataclasses
-import os
+import json
 import re
+import urllib.parse
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path, PurePath
+from typing import Any
 
 from packaging.version import Version
 
@@ -17,18 +20,96 @@ from science.errors import InputError
 from science.fetcher import fetch_json, fetch_text
 from science.frozendict import FrozenDict
 from science.hashing import Digest, Fingerprint
-from science.model import Distribution, Fetch, File, FileType, Identifier, Provider, Url
+from science.model import (
+    Distribution,
+    DistributionsManifest,
+    Fetch,
+    File,
+    FileType,
+    Identifier,
+    Provider,
+    Url,
+)
 from science.platform import Platform
 
 
 @dataclass(frozen=True)
 class FingerprintedAsset:
+    @classmethod
+    def from_dict(cls, data: dict[str, Any], base_url: Url) -> FingerprintedAsset:
+        data["url"] = Url(
+            f"{base_url.rstrip("/")}/{urllib.parse.quote_plus(data.pop("rel_path"), safe="/")}"
+        )
+
+        digest = data["digest"]
+        data["digest"] = Digest(size=digest["size"], fingerprint=Fingerprint(digest["fingerprint"]))
+
+        data["version"] = Version(data["version"])
+        data["file_type"] = FileType(data["file_type"])
+        return cls(**data)
+
     url: Url
     name: str
     digest: Digest
     version: Version
     target_triple: str
     file_type: FileType
+
+    def as_dict(self) -> dict[str, Any]:
+        data = dataclasses.asdict(self)
+        data["rel_path"] = data.pop("url").rel_path.as_posix()
+        data["digest"] = {"size": self.digest.size, "fingerprint": self.digest.fingerprint}
+        data["version"] = str(data["version"])
+        data["file_type"] = data["file_type"].value
+        return data
+
+
+@dataclass(frozen=True)
+class Distributions:
+    @classmethod
+    def fetch(
+        cls, base_url: Url, version: Version, flavor: str, release: str | None = None
+    ) -> Distributions:
+        rel_path = (
+            PurePath(f"download/{release}" if release else "latest/download")
+            / f"distributions-{version}-{flavor}.json"
+        )
+        data = fetch_json(Url(f"{base_url.rstrip("/")}/{rel_path.as_posix()}"))
+        return cls(
+            base_url=base_url,
+            release=data["release"],
+            latest=release is None,
+            version=version,
+            flavor=flavor,
+            assets=tuple(
+                FingerprintedAsset.from_dict(asset, base_url=base_url) for asset in data["assets"]
+            ),
+        )
+
+    base_url: Url
+    release: str
+    latest: bool
+    version: Version
+    flavor: str
+    assets: tuple[FingerprintedAsset, ...]
+
+    def serialize(self, base_dir: Path) -> None:
+        if self.latest:
+            dest_dir = base_dir / "latest" / "download"
+        else:
+            dest_dir = base_dir / "download" / self.release
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        with (dest_dir / f"distributions-{self.version}-{self.flavor}.json").open("w") as fp:
+            json.dump(
+                {
+                    "base_url": self.base_url,
+                    "release": self.release,
+                    "assets": [asset.as_dict() for asset in self.assets],
+                },
+                fp,
+                sort_keys=True,
+                indent=2,
+            )
 
 
 @dataclass(frozen=True)
@@ -93,6 +174,17 @@ class Config:
             """The flavor of the Python Standalone Builds release to use.
 
             Currently only accepts 'install_only' and 'install_only_stripped'.
+            """
+        ),
+    )
+    base_url: Url | None = dataclasses.field(
+        default=None,
+        metadata=metadata(
+            """The base URL to download distributions from.
+
+            Defaults to https://github.com/astral-sh/python-build-standalone/releases but can be
+            configured to the `providers/PythonBuildStandalone` sub-directory of a mirror created
+            with the `science download provider PythonBuildStandalone` command.
             """
         ),
     )
@@ -206,17 +298,30 @@ class PythonBuildStandalone(Provider[Config]):
 
     @classmethod
     def create(cls, identifier: Identifier, lazy: bool, config: Config) -> PythonBuildStandalone:
-        api_url = "https://api.github.com/repos/indygreg/python-build-standalone/releases"
+        version = Version(config.version)
+        if config.base_url:
+            return cls(
+                id=identifier,
+                lazy=lazy,
+                _distributions=Distributions.fetch(
+                    base_url=config.base_url,
+                    version=version,
+                    flavor=config.flavor,
+                    release=config.release,
+                ),
+            )
+
+        api_url = "https://api.github.com/repos/astral-sh/python-build-standalone/releases"
         if config.release:
             release_url = Url(f"{api_url}/tags/{config.release}")
             ttl = None
         else:
             release_url = Url(f"{api_url}/latest")
             ttl = timedelta(days=5)
+        # For a given release (optional config parameter), get metadata.
         release_data = fetch_json(release_url, ttl=ttl)
 
         release = release_data["name"]
-        version = Version(config.version)
         # Names are like:
         #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
         name_re = re.compile(
@@ -229,6 +334,7 @@ class PythonBuildStandalone(Provider[Config]):
         # 1. The release archive.
         # 2. The release archive .sah256 file with its individual checksum.
         # 3. The SHA256SUMS file with all the release archive checksums.
+        base_url = Url("https://github.com/astral-sh/python-build-standalone/releases")
         sha256sums_url: Url | None = None
         asset_mapping = {}
         for asset in release_data["assets"]:
@@ -244,7 +350,7 @@ class PythonBuildStandalone(Provider[Config]):
                 target_triple = match["target_triple"]
                 extension = match["extension"]
                 asset_mapping[name] = Asset(
-                    url=Url(url),
+                    url=Url(url, base=base_url),
                     name=name,
                     size=size,
                     version=exact_version,
@@ -280,33 +386,38 @@ class PythonBuildStandalone(Provider[Config]):
         return cls(
             id=identifier,
             lazy=lazy,
-            release=release,
-            version=version,
-            flavor=config.flavor,
-            assets=tuple(fingerprinted_assets),
+            _distributions=Distributions(
+                release=release,
+                latest=config.release is None,
+                version=version,
+                flavor=config.flavor,
+                base_url=base_url,
+                assets=tuple(fingerprinted_assets),
+            ),
         )
 
     id: Identifier
     lazy: bool
-    release: str
-    version: Version
-    flavor: str
-    assets: tuple[FingerprintedAsset, ...]
+    _distributions: Distributions
+
+    @property
+    def version(self) -> Version:
+        return self._distributions.version
+
+    def distributions(self) -> DistributionsManifest:
+        return self._distributions
 
     def distribution(self, platform: Platform) -> Distribution | None:
         selected_asset: FingerprintedAsset | None = None
         asset_rank: int | None = None
-        for asset in self.assets:
+        for asset in self._distributions.assets:
             if (rank := self.rank_compatibility(platform, asset.target_triple)) is not None and (
                 asset_rank is None or rank < asset_rank
             ):
                 asset_rank = rank
                 selected_asset = asset
         if selected_asset is None:
-            raise InputError(
-                f"No compatible distribution was found for {platform} from amongst:\n"
-                f"{os.linesep.join(asset.name for asset in self.assets)}"
-            )
+            return None
 
         file = File(
             name=selected_asset.name,
@@ -315,18 +426,19 @@ class PythonBuildStandalone(Provider[Config]):
             type=selected_asset.file_type,
             is_executable=False,
             eager_extract=False,
-            source=Fetch(url=Url(selected_asset.url), lazy=self.lazy),
+            source=Fetch(
+                url=Url(selected_asset.url, base=self._distributions.base_url), lazy=self.lazy
+            ),
         )
         placeholders = {}
-        match self.flavor:
+        match self._distributions.flavor:
             case "install_only" | "install_only_stripped":
-                match platform:
-                    case Platform.Windows_aarch64 | Platform.Windows_x86_64:
-                        placeholders[Identifier("python")] = "python\\python.exe"
-                    case _:
-                        version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
-                        placeholders[Identifier("python")] = f"python/bin/python{version}"
-                        placeholders[Identifier("pip")] = f"python/bin/pip{version}"
+                if platform.is_windows:
+                    placeholders[Identifier("python")] = "python\\python.exe"
+                else:
+                    version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
+                    placeholders[Identifier("python")] = f"python/bin/python{version}"
+                    placeholders[Identifier("pip")] = f"python/bin/pip{version}"
             case flavor:
                 raise InputError(
                     "PythonBuildStandalone currently only understands the 'install_only' flavor of "

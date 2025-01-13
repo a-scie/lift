@@ -116,7 +116,7 @@ class RawTypenameError(ValueError):
         super().__init__(
             os.linesep.join(
                 (
-                    f"Raw data type names are not allowed and {type_} has no " "configured name.",
+                    f"Raw data type names are not allowed and {type_} has no configured name.",
                     f"Use @{documented_dataclass.__module__}.documented_dataclass(alias=...) "
                     "to define one.",
                 )
