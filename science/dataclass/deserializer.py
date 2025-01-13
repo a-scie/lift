@@ -41,6 +41,8 @@ def _parse_field(
                 ),
             ),
         )
+        if not data_value and default is None:
+            return cast(_F, None)
         return cast(_F, parse(data_value, dataclass_type, custom_parsers=custom_parsers))
 
     if type_.istype(int):
