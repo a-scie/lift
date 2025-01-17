@@ -87,6 +87,12 @@ jobs:
       - name: Install the latest version of uv
         if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
         uses: astral-sh/setup-uv@v5
+      - name: Setup uv
+        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
+        run: |
+          export UV="$(which uv)"
+          "${UV}" -V
+          echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Install the latest version of uv
         if: matrix.os == 'windows-arm64'
         run: |
@@ -99,9 +105,9 @@ jobs:
             shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
             unzip uv-x86_64-pc-windows-msvc.zip
           )
-          export PATH="${CI_BIN_DIR}:${PATH}"
-          uv -V
-          echo PATH="${PATH}" >> ${GITHUB_ENV}
+          export UV="${CI_BIN_DIR}/uv.exe"
+          "${UV}" -V
+          echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
         run: |
@@ -109,7 +115,7 @@ jobs:
           # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
           # native deps like psutil) for our shiv.
           UV_PYTHON_VERSION=cpython-3.12.8-windows-x86_64-none
-          uv python install ${UV_PYTHON_VERSION}
+          "${UV}" python install ${UV_PYTHON_VERSION}
           echo UV_PYTHON_ARGS="--python ${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
         if: matrix.docker-platform != ''
@@ -120,7 +126,7 @@ jobs:
           ref: ${{ needs.determine-tag.outputs.release-tag }}
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
         if: matrix.docker-platform == ''
-        run: uv run ${UV_PYTHON_ARGS} dev-cmd package
+        run: "${UV}" run ${UV_PYTHON_ARGS} dev-cmd package
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
         if: matrix.docker-platform != ''
         run: |

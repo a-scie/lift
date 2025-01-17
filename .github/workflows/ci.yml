@@ -64,6 +64,12 @@ jobs:
       - name: Install the latest version of uv
         if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
         uses: astral-sh/setup-uv@v5
+      - name: Setup uv
+        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
+        run: |
+          export UV="$(which uv)"
+          "${UV}" -V
+          echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Install the latest version of uv
         if: matrix.os == 'windows-arm64'
         run: |
@@ -76,9 +82,9 @@ jobs:
             shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
             unzip uv-x86_64-pc-windows-msvc.zip
           )
-          export PATH="${CI_BIN_DIR}:${PATH}"
-          uv -V
-          echo PATH="${PATH}" >> ${GITHUB_ENV}
+          export UV="${CI_BIN_DIR}/uv.exe"
+          "${UV}" -V
+          echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
         run: |
@@ -86,7 +92,7 @@ jobs:
           # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
           # native deps like psutil) for our shiv.
           UV_PYTHON_VERSION=cpython-3.12.8-windows-x86_64-none
-          uv python install ${UV_PYTHON_VERSION}
+          "${UV}" python install ${UV_PYTHON_VERSION}
           echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
         if: matrix.docker-platform != ''
@@ -95,7 +101,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
-        run: uv run dev-cmd ci --skip test
+        run: "${UV}" run dev-cmd ci --skip test
       - name: Check Formatting & Lints
         if: matrix.docker-platform != ''
         run: |
@@ -120,7 +126,7 @@ jobs:
           echo SCIE_BASE=C:/tmp/gha/nce >> ${GITHUB_ENV}
       - name: Unit Tests
         if: matrix.docker-platform == ''
-        run: uv run dev-cmd test -- -vvs
+        run: "${UV}" run dev-cmd test -- -vvs
       - name: Unit Tests
         if: matrix.docker-platform != ''
         run: |
@@ -150,7 +156,7 @@ jobs:
             python:3.12-bookworm bash _ci_test.sh
       - name: Build & Package
         if: matrix.docker-platform == ''
-        run: uv run dev-cmd package
+        run: "${UV}" run dev-cmd package
       - name: Build & Package
         if: matrix.docker-platform != ''
         run: |
@@ -169,7 +175,7 @@ jobs:
               "
       - name: Generate Doc Site
         if: matrix.docker-platform == ''
-        run: uv run dev-cmd doc linkcheck
+        run: "${UV}" run dev-cmd doc linkcheck
       - name: Generate Doc Site
         if: matrix.docker-platform != ''
         run: |
