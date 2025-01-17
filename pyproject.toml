@@ -87,6 +87,9 @@ line-length = 100
 [tool.ruff.lint]
 extend-select = ["I"]
 
+[tool.uv]
+required-version = ">=0.5.19"
+
 [tool.dev-cmd.commands]
 check-python-version = ["scripts/check-python-version-alignment.py"]
 
