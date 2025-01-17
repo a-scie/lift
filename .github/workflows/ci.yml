@@ -63,7 +63,7 @@ jobs:
     steps:
       - name: Install the latest version of uv
         if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
       - name: Install the latest version of uv
         if: matrix.os == 'windows-arm64'
         run: |
