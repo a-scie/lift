@@ -155,7 +155,7 @@ PYTHONPATH = "../test-support"
 SCIENCE_TEST_PYZ_PATH = "../dist/science.pyz"
 
 [tool.dev-cmd.tasks]
-linkcheck = ["doc-typelinkcheck"]
+linkcheck = ["doc-type:linkcheck"]
 test = ["create-zipapp", "pytest"]
 checks = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
 ci = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]

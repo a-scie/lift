@@ -150,7 +150,7 @@ wheels = [
 
 [[package]]
 name = "dev-cmd"
-version = "0.12.0"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioconsole" },
@@ -159,9 +159,8 @@ dependencies = [
     { name = "packaging" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/a2/823d13b9e22cdf13c10374502af2112e0c0dd6b60a49acda2e2777471ada/dev_cmd-0.12.0.tar.gz", hash = "sha256:dc032b71eb812f4dcba36fa36df3b8a88a8b2d3eb84763fbd8e5081608421b9f", size = 38949 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/49/698970311e1031492906d42f1add367ee17795d7403a9ec320eae0801f4e/dev_cmd-0.12.0-py3-none-any.whl", hash = "sha256:01e2eb3c7878246080fa17f4068db0c59a39a5d4375cf92cbc4070aea69624a5", size = 32469 },
+    { url = "https://files.pythonhosted.org/packages/e9/ab/2d9aa6dbb7a4305ce7c3be03895596992762d39b0e408f3809c7bfcfd884/dev_cmd-0.13.0-py3-none-any.whl", hash = "sha256:0f3211e624806ba5b6a62e4edb7e4a3fbc908a31f88f9c4aca87f330b0f1822c", size = 32452 },
 ]
 
 [[package]]
