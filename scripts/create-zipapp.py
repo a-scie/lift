@@ -2,6 +2,7 @@
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 import atexit
+import os
 import shutil
 import subprocess
 import sys
@@ -13,13 +14,16 @@ def main() -> int:
     work_dir = Path(tempfile.mkdtemp(prefix="science-zipapp-build."))
     atexit.register(shutil.rmtree, work_dir, ignore_errors=True)
 
+    # An affordance for CI uv setups on some shards.
+    uv = os.environ.get("UV", "uv")
+
     locked_requirements = work_dir / "requirements.txt"
     wheels = work_dir / "wheels"
     processes = [
         subprocess.Popen(
-            args=["uv", "-q", "export", "--no-dev", "--no-emit-project", "-o", locked_requirements],
+            args=[uv, "-q", "export", "--no-dev", "--no-emit-project", "-o", locked_requirements],
         ),
-        subprocess.Popen(args=["uv", "-q", "build", "--wheel", "-o", wheels]),
+        subprocess.Popen(args=[uv, "-q", "build", "--wheel", "-o", wheels]),
     ]
     while processes:
         process = processes.pop()
@@ -33,7 +37,7 @@ def main() -> int:
     if 0 != (
         exit_code := subprocess.call(
             args=[
-                "uv",
+                uv,
                 "-q",
                 "pip",
                 "install",
