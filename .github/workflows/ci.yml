@@ -67,16 +67,17 @@ jobs:
       - name: Install the latest version of uv
         if: matrix.os == 'windows-arm64'
         run: |
-          rm -rf .bin && mkdir .bin && cd .bin
-
-          curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip
-          curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip.sha256
-          shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
-
-          unzip uv-x86_64-pc-windows-msvc.zip
-          export PATH="$(pwd):${PATH}"
+          CI_BIN_DIR=$(mktemp -d)
+          echo CI_BIN_DIR="${CI_BIN_DIR}" >> ${GITHUB_ENV}
+          (
+            cd "${CI_BIN_DIR}"
+            curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip
+            curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip.sha256
+            shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
+            unzip uv-x86_64-pc-windows-msvc.zip
+          )
+          export PATH="${CI_BIN_DIR}:${PATH}"
           uv -V
-
           echo PATH="${PATH}" >> ${GITHUB_ENV}
       - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
@@ -185,3 +186,9 @@ jobs:
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
                 su build -c 'uv run dev-cmd doc linkcheck'
               "
+      - name: Cleanup
+        if: always()
+        run: |
+          if [[ -n "${CI_BIN_DIR}" && -d "${CI_BIN_DIR}" ]]; then
+            rm -rf "${CI_BIN_DIR}"
+          fi
