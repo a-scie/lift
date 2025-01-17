@@ -74,7 +74,7 @@ jobs:
           shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
 
           unzip uv-x86_64-pc-windows-msvc.zip
-          export PATH="$(pwd):${PATH}
+          export PATH="$(pwd):${PATH}"
           uv -V
 
           echo PATH="${PATH}" >> ${GITHUB_ENV}
