@@ -87,6 +87,9 @@ line-length = 100
 [tool.ruff.lint]
 extend-select = ["I"]
 
+[tool.uv]
+required-version = ">=0.5.19"
+
 [tool.dev-cmd.commands]
 check-python-version = ["scripts/check-python-version-alignment.py"]
 
@@ -98,8 +101,7 @@ check-lint = ["ruff", "check"]
 
 type-check = ["mypy", "docs/_ext", "science", "scripts", "setup.py", "tests", "test-support"]
 
-doc = ["sphinx-build", "-b", "html", "-aEW", "docs", "docs/build/html"]
-linkcheck = ["sphinx-build", "-b", "linkcheck", "-aEW", "docs", "docs/build/linkcheck"]
+doc = ["sphinx-build", "-b", "{-type:html}", "-aEW", "docs", "docs/build/{-type:html}"]
 
 create-zipapp = ["scripts/create-zipapp.py"]
 
@@ -156,6 +158,7 @@ PYTHONPATH = "../test-support"
 SCIENCE_TEST_PYZ_PATH = "../dist/science.pyz"
 
 [tool.dev-cmd.tasks]
+linkcheck = ["doc-type:linkcheck"]
 test = ["create-zipapp", "pytest"]
 checks = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
 ci = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]
