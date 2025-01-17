@@ -62,15 +62,8 @@ jobs:
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Install the latest version of uv
-        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
+        if: matrix.docker-platform == ''
         uses: astral-sh/setup-uv@v4
-      - name: Install the latest version of uv
-        if: matrix.os == 'windows-arm64'
-        shell: cmd
-        run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
-          cargo install --git https://github.com/astral-sh/uv uv
-          uv -V
       - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
         run: |
