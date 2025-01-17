@@ -150,17 +150,18 @@ wheels = [
 
 [[package]]
 name = "dev-cmd"
-version = "0.11.1"
+version = "0.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioconsole" },
     { name = "ansicolors" },
     { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "packaging" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/71/05/9fd907b1ad956cd8979faa2e5bd00c4866c03e97b42172702c8f29dc0bc4/dev_cmd-0.11.1.tar.gz", hash = "sha256:4a9d30bb399b7cb6e1948c882ad883d54a6e8b77cb65f0c377220ccf7927ace3", size = 41158 }
+sdist = { url = "https://files.pythonhosted.org/packages/de/a2/823d13b9e22cdf13c10374502af2112e0c0dd6b60a49acda2e2777471ada/dev_cmd-0.12.0.tar.gz", hash = "sha256:dc032b71eb812f4dcba36fa36df3b8a88a8b2d3eb84763fbd8e5081608421b9f", size = 38949 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/0f/c4c66db5807a9a1527982eebd4ba62a2f76efcc6fb8b7e9d2c63bc3b4cc2/dev_cmd-0.11.1-py3-none-any.whl", hash = "sha256:395f0ac099e8ec40736b3865602c809082b84bb28c9bd062fd06ba35e7b9954e", size = 27068 },
+    { url = "https://files.pythonhosted.org/packages/70/49/698970311e1031492906d42f1add367ee17795d7403a9ec320eae0801f4e/dev_cmd-0.12.0-py3-none-any.whl", hash = "sha256:01e2eb3c7878246080fa17f4068db0c59a39a5d4375cf92cbc4070aea69624a5", size = 32469 },
 ]
 
 [[package]]
@@ -517,7 +518,6 @@ wheels = [
 
 [[package]]
 name = "science"
-version = "0.11.2"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
