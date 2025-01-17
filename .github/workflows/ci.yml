@@ -67,14 +67,16 @@ jobs:
       - name: Install the latest version of uv
         if: matrix.os == 'windows-arm64'
         run: |
-          curl -fssL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip
-          curl -fssL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip.sha256
+          rm -rf .bin && mkdir .bin && cd .bin
+
+          curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip
+          curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip.sha256
           shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
-          
-          unzip -d .bin uv-x86_64-pc-windows-msvc.zip
-          export PATH="${PWD}/.bin:${PATH}
+
+          unzip uv-x86_64-pc-windows-msvc.zip
+          export PATH="$(pwd):${PATH}
           uv -V
-          
+
           echo PATH="${PATH}" >> ${GITHUB_ENV}
       - name: Setup x86_64 Python for Prism
         if: matrix.os == 'windows-arm64'
