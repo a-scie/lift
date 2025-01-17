@@ -73,7 +73,7 @@ jobs:
       - name: Install the latest version of uv
         if: matrix.os == 'windows-arm64'
         run: |
-          CI_BIN_DIR=$(mktemp -d)
+          CI_BIN_DIR="$(mktemp -d)"
           echo CI_BIN_DIR="${CI_BIN_DIR}" >> ${GITHUB_ENV}
           (
             cd "${CI_BIN_DIR}"
@@ -101,7 +101,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
-        run: "${UV}" run dev-cmd ci --skip test
+        run: |
+          "${UV}" run dev-cmd ci --skip test
       - name: Check Formatting & Lints
         if: matrix.docker-platform != ''
         run: |
@@ -126,7 +127,8 @@ jobs:
           echo SCIE_BASE=C:/tmp/gha/nce >> ${GITHUB_ENV}
       - name: Unit Tests
         if: matrix.docker-platform == ''
-        run: "${UV}" run dev-cmd test -- -vvs
+        run: |
+          "${UV}" run dev-cmd test -- -vvs
       - name: Unit Tests
         if: matrix.docker-platform != ''
         run: |
@@ -156,7 +158,8 @@ jobs:
             python:3.12-bookworm bash _ci_test.sh
       - name: Build & Package
         if: matrix.docker-platform == ''
-        run: "${UV}" run dev-cmd package
+        run: |
+          "${UV}" run dev-cmd package
       - name: Build & Package
         if: matrix.docker-platform != ''
         run: |
@@ -175,7 +178,8 @@ jobs:
               "
       - name: Generate Doc Site
         if: matrix.docker-platform == ''
-        run: "${UV}" run dev-cmd doc linkcheck
+        run: |
+          "${UV}" run dev-cmd doc linkcheck
       - name: Generate Doc Site
         if: matrix.docker-platform != ''
         run: |
