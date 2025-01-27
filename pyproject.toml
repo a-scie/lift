@@ -101,11 +101,12 @@ check-lint = ["ruff", "check"]
 
 type-check = ["mypy", "docs/_ext", "science", "scripts", "setup.py", "tests", "test-support"]
 
-doc = ["sphinx-build", "-b", "{-type:html}", "-aEW", "docs", "docs/build/{-type:html}"]
+[tool.dev-cmd.commands.create-zipapp]
+args = ["scripts/create-zipapp.py"]
+hidden = true
 
-create-zipapp = ["scripts/create-zipapp.py"]
-
-package-thin-scie = [
+[tool.dev-cmd.commands.package-thin-scie]
+args = [
     "python",
     "dist/science.pyz",
     "lift",
@@ -121,8 +122,10 @@ package-thin-scie = [
     "--dest-dir",
     "dist",
 ]
+hidden = true
 
-package-fat-scie = [
+[tool.dev-cmd.commands.package-fat-scie]
+args = [
     "python",
     "dist/science.pyz",
     "lift",
@@ -142,29 +145,54 @@ package-fat-scie = [
     "--dest-dir",
     "dist",
 ]
+hidden = true
+
+[tool.dev-cmd.commands.doc.factors]
+type = """\
+The type of sphinx doc to build. One of:
+html, dirhtml, htmlhelp, qthelp, devhelp, text, gettext, linkcheck or xml.
+"""
+[tool.dev-cmd.commands.doc]
+args = ["sphinx-build", "-b", "{-type:html}", "-aEW", "docs", "docs/build/{-type:html}"]
 
 [tool.dev-cmd.commands.run-zipapp]
 env = {"SCIENCE_DOC_LOCAL" = "docs/build/html"}
 args = ["python", "dist/science.pyz"]
 accepts-extra-args = true
+hidden = true
 
 [tool.dev-cmd.commands.pytest]
 args = ["pytest", "-n", "auto"]
 cwd = "tests"
 accepts-extra-args = true
+hidden = true
 [tool.dev-cmd.commands.pytest.env]
 BUILD_ROOT = ".."
 PYTHONPATH = "../test-support"
 SCIENCE_TEST_PYZ_PATH = "../dist/science.pyz"
 
 [tool.dev-cmd.tasks]
-linkcheck = ["doc-type:linkcheck"]
 test = ["create-zipapp", "pytest"]
-checks = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
-ci = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]
-science = [["doc", "create-zipapp"], "run-zipapp"]
 
-package = [["doc", "create-zipapp"], ["package-thin-scie", "package-fat-scie"]]
+[tool.dev-cmd.tasks.linkcheck]
+description = "Check documentation for broken links."
+steps = ["doc-type:linkcheck"]
+
+[tool.dev-cmd.tasks.package]
+description = "Build the science scies using science from local sources."
+steps = [["doc", "create-zipapp"], ["package-thin-scie", "package-fat-scie"]]
+
+[tool.dev-cmd.tasks.science]
+description = "Runs science from local sources. Accepts extra args after --."
+steps = [["doc", "create-zipapp"], "run-zipapp"]
+
+[tool.dev-cmd.tasks.checks]
+description = "Runs all development checks, including auto-formatting code."
+steps = [["check-python-version", ["fmt", "lint"]], "type-check", "test"]
+
+[tool.dev-cmd.tasks.ci]
+description = "Runs all checks used for CI."
+steps = [["check-python-version", "check-fmt", "check-lint", "type-check"], "test"]
 
 [tool.dev-cmd]
 default = "checks"
