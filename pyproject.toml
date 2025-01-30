@@ -157,7 +157,7 @@ args = ["sphinx-build", "-b", "{-type:html}", "-aEW", "docs", "docs/build/{-type
 
 [tool.dev-cmd.commands.run-zipapp]
 env = {"SCIENCE_DOC_LOCAL" = "docs/build/html"}
-args = ["python", "dist/science.pyz"]
+args = ["dist/science.pyz"]
 accepts-extra-args = true
 hidden = true
 
@@ -183,7 +183,7 @@ description = "Build the science scies using science from local sources."
 steps = [["doc", "create-zipapp"], ["package-thin-scie", "package-fat-scie"]]
 
 [tool.dev-cmd.tasks.science]
-description = "Runs science from local sources. Accepts extra args after --."
+description = "Runs science from local sources."
 steps = [["doc", "create-zipapp"], "run-zipapp"]
 
 [tool.dev-cmd.tasks.checks]
