@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.11.3
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.9.
+
 ## 0.11.2
 
 This release fixes a bug introduced in the 0.11.0 release whereby a `ptex` binary was always
