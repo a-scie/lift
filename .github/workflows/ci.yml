@@ -17,6 +17,9 @@ concurrency:
   group: CI-${{ github.ref }}
   # Queue on all branches and tags, but only cancel overlapping PR burns.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+env:
+  # Work around SIGSEGVs and other errors under some qemu targets.
+  UV_CONCURRENT_INSTALLS: 1
 jobs:
   org-check:
     name: Check GitHub Organization
