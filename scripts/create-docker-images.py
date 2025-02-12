@@ -89,6 +89,8 @@ def obtain_wheels(
             colors.color(f"Saving wheels for {platform} to {wheel_dir}...", fg="gray"),
             file=sys.stderr,
         )
+        uid = os.getuid()  # type: ignore[attr-defined]
+        gid = os.getgid()  # type: ignore[attr-defined]
         subprocess.run(
             args=[
                 "docker",
@@ -104,7 +106,7 @@ def obtain_wheels(
                 dedent(
                     f"""\
                     cp /wheels/*.whl /mnt/wheels
-                    chown -R {os.getuid()}:{os.getgid()} /mnt/wheels
+                    chown -R {uid}:{gid} /mnt/wheels
                     chmod 755 /mnt/wheels
                     """
                 ),
