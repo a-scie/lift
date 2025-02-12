@@ -109,8 +109,8 @@ jobs:
           path: .mypy_cache
           # We're using a key suffix / restore-keys prefix trick here to get an updatable cache.
           # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
-          key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tox-env }}-a-scie-lift-mypy-v1-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tox-env }}-a-scie-lift-mypy-v1
+          key: ${{ matrix.os }}-${{ matrix.docker-platform || runner.arch }}-a-scie-lift-mypy-v1-${{ github.run_id }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.docker-platform || runner.arch }}-a-scie-lift-mypy-v1
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
         run: |
