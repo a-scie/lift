@@ -4,6 +4,9 @@
 # Python bytecode.
 __pycache__/
 
+# We copy files from elseshwere in the project here just in time for use in docker image builds.
+/docker/ephemeral-context/
+
 # Sphinx doc site (html) builds are generated here.
 /docs/build/
 
@@ -12,4 +15,3 @@ __pycache__/
 
 # Our Sphinx extension (see: docs/_ext/) dynamically generates doc sources here.
 /docs/_/
-

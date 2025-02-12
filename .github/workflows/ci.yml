@@ -17,9 +17,6 @@ concurrency:
   group: CI-${{ github.ref }}
   # Queue on all branches and tags, but only cancel overlapping PR burns.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
-env:
-  # Work around SIGSEGVs and other errors under some qemu targets.
-  UV_CONCURRENT_INSTALLS: 1
 jobs:
   org-check:
     name: Check GitHub Organization
@@ -115,12 +112,11 @@ jobs:
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm \
+            ghcr.io/a-scie/lift/dev:latest \
               bash -c "
-                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'uv run dev-cmd ci --skip test'
+                su build -c 'uv lock -U && uv run dev-cmd ci --skip test'
               "
       - name: Configure Windows pytest short tmp dir path
         if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
@@ -146,10 +142,9 @@ jobs:
             echo "Skipping tests on ppc64le."
             exit 0
           fi
-          pip install --root-user-action ignore uv
           addgroup --gid $(id -g) build
           adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
-          su build -c "uv run dev-cmd test -- -vvs"
+          su build -c "uv lock -U && uv run dev-cmd test -- -vvs"
           EOF
 
           docker run --rm \
@@ -158,7 +153,7 @@ jobs:
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm bash _ci_test.sh
+            ghcr.io/a-scie/lift/dev:latest bash _ci_test.sh
       - name: Build & Package
         if: matrix.docker-platform == ''
         run: |
@@ -172,12 +167,11 @@ jobs:
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm \
+            ghcr.io/a-scie/lift/dev:latest \
               bash -c "
-                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'uv run dev-cmd package'
+                su build -c 'uv lock -U && uv run dev-cmd package'
               "
       - name: Generate Doc Site
         if: matrix.docker-platform == ''
@@ -192,12 +186,11 @@ jobs:
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm \
+            ghcr.io/a-scie/lift/dev:latest \
               bash -c "
-                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'uv run dev-cmd doc linkcheck'
+                su build -c 'uv lock -U && uv run dev-cmd doc linkcheck'
               "
       - name: Cleanup
         if: always()

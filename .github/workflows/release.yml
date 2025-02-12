@@ -11,9 +11,6 @@ on:
 defaults:
   run:
     shell: bash
-env:
-  # Work around SIGSEGVs and other errors under some qemu targets.
-  UV_CONCURRENT_INSTALLS: 1
 jobs:
   org-check:
     name: Check GitHub Organization
@@ -140,12 +137,11 @@ jobs:
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm \
+            ghcr.io/a-scie/lift/dev:latest \
               bash -c "
-                pip install --root-user-action ignore uv &&
                 addgroup --gid $(id -g) build &&
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'uv run dev-cmd package'
+                su build -c 'uv lock -U && uv run dev-cmd package'
               "
       - name: Generate science ${{ needs.determine-tag.outputs.release-tag }} artifact attestations
         uses: actions/attest-build-provenance@v1

@@ -1,6 +1,82 @@
 version = 1
 requires-python = "==3.12.*"
 
+[manifest]
+constraints = [
+    { name = "aioconsole", specifier = "==0.8.1" },
+    { name = "alabaster", specifier = "==1.0.0" },
+    { name = "ansicolors", specifier = "==1.1.8" },
+    { name = "anyio", specifier = "==4.7.0" },
+    { name = "appdirs", specifier = "==1.4.4" },
+    { name = "babel", specifier = "==2.16.0" },
+    { name = "beautifulsoup4", specifier = "==4.12.3" },
+    { name = "certifi", specifier = "==2024.12.14" },
+    { name = "charset-normalizer", specifier = "==3.4.1" },
+    { name = "click", specifier = "==8.1.8" },
+    { name = "click-didyoumean", specifier = "==0.3.1" },
+    { name = "click-log", specifier = "==0.4.0" },
+    { name = "colorama", marker = "sys_platform == 'win32'", specifier = "==0.4.6" },
+    { name = "dev-cmd", specifier = "==0.16.0" },
+    { name = "docutils", specifier = "==0.21.2" },
+    { name = "execnet", specifier = "==2.1.1" },
+    { name = "filelock", specifier = "==3.16.1" },
+    { name = "h11", specifier = "==0.14.0" },
+    { name = "httpcore", specifier = "==1.0.7" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "idna", specifier = "==3.10" },
+    { name = "imagesize", specifier = "==1.4.1" },
+    { name = "iniconfig", specifier = "==2.0.0" },
+    { name = "jinja2", specifier = "==3.1.5" },
+    { name = "linkify-it-py", specifier = "==2.0.3" },
+    { name = "markdown-it-py", specifier = "==3.0.0" },
+    { name = "markupsafe", specifier = "==3.0.2" },
+    { name = "mdit-py-plugins", specifier = "==0.4.2" },
+    { name = "mdurl", specifier = "==0.1.2" },
+    { name = "mypy", specifier = "==1.14.1" },
+    { name = "mypy-extensions", specifier = "==1.0.0" },
+    { name = "myst-parser", specifier = "==4.0.0" },
+    { name = "packaging", specifier = "==24.2" },
+    { name = "pip", specifier = "==24.3.1" },
+    { name = "pluggy", specifier = "==1.5.0" },
+    { name = "psutil", specifier = "==6.1.1" },
+    { name = "pygments", specifier = "==2.18.0" },
+    { name = "pytest", specifier = "==8.3.4" },
+    { name = "pytest-xdist", specifier = "==3.6.1" },
+    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "requests", specifier = "==2.32.3" },
+    { name = "ruff", specifier = "==0.8.5" },
+    { name = "setuptools", specifier = "==75.6.0" },
+    { name = "shiv", specifier = "==1.0.8" },
+    { name = "sniffio", specifier = "==1.3.1" },
+    { name = "snowballstemmer", specifier = "==2.2.0" },
+    { name = "soupsieve", specifier = "==2.6" },
+    { name = "sphinx", specifier = "==8.1.3" },
+    { name = "sphinx-click", specifier = "==6.0.0" },
+    { name = "sphinx-library", git = "https://github.com/vsalvino/sphinx-library?rev=5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b" },
+    { name = "sphinxcontrib-applehelp", specifier = "==2.0.0" },
+    { name = "sphinxcontrib-devhelp", specifier = "==2.0.0" },
+    { name = "sphinxcontrib-htmlhelp", specifier = "==2.1.0" },
+    { name = "sphinxcontrib-jsmath", specifier = "==1.0.1" },
+    { name = "sphinxcontrib-qthelp", specifier = "==2.0.0" },
+    { name = "sphinxcontrib-serializinghtml", specifier = "==2.0.0" },
+    { name = "tenacity", specifier = "==9.0.0" },
+    { name = "toml", specifier = "==0.10.2" },
+    { name = "tqdm", specifier = "==4.67.1" },
+    { name = "types-appdirs", specifier = "==1.4.3.5" },
+    { name = "types-beautifulsoup4", specifier = "==4.12.0.20241020" },
+    { name = "types-docutils", specifier = "==0.21.0.20241128" },
+    { name = "types-html5lib", specifier = "==1.1.11.20241018" },
+    { name = "types-psutil", specifier = "==6.1.0.20241221" },
+    { name = "types-pyyaml", specifier = "==6.0.12.20241230" },
+    { name = "types-requests", specifier = "==2.32.0.20241016" },
+    { name = "types-setuptools", specifier = "==75.8.0.20250110" },
+    { name = "types-toml", specifier = "==0.10.8.20240310" },
+    { name = "types-tqdm", specifier = "==4.67.0.20241221" },
+    { name = "typing-extensions", specifier = "==4.12.2" },
+    { name = "uc-micro-py", specifier = "==1.0.3" },
+    { name = "urllib3", specifier = "==2.3.0" },
+]
+
 [[package]]
 name = "aioconsole"
 version = "0.8.1"
@@ -543,6 +619,7 @@ dev = [
     { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "pyyaml" },
     { name = "ruff" },
     { name = "shiv" },
     { name = "sphinx" },
@@ -553,6 +630,7 @@ dev = [
     { name = "types-beautifulsoup4" },
     { name = "types-docutils" },
     { name = "types-psutil" },
+    { name = "types-pyyaml" },
     { name = "types-setuptools" },
     { name = "types-toml" },
     { name = "types-tqdm" },
@@ -583,6 +661,7 @@ dev = [
     { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "pyyaml" },
     { name = "ruff" },
     { name = "shiv" },
     { name = "sphinx" },
@@ -593,6 +672,7 @@ dev = [
     { name = "types-beautifulsoup4" },
     { name = "types-docutils" },
     { name = "types-psutil" },
+    { name = "types-pyyaml" },
     { name = "types-setuptools" },
     { name = "types-toml" },
     { name = "types-tqdm" },
@@ -824,6 +904,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/44/8c/5f82cd554cc5bb79d137f082e4c9f8d22e85c8c08dabee4971d422a9abdd/types_psutil-6.1.0.20241221.tar.gz", hash = "sha256:600f5a36bd5e0eb8887f0e3f3ff2cf154d90690ad8123c8a707bba4ab94d3185", size = 20035 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2e/8f/eda6f25fe59e683b875108f520dfaf683dd45aed59051ec55b9470d869b7/types_psutil-6.1.0.20241221-py3-none-any.whl", hash = "sha256:8498dbe13285a9ba7d4b2fa934c569cc380efc74e3dacdb34ae16d2cdf389ec3", size = 23361 },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20241230"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/f9/4d566925bcf9396136c0a2e5dc7e230ff08d86fa011a69888dd184469d80/types_pyyaml-6.0.12.20241230.tar.gz", hash = "sha256:7f07622dbd34bb9c8b264fe860a17e0efcad00d50b5f27e93984909d9363498c", size = 17078 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/c1/48474fbead512b70ccdb4f81ba5eb4a58f69d100ba19f17c92c0c4f50ae6/types_PyYAML-6.0.12.20241230-py3-none-any.whl", hash = "sha256:fa4d32565219b68e6dee5f67534c722e53c00d1cfc09c435ef04d7353e1e96e6", size = 20029 },
 ]
 
 [[package]]

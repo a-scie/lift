@@ -38,6 +38,7 @@ include = ["science*"]
 
 [dependency-groups]
 dev = [
+    "PyYAML",
     "ansicolors",
     "dev-cmd",
     "docutils",
@@ -56,6 +57,7 @@ dev = [
     "sphinx-library @ git+https://github.com/vsalvino/sphinx-library@5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b",
 
     "toml",
+    "types-PyYAML",
     "types-appdirs",
     "types-beautifulsoup4",
     "types-docutils",
@@ -89,6 +91,80 @@ extend-select = ["I"]
 
 [tool.uv]
 required-version = ">=0.5.19"
+constraint-dependencies = [
+    "aioconsole==0.8.1",
+    "alabaster==1.0.0",
+    "ansicolors==1.1.8",
+    "anyio==4.7.0",
+    "appdirs==1.4.4",
+    "babel==2.16.0",
+    "beautifulsoup4==4.12.3",
+    "certifi==2024.12.14",
+    "charset-normalizer==3.4.1",
+    "click==8.1.8",
+    "click-didyoumean==0.3.1",
+    "click-log==0.4.0",
+    "colorama==0.4.6 ; sys_platform == 'win32'",
+    "dev-cmd==0.16.0",
+    "docutils==0.21.2",
+    "execnet==2.1.1",
+    "filelock==3.16.1",
+    "h11==0.14.0",
+    "httpcore==1.0.7",
+    "httpx==0.28.1",
+    "idna==3.10",
+    "imagesize==1.4.1",
+    "iniconfig==2.0.0",
+    "jinja2==3.1.5",
+    "linkify-it-py==2.0.3",
+    "markdown-it-py==3.0.0",
+    "markupsafe==3.0.2",
+    "mdit-py-plugins==0.4.2",
+    "mdurl==0.1.2",
+    "mypy==1.14.1",
+    "mypy-extensions==1.0.0",
+    "myst-parser==4.0.0",
+    "packaging==24.2",
+    "pip==24.3.1",
+    "pluggy==1.5.0",
+    "psutil==6.1.1",
+    "pygments==2.18.0",
+    "pytest==8.3.4",
+    "pytest-xdist==3.6.1",
+    "pyyaml==6.0.2",
+    "requests==2.32.3",
+    "ruff==0.8.5",
+    "setuptools==75.6.0",
+    "shiv==1.0.8",
+    "sniffio==1.3.1",
+    "snowballstemmer==2.2.0",
+    "soupsieve==2.6",
+    "sphinx==8.1.3",
+    "sphinx-click==6.0.0",
+    "sphinx-library @ git+https://github.com/vsalvino/sphinx-library@5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b",
+    "sphinxcontrib-applehelp==2.0.0",
+    "sphinxcontrib-devhelp==2.0.0",
+    "sphinxcontrib-htmlhelp==2.1.0",
+    "sphinxcontrib-jsmath==1.0.1",
+    "sphinxcontrib-qthelp==2.0.0",
+    "sphinxcontrib-serializinghtml==2.0.0",
+    "tenacity==9.0.0",
+    "toml==0.10.2",
+    "tqdm==4.67.1",
+    "types-appdirs==1.4.3.5",
+    "types-beautifulsoup4==4.12.0.20241020",
+    "types-docutils==0.21.0.20241128",
+    "types-html5lib==1.1.11.20241018",
+    "types-psutil==6.1.0.20241221",
+    "types-pyyaml==6.0.12.20241230",
+    "types-requests==2.32.0.20241016",
+    "types-setuptools==75.8.0.20250110",
+    "types-toml==0.10.8.20240310",
+    "types-tqdm==4.67.0.20241221",
+    "typing-extensions==4.12.2",
+    "uc-micro-py==1.0.3",
+    "urllib3==2.3.0",
+]
 
 [tool.dev-cmd.commands]
 check-python-version = ["scripts/check-python-version-alignment.py"]
@@ -104,6 +180,10 @@ type-check = ["mypy", "docs/_ext", "science", "scripts", "setup.py", "tests", "t
 [tool.dev-cmd.commands.create-zipapp]
 args = ["scripts/create-zipapp.py"]
 hidden = true
+
+[tool.dev-cmd.commands.create-docker-images]
+args = ["scripts/create-docker-images.py"]
+accepts-extra-args = true
 
 [tool.dev-cmd.commands.package-thin-scie]
 args = [
