@@ -13,7 +13,7 @@ defaults:
     shell: bash
 env:
   # Work around SIGSEGVs and other errors under some qemu targets.
-  UV_CONCURRENT_INSTALLS: 1
+  UV_CONCURRENT_BUILDS: 1
 jobs:
   org-check:
     name: Check GitHub Organization
