@@ -109,18 +109,12 @@ jobs:
           path: .mypy_cache
           # We're using a key suffix / restore-keys prefix trick here to get an updatable cache.
           # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
-          key: ${{ matrix.os }}-${{ matrix.docker-platform || runner.arch }}-a-scie-lift-mypy-v1-${{ github.run_id }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.docker-platform || runner.arch }}-a-scie-lift-mypy-v1
+          key: ${{ matrix.docker-platform || format('{0}-{1}', matrix.os, runner.arch) }}-a-scie-lift-mypy-v1-${{ github.run_id }}
+          restore-keys: ${{ matrix.docker-platform || format('{0}-{1}', matrix.os, runner.arch) }}-a-scie-lift-mypy-v1
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
         run: |
           "${UV}" run dev-cmd ci --skip test
-      - name: Cache MyPy
-        uses: actions/cache/save@v4
-        if: github.ref == 'refs/heads/main'
-        with:
-          path: .mypy_cache
-          key: ${{ steps.restore-mypy-cache.outputs.cache-primary-key }}
       - name: Check Formatting & Lints
         if: matrix.docker-platform != ''
         run: |
@@ -137,6 +131,12 @@ jobs:
                 adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
                 su build -c 'uv run dev-cmd ci --skip test'
               "
+      - name: Cache MyPy
+        uses: actions/cache/save@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: .mypy_cache
+          key: ${{ steps.restore-mypy-cache.outputs.cache-primary-key }}
       - name: Configure Windows pytest short tmp dir path
         if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
         run: |
