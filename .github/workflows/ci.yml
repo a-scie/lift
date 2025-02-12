@@ -102,10 +102,25 @@ jobs:
         run: docker run --privileged --rm tonistiigi/binfmt --install all
       - name: Checkout Lift
         uses: actions/checkout@v4
+      - name: Restore MyPy Cache
+        id: restore-mypy-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .mypy_cache
+          # We're using a key suffix / restore-keys prefix trick here to get an updatable cache.
+          # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tox-env }}-a-scie-lift-mypy-v1-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.tox-env }}-a-scie-lift-mypy-v1
       - name: Check Formatting & Lints
         if: matrix.docker-platform == ''
         run: |
           "${UV}" run dev-cmd ci --skip test
+      - name: Cache MyPy
+        uses: actions/cache/save@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: .mypy_cache
+          key: ${{ steps.restore-mypy-cache.outputs.cache-primary-key }}
       - name: Check Formatting & Lints
         if: matrix.docker-platform != ''
         run: |
