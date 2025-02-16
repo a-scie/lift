@@ -150,7 +150,7 @@ jobs:
             adduser -D -g '' -G build -u $(id -u) build
             apk add git gcc python3-dev musl-dev linux-headers
           else
-            adduser --disabled-password --gecos '' --group build --uid $(id -u) build
+            adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
           fi
 
           su build -c 'uv run dev-cmd package'
