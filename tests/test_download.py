@@ -16,7 +16,7 @@ import pytest
 from pytest import MonkeyPatch
 
 from science.hashing import Digest
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM_SPEC, Platform
 from science.providers import PyPy
 
 
@@ -187,7 +187,7 @@ def test_pbs_mirror(tmp_path: Path, current_platform: Platform) -> None:
 
 
 @pytest.mark.skipif(
-    CURRENT_PLATFORM not in PyPy.supported_platforms(),
+    CURRENT_PLATFORM_SPEC not in frozenset(PyPy.iter_supported_platforms([CURRENT_PLATFORM_SPEC])),
     reason="PyPy does not have pre-built distributions for the current platform.",
 )
 def test_pypy_mirror(tmp_path: Path, current_platform: Platform) -> None:

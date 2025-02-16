@@ -7,14 +7,49 @@ import dataclasses
 import os
 import typing
 from collections import OrderedDict
+from dataclasses import dataclass
 from textwrap import dedent
-from typing import Any, Collection, Mapping, TypeVar, cast
+from typing import Any, Callable, Collection, Mapping, TypeVar, cast
 
 from science.data import Data
 from science.dataclass import Dataclass
+from science.dataclass.reflect import dataclass_info
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.types import TypeInfo
+
+
+@dataclass(frozen=True)
+class HeterogeneousParser[O]:
+    @classmethod
+    def wrap(
+        cls,
+        parser: Callable[[Any], O],
+        input_type: type,
+        another_input_type: type,
+        *remaining_input_types: type,
+        output_type: type[O],
+    ) -> HeterogeneousParser[O]:
+        return cls(parser, (input_type, another_input_type, *remaining_input_types), output_type)
+
+    parser: Callable[[Any], O]
+    input_types: tuple[type, ...]
+    output_type: type[O]
+
+    def __post_init__(self):
+        if not self.input_types:
+            raise InputError(
+                "A HeterogeneousParser must accept two or more input types. Given none."
+            )
+        if len(self.input_types) == 1:
+            raise InputError(
+                f"A HeterogeneousParser must accept two or more input types. Given just one: "
+                f"{self.input_types[0]}"
+            )
+
+    def __call__(self, data: Any) -> O:
+        return self.parser(data)
+
 
 _F = TypeVar("_F")
 
@@ -24,7 +59,7 @@ def _parse_field(
     type_: TypeInfo[_F],
     default: _F | Data.Required,
     data: Data,
-    custom_parsers: Mapping[type, typing.Callable[[Data], Any]],
+    custom_parsers: Mapping[type, Callable[[Data], Any]],
 ) -> _F:
     if type_.has_origin_type and (parser := custom_parsers.get(type_.origin_type)):
         return parser(data)
@@ -66,7 +101,15 @@ def _parse_field(
         item_type = type_.item_type
         items: list[Any] = []
         if dataclasses.is_dataclass(item_type) or isinstance(item_type, Mapping):
-            data_list = data.get_data_list(name, default=cast(list | Data.Required, default))
+            custom_parser = custom_parsers.get(item_type)
+            if isinstance(custom_parser, HeterogeneousParser):
+                data_list = data.get_heterogeneous_list(
+                    name,
+                    expected_item_types=(*custom_parser.input_types, custom_parser.output_type),
+                    default=cast(list | Data.Required, default),
+                )
+            else:
+                data_list = data.get_data_list(name, default=cast(list | Data.Required, default))
 
             if isinstance(item_type, Mapping):
                 items.extend(
@@ -129,11 +172,14 @@ def parse(
     data: Data,
     data_type: type[_D],
     *,
-    custom_parsers: Mapping[type, typing.Callable[[Data], Any]] = FrozenDict(),
+    custom_parsers: Mapping[type, Callable[[Data], Any]] = FrozenDict(),
     **pre_parsed_fields: Any,
 ) -> _D:
     if not dataclasses.is_dataclass(data_type):
         raise InputError(f"Cannot parse data_type {data_type}, it is not a @dataclass.")
+
+    if isinstance(data, data_type):
+        return cast(_D, data)
 
     if parser := custom_parsers.get(data_type):
         return parser(data)
@@ -151,21 +197,20 @@ def parse(
             )
 
     kwargs = {}
-    for field in dataclasses.fields(data_type):
+    for field in dataclass_info(data_type).field_info:
         if value := pre_parsed_fields.get(field.name):
             kwargs[field.name] = value
             continue
 
-        type_info = get_type(field_name=field.name, putative_type=field.type)
-        if type_info.optional:
+        if field.type.optional:
             kwargs[field.name] = None
 
         errors = OrderedDict[TypeInfo, Exception]()
-        for field_type in type_info.iter_types():
+        for field_type in field.type.iter_types():
 
             def parse_field(data: Data) -> Any:
                 return _parse_field(
-                    name=field.name,
+                    name=field.display_name,
                     type_=field_type,
                     default=(
                         field.default if field.default is not dataclasses.MISSING else Data.REQUIRED

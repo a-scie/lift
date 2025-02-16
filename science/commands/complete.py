@@ -1,13 +1,15 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
+import logging
 from enum import Enum
 from functools import cache
 from typing import Self
 
-import psutil
-
+from science.commands import _psutil as psutil
 from science.os import EXE_EXT
+
+logger = logging.getLogger(__name__)
 
 
 class Shell(Enum):

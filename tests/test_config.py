@@ -12,7 +12,7 @@ from textwrap import dedent
 
 from science.config import parse_config_file
 from science.model import Identifier
-from science.platform import CURRENT_PLATFORM
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Platform, PlatformSpec
 
 
 def test_parse(build_root: Path) -> None:
@@ -21,7 +21,7 @@ def test_parse(build_root: Path) -> None:
     assert 1 == len(interpreters), "Expected science to ship on a single fixed interpreter."
 
     interpreter = interpreters[0]
-    distribution = interpreter.provider.distribution(CURRENT_PLATFORM)
+    distribution = interpreter.provider.distribution(CURRENT_PLATFORM_SPEC)
     assert (
         distribution is not None
     ), "Expected a Python interpreter distribution to be available for each platform tests run on."
@@ -188,4 +188,26 @@ def test_unrecognized_config_fields(tmp_path: Path, science_pyz: Path) -> None:
                 """
             )
             == result.stderr
+        )
+
+
+def test_platform_specs() -> None:
+    with resources.as_file(resources.files("data") / "platform-specs.toml") as config:
+        app = parse_config_file(config)
+        assert (
+            frozenset(
+                (
+                    PlatformSpec(Platform.Linux_aarch64),
+                    PlatformSpec(Platform.Linux_armv7l),
+                    PlatformSpec(Platform.Linux_powerpc64le),
+                    PlatformSpec(Platform.Linux_s390x),
+                    PlatformSpec(Platform.Linux_x86_64, LibC.GLIBC),
+                    PlatformSpec(Platform.Linux_x86_64, LibC.MUSL),
+                    PlatformSpec(Platform.Macos_aarch64),
+                    PlatformSpec(Platform.Macos_x86_64),
+                    PlatformSpec(Platform.Windows_aarch64),
+                    PlatformSpec(Platform.Windows_x86_64),
+                )
+            )
+            == app.platform_specs
         )

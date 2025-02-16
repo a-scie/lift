@@ -14,7 +14,7 @@ from science import a_scie
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
 from science.model import Fetch, Identifier
-from science.platform import Platform
+from science.platform import Platform, PlatformSpec
 from science.providers import ProviderInfo
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def download_a_scie_executables(
 
 def download_provider_distribution(
     provider_info: ProviderInfo,
-    platforms: Iterable[Platform],
+    platform_specs: Iterable[PlatformSpec],
     explicit_platforms: bool,
     dest_dir: Path,
     **kwargs: list[Any],
@@ -85,18 +85,16 @@ def download_provider_distribution(
             for field in provider_info.config_fields()
             if (value := getattr(config, field.name))
         )
-        supported_platforms = provider.supported_platforms()
-        for platform in platforms:
-            if platform not in supported_platforms:
-                continue
-            if dist := provider.distribution(platform):
+        for platform_spec in provider.iter_supported_platforms(platform_specs):
+            if dist := provider.distribution(platform_spec):
                 assert isinstance(dist.file.source, Fetch), (
-                    f"Expected {provider_info.name} to fetch distributions by URL but {config_desc} for "
-                    f"{platform} has a source of {dist.file.source}."
+                    f"Expected {provider_info.name} to fetch distributions by URL but "
+                    f"{config_desc} for {platform_spec} has a source of {dist.file.source}."
                 )
                 dest = base_dir / dist.file.source.url.rel_path
                 click.echo(
-                    f"Downloading {provider_info.name} {config_desc} for {platform} to {dest}...",
+                    f"Downloading {provider_info.name} {config_desc} for {platform_spec} to "
+                    f"{dest}...",
                     err=True,
                 )
                 result = fetch_and_verify(
@@ -111,9 +109,12 @@ def download_provider_distribution(
                     f"{result.digest.fingerprint} {exe_flag}{dest.name}"
                 )
             elif explicit_platforms:
-                raise InputError(f"There is no {provider_info.name} {config_desc} for {platform}.")
+                raise InputError(
+                    f"There is no {provider_info.name} {config_desc} for {platform_spec}."
+                )
             else:
                 click.secho(
-                    f"There is no {provider_info.name} {config_desc} for {platform}, skipping.",
+                    f"There is no {provider_info.name} {config_desc} for {platform_spec}, "
+                    f"skipping.",
                     fg="yellow",
                 )

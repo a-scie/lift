@@ -17,10 +17,9 @@ from functools import cache
 from pathlib import Path, PurePath
 from typing import Any
 
-import psutil
-
 from science import __version__
 from science.cache import science_cache
+from science.commands import _psutil as psutil
 from science.platform import CURRENT_PLATFORM
 
 logger = logging.getLogger(__name__)
@@ -46,10 +45,12 @@ def _render_unix_time(unix_time: float) -> str:
 class ServerInfo:
     url: str
     pid: int
-    create_time: float
+    create_time: float | None
 
     def __str__(self) -> str:
-        return f"{self.url} @ {self.pid} (started at {_render_unix_time(self.create_time)})"
+        if self.create_time:
+            return f"{self.url} @ {self.pid} (started at {_render_unix_time(self.create_time)})"
+        return f"{self.url} @ {self.pid}"
 
 
 @dataclass(frozen=True)

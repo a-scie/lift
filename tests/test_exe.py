@@ -27,7 +27,7 @@ from testing import issue
 from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +69,7 @@ def science_exe(
 def test_use_platform_suffix(
     tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
 ) -> None:
-    expected_executable = tmp_path / CURRENT_PLATFORM.qualified_binary_name("science")
+    expected_executable = tmp_path / CURRENT_PLATFORM_SPEC.qualified_binary_name("science")
     assert not expected_executable.exists()
     subprocess.run(
         args=[
@@ -88,7 +88,7 @@ def test_use_platform_suffix(
         check=True,
     )
     assert expected_executable.is_file()
-    assert not (tmp_path / CURRENT_PLATFORM.binary_name("science")).exists()
+    assert not (tmp_path / CURRENT_PLATFORM_SPEC.binary_name("science")).exists()
 
 
 def test_no_use_platform_suffix(

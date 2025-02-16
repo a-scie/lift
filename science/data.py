@@ -98,6 +98,51 @@ class Data:
     def get_bool(self, key: str, default: bool | Required = REQUIRED) -> bool:
         return self.get_value(key, expected_type=bool, default=default)
 
+    def get_heterogeneous_list(
+        self,
+        key: str,
+        expected_item_types: tuple[type, ...],
+        default: list | Required = REQUIRED,
+        used: bool = True,
+    ) -> list:
+        if len(expected_item_types) < 2:
+            raise InputError(
+                f"Can only extract a heterogeneous list given two or more expected item types."
+                f"{os.linesep}Given: {' '.join(map(str, expected_item_types))}"
+            )
+
+        value = self.get_value(
+            key,
+            expected_type=list,
+            default=default,
+            used=used,  # type: ignore[type-abstract]
+        )
+
+        items = []
+        invalid_entries = {}
+        for index, item in enumerate(value, start=1):
+            if isinstance(item, expected_item_types):
+                items.append(item)
+            elif isinstance(item, dict) and Data in expected_item_types:
+                items.append(Data(provenance=self.provenance, data=FrozenDict(item), path=""))
+            else:
+                invalid_entries[index] = item
+
+        if invalid_entries:
+            invalid_items = [
+                f"item {index}: {item} of type {self._typename(type(item))}"
+                for index, item in invalid_entries.items()
+            ]
+            head_types = ", ".join(self._typename(it) for it in expected_item_types[:-1])
+            tail_type = self._typename(expected_item_types[-1])
+            raise InputError(
+                f"Expected {self.config(key)} defined in {self.provenance.source} to be a list "
+                f"with items of type {head_types} or {tail_type} but got {len(invalid_entries)} "
+                f"out of {len(value)} entries of the wrong type:{os.linesep}"
+                f"{os.linesep.join(invalid_items)}"
+            )
+        return items
+
     def get_list(
         self,
         key: str,
@@ -131,8 +176,12 @@ class Data:
                 for index, item in invalid_entries.items()
             ]
             expected_values = ""
-            if issubclass(expected_item_type, Enum):
-                expected_values = f" from {{{", ".join(repr(expected.value) for expected in expected_item_type)}}}"
+            try:
+                if issubclass(expected_item_type, Enum):
+                    enum_values = ", ".join(repr(expected.value) for expected in expected_item_type)
+                    expected_values = f" from {{{enum_values}}}"
+            except TypeError:
+                pass
 
             raise InputError(
                 f"Expected {self.config(key)} defined in {self.provenance.source} to be a list "
@@ -145,7 +194,7 @@ class Data:
     def get_data_list(
         self,
         key: str,
-        default: list[dict] | Required = REQUIRED,
+        default: list[Data] | Required = REQUIRED,
     ) -> list[Data]:
         data_list = [
             Data(
@@ -154,12 +203,21 @@ class Data:
                 path=f"{self.path}.{key}[{index}]" if self.path else key,
             )
             for index, data in enumerate(
-                self.get_list(key, expected_item_type=Mapping, default=default, used=False), start=1
+                self.get_list(
+                    key,
+                    expected_item_type=dict,
+                    default=[] if default is not Data.REQUIRED else Data.REQUIRED,
+                    used=False,
+                ),
+                start=1,
             )
         ]
         if data_list:
             self._unused_data[key] = data_list
-        return data_list
+            return data_list
+
+        assert default is not Data.REQUIRED
+        return default
 
     @staticmethod
     def _typename(type_: type) -> str:

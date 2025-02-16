@@ -44,7 +44,7 @@ from science.fs import temporary_directory
 from science.model import Application
 from science.options import OptionDescriptor, mutually_exclusive, to_option_string
 from science.os import EXE_EXT
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Platform, PlatformSpec
 from science.providers import ALL_PROVIDERS, ProviderInfo
 
 logger = logging.getLogger(__name__)
@@ -268,7 +268,7 @@ def _close_doc() -> None:
 
 @dataclass(frozen=True)
 class DownloadConfig:
-    platforms: tuple[Platform, ...]
+    platform_specs: tuple[PlatformSpec, ...]
     explicit_set: bool
 
 
@@ -302,8 +302,22 @@ platform_mutex_check = mutually_exclusive(
         "`--platform`. By default, only binaries for the current platform are downloaded."
     ),
 )
+@click.option(
+    "--libc",
+    "libcs",
+    type=click.Choice([libc.value for libc in LibC]),
+    multiple=True,
+    default=[],
+    callback=lambda _ctx, _param, value: [LibC(v) for v in value],
+    help=(
+        "Choose binaries that link to the specified libc when downloading for a Linux platform. "
+        "Binaries that link against gnu libc by will be chosen by default."
+    ),
+)
 @click.pass_context
-def _download(ctx: click.Context, platforms: list[Platform], all_platforms: bool) -> None:
+def _download(
+    ctx: click.Context, platforms: list[Platform], all_platforms: bool, libcs: list[LibC | None]
+) -> None:
     """Download binaries for offline use."""
 
     if platforms:
@@ -316,7 +330,14 @@ def _download(ctx: click.Context, platforms: list[Platform], all_platforms: bool
         platforms = [CURRENT_PLATFORM]
         explicit_set = True
 
-    ctx.obj = DownloadConfig(platforms=tuple(platforms), explicit_set=explicit_set)
+    libcs = libcs or [None]
+
+    ctx.obj = DownloadConfig(
+        platform_specs=tuple(
+            PlatformSpec(platform, libc) for platform in platforms for libc in libcs
+        ),
+        explicit_set=explicit_set,
+    )
 
 
 download_dest_dir = click.argument("dest_dir", metavar="DEST_DIR", type=Path)
@@ -336,7 +357,7 @@ def _create_provider_download_func(
     def func(download_config: DownloadConfig, dest_dir: Path, **kwargs: Any) -> None:
         download_provider_distribution(
             provider_info=provider_info,
-            platforms=download_config.platforms,
+            platform_specs=download_config.platform_specs,
             explicit_platforms=download_config.explicit_set,
             dest_dir=dest_dir,
             **kwargs,
@@ -392,7 +413,9 @@ def _download_ptex(
         project_name="ptex",
         binary_name="ptex",
         versions=versions,
-        platforms=download_config.platforms,
+        platforms=dict.fromkeys(
+            platform_spec.platform for platform_spec in download_config.platform_specs
+        ),
         dest_dir=dest_dir,
     )
 
@@ -409,7 +432,9 @@ def _download_scie_jump(
         project_name="jump",
         binary_name="scie-jump",
         versions=versions,
-        platforms=download_config.platforms,
+        platforms=dict.fromkeys(
+            platform_spec.platform for platform_spec in download_config.platform_specs
+        ),
         dest_dir=dest_dir,
     )
 
@@ -654,6 +679,15 @@ pass_lift = click.make_pass_decorator(LiftConfig)
     default=[],
     help="Override any configured platforms and target these platforms instead.",
 )
+@click.option(
+    "--libc",
+    "libcs",
+    type=click.Choice([libc.value for libc in LibC]),
+    multiple=True,
+    default=[],
+    callback=lambda _ctx, _param, value: [LibC(v) for v in value],
+    help="Override any configured libc providers and use these libc providers instead.",
+)
 @click.pass_context
 def _lift(
     ctx: click.Context,
@@ -663,15 +697,20 @@ def _lift(
     app_name: str | None,
     app_info: list[AppInfo],
     platforms: list[Platform],
+    libcs: list[LibC | None],
 ) -> None:
     # N.B.: Help is defined above in the _lift group decorator since it's a dynamic string.
+
+    libcs = libcs or [None]
     ctx.obj = LiftConfig(
         file_mappings=tuple(file_mappings),
         invert_lazy_ids=frozenset(invert_lazy_ids),
         include_provenance=include_provenance or bool(app_info),
         app_info=tuple(app_info),
         app_name=app_name,
-        platforms=tuple(platforms),
+        platform_specs=tuple(
+            PlatformSpec(platform, libc) for platform in platforms for libc in libcs
+        ),
     )
 
 
@@ -744,7 +783,7 @@ def export(
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
     with temporary_directory(cleanup=True) as td:
         for _, manifest_path in lift.export_manifest(
-            lift_config, application, dest_dir=td, platforms=lift_config.platforms
+            lift_config, application, dest_dir=td, platform_specs=lift_config.platform_specs
         ):
             lift_manifest = dest_dir / (
                 manifest_path.relative_to(td) if platform_info.use_suffix else manifest_path.name
@@ -841,14 +880,14 @@ def _build(
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
 
-    platforms = lift_config.platforms or application.platforms
+    platform_specs = lift_config.platform_specs or application.platform_specs
     if use_jump and use_platform_suffix:
         logger.warning("Cannot use a custom scie jump build with a multi-platform configuration.")
         logger.warning(
             "Restricting requested platforms of "
-            f"{", ".join(sorted(platform.value for platform in platforms))} to {CURRENT_PLATFORM}",
+            f"{", ".join(sorted(platform.value for platform in platform_specs))} to {CURRENT_PLATFORM}",
         )
-        platforms = frozenset([CURRENT_PLATFORM])
+        platform_specs = frozenset([CURRENT_PLATFORM_SPEC])
 
     scie_jump_version = application.scie_jump.version if application.scie_jump else None
     if scie_jump_version and scie_jump_version < version.parse("0.9.0"):
@@ -864,7 +903,7 @@ def _build(
             lift_config=lift_config,
             application=application,
             dest_dir=td,
-            platforms=platforms,
+            platform_specs=platform_specs,
             platform_info=platform_info,
             use_jump=use_jump,
             hash_functions=hash_functions,

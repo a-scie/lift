@@ -31,13 +31,13 @@ from sphinx_science.render import MarkdownParser, Section
 class TOMLType:
     label: str
 
-    def render_value(self, value: Any) -> str:
+    def render_value(self, value: Any) -> Any:
         return repr(value)
 
 
 @dataclass(frozen=True)
 class PrimitiveType(TOMLType):
-    def render_value(self, value: Any) -> str:
+    def render_value(self, value: Any) -> Any:
         if isinstance(value, bool):
             return "true" if value else "false"
         return repr(value)
@@ -51,8 +51,8 @@ class ArrayType(TOMLType):
 
     item_type: TOMLType
 
-    def render_value(self, value: Any) -> str:
-        return repr([self.item_type.render_value(item) for item in value])
+    def render_value(self, value: Any) -> Any:
+        return [self.item_type.render_value(item) for item in value]
 
 
 @dataclass(frozen=True)
@@ -63,10 +63,10 @@ class TableType(TOMLType):
 
     value_type: TOMLType | None = None
 
-    def render_value(self, value: Any) -> str:
+    def render_value(self, value: Any) -> Any:
         if self.value_type:
-            return repr({key: self.value_type.render_value(val) for key, val in value.items()})
-        return repr(value)
+            return {key: self.value_type.render_value(val) for key, val in value.items()}
+        return value
 
 
 @dataclass(frozen=True)
@@ -84,9 +84,9 @@ class ChoiceType(TOMLType):
             renderer=lambda value: enum_type(value).value,
         )
 
-    renderer: Callable[[Any], str]
+    renderer: Callable[[Any], Any]
 
-    def render_value(self, value: Any) -> str:
+    def render_value(self, value: Any) -> Any:
         return self.renderer(value)
 
 
@@ -105,9 +105,9 @@ class UnionType(TOMLType):
             renderer=lambda value: toml_type_factory(type(value)).render_value(value),
         )
 
-    renderer: Callable[[Any], str]
+    renderer: Callable[[Any], Any]
 
-    def render_value(self, value: Any) -> str:
+    def render_value(self, value: Any) -> Any:
         return self.renderer(value)
 
 
@@ -270,7 +270,9 @@ class TOMLTypeRenderer(MarkdownParser):
                 fields.extendleft(dataclass_info(field_dataclass_type).field_info)
                 continue
 
-            field_section = dataclass_section.create_subsection(title=field.name, name=field.name)
+            field_section = dataclass_section.create_subsection(
+                title=field.display_name, name=field.display_name
+            )
             field_section.extend(self.render_field(field, owner=class_info.type))
 
             if self._recurse_tables:

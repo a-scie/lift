@@ -55,19 +55,28 @@ jobs:
         # non-deprecated ARM Mac runner.
         include:
           - os: ubuntu-24.04
-            name: Linux x86-64
+            name: Linux x86-64 (musl)
+            docker-image: python:3.12-alpine
+            docker-platform: linux/amd64
+          - os: ubuntu-24.04
+            name: Linux x86-64 (glibc)
+            docker-image: python:3.12-bookworm
             docker-platform: linux/amd64
           - os: ubuntu-24.04
             name: Linux aarch64
+            docker-image: python:3.12-bookworm
             docker-platform: linux/arm64
           - os: ubuntu-24.04
             name: Linux armv7l
+            docker-image: python:3.12-bookworm
             docker-platform: linux/arm/v7
           - os: ubuntu-24.04
             name: Linux s390x
+            docker-image: python:3.12-bookworm
             docker-platform: linux/s390x
           - os: ubuntu-24.04
             name: Linux powerpc64le
+            docker-image: python:3.12-bookworm
             docker-platform: linux/ppc64le
           - os: macos-13
             name: macOS x86-64
@@ -88,10 +97,10 @@ jobs:
       discussions: write
     steps:
       - name: Install the latest version of uv
-        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
+        if: matrix.docker-image == '' && matrix.os != 'windows-arm64'
         uses: astral-sh/setup-uv@v5
       - name: Setup uv
-        if: matrix.docker-platform == '' && matrix.os != 'windows-arm64'
+        if: matrix.docker-image == '' && matrix.os != 'windows-arm64'
         run: |
           export UV="$(which uv)"
           "${UV}" -V
@@ -121,32 +130,39 @@ jobs:
           "${UV}" python install ${UV_PYTHON_VERSION}
           echo UV_PYTHON_ARGS="--python ${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
-        if: matrix.docker-platform != ''
+        if: matrix.docker-image != ''
         run: docker run --privileged --rm tonistiigi/binfmt --install all
       - name: Checkout lift ${{ needs.determine-tag.outputs.release-tag }}
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.determine-tag.outputs.release-tag }}
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
-        if: matrix.docker-platform == ''
+        if: matrix.docker-image == ''
         run: |
           "${UV}" run ${UV_PYTHON_ARGS} dev-cmd package
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
-        if: matrix.docker-platform != ''
+        if: matrix.docker-image != ''
         run: |
+          cat << EOF > _package.sh
+          pip install --root-user-action ignore uv
+          addgroup --gid $(id -g) build
+          if [ "${{ matrix.docker-image }}" = "python:3.12-alpine" ]; then
+            adduser -D -g '' -G build -u $(id -u) build
+            apk add git gcc python3-dev musl-dev linux-headers
+          else
+            adduser --disabled-password --gecos '' --group build --uid $(id -u) build
+          fi
+
+          su build -c 'uv run dev-cmd package'
+          EOF
+
           docker run --rm \
             -e FORCE_COLOR \
             -e SCIENCE_AUTH_API_GITHUB_COM_BEARER \
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            python:3.12-bookworm \
-              bash -c "
-                pip install --root-user-action ignore uv &&
-                addgroup --gid $(id -g) build &&
-                adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build &&
-                su build -c 'uv run dev-cmd package'
-              "
+            ${{ matrix.docker-image }} sh -eu _package.sh
       - name: Generate science ${{ needs.determine-tag.outputs.release-tag }} artifact attestations
         uses: actions/attest-build-provenance@v1
         with:

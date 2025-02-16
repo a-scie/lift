@@ -18,6 +18,7 @@ from typing import BinaryIO, Generic, TypeVar
 from science.build_info import BuildInfo
 from science.data import Accessor, Data
 from science.dataclass import Dataclass
+from science.dataclass.deserializer import HeterogeneousParser
 from science.dataclass.deserializer import parse as parse_dataclass
 from science.dataclass.reflect import FieldInfo, dataclass_info
 from science.doc import DOC_SITE_URL
@@ -31,6 +32,7 @@ from science.model import (
     InterpreterGroup,
     Provider,
 )
+from science.platform import LibC, Platform, PlatformSpec
 from science.providers import get_provider
 
 
@@ -54,6 +56,15 @@ def parse_build_info(data: Data) -> BuildInfo:
     return BuildInfo.gather(
         lift_toml=data.provenance, app_info=data.get_data("app_info", default={}, used=True).data
     )
+
+
+def parse_platform_spec(data: Data | str) -> PlatformSpec:
+    if isinstance(data, str):
+        return PlatformSpec(Platform.parse(data))
+
+    libc_value = data.get_str("libc", default="")
+    libc = LibC(libc_value) if libc_value else None
+    return PlatformSpec(platform=Platform.parse(data.get_str("platform")), libc=libc)
 
 
 @dataclass(frozen=True)
@@ -166,7 +177,13 @@ def parse_config_data(data: Data) -> Application:
         lift,
         Application,
         interpreters=tuple(interpreters_by_id.values()),
-        custom_parsers={BuildInfo: parse_build_info, InterpreterGroup: parse_interpreter_group},
+        custom_parsers={
+            BuildInfo: parse_build_info,
+            InterpreterGroup: parse_interpreter_group,
+            PlatformSpec: HeterogeneousParser.wrap(
+                parse_platform_spec, Data, str, output_type=PlatformSpec
+            ),
+        },
     )
 
     unrecognized_config = gather_unrecognized_application_config(lift, index_start=1)
