@@ -69,7 +69,9 @@ except ImportError:
 
         def kill(self) -> None:
             try:
-                os.kill(self.pid, signal.SIGKILL)
+                # SIGKILL does not exist in Windows, but we have the real psutil importable there;
+                # so this code is not reached.
+                os.kill(self.pid, signal.SIGKILL)  # type: ignore[attr-defined]
             except OSError as e:
                 if e.errno == errno.ESRCH:
                     raise NoSuchProcess(str(e))
