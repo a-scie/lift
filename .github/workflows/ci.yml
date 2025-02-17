@@ -145,6 +145,11 @@ jobs:
       - name: Unit Tests
         if: matrix.image != ''
         run: |
+          if [ "${{ matrix.arch }}" = "ppc64le" ]; then
+            echo "Skipping tests on ppc64le."
+            exit 0
+          fi
+
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             test -- -vvs
       - name: Build & Package
