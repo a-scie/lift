@@ -101,6 +101,11 @@ check-lint = ["ruff", "check"]
 
 type-check = ["mypy", "docs/_ext", "science", "scripts", "setup.py", "tests", "test-support"]
 
+[tool.dev-cmd.commands.docker]
+args = ["scripts/docker/uv.py"]
+accepts-extra-args = true
+hidden = true
+
 [tool.dev-cmd.commands.create-zipapp]
 args = ["scripts/create-zipapp.py"]
 hidden = true

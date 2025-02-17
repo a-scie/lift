@@ -13,3 +13,6 @@ __pycache__/
 # Our Sphinx extension (see: docs/_ext/) dynamically generates doc sources here.
 /docs/_/
 
+# Various files are copied from the project root to here for building docker images.
+/scripts/docker/ephemeral-build-context/
+
