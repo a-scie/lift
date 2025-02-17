@@ -10,9 +10,18 @@ from importlib import resources
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
+
 from science.config import parse_config_file
 from science.model import Identifier
-from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Platform, PlatformSpec
+from science.platform import (
+    CURRENT_PLATFORM,
+    CURRENT_PLATFORM_SPEC,
+    LibC,
+    Os,
+    Platform,
+    PlatformSpec,
+)
 
 
 def test_parse(build_root: Path) -> None:
@@ -211,3 +220,41 @@ def test_platform_specs() -> None:
             )
             == app.platform_specs
         )
+
+
+@pytest.mark.skipif(
+    CURRENT_PLATFORM.os is not Os.Linux, reason="This test needs to run a Linux scie."
+)
+def test_PBS_gnu_and_musl(tmp_path: Path, science_pyz: Path) -> None:
+    with resources.as_file(resources.files("data") / "PBS-gnu-and-musl.toml") as config:
+        subprocess.run(
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                str(config),
+            ],
+            check=True,
+        )
+        exe_path = tmp_path / CURRENT_PLATFORM.binary_name("gnu-and-musl")
+        scie_base = tmp_path / "scie-base"
+        result = subprocess.run(
+            args=[exe_path],
+            env={**os.environ, "SCIE_BASE": str(scie_base)},
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert (
+            dedent(
+                f"""\
+                Configured:
+                PYTHON=cpython-{CURRENT_PLATFORM_SPEC.libc}
+                """
+            )
+            == result.stderr
+        )
+        assert "Python 3.13.2\n" == result.stdout
