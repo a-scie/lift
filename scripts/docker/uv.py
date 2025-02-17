@@ -46,7 +46,8 @@ def main() -> Any:
     )
 
     parent_dir = Path(__file__).parent
-    base_image = f"a-scie/lift/base:{options.arch}"
+    arch_tag = options.arch.replace("/", "-")
+    base_image = f"a-scie/lift/base:{arch_tag}"
 
     subprocess.run(
         args=[
@@ -66,7 +67,7 @@ def main() -> Any:
         check=True,
     )
 
-    dev_image = f"a-scie/lift/dev:{options.arch}"
+    dev_image = f"a-scie/lift/dev:{arch_tag}"
 
     ephemeral_build_context = parent_dir / "ephemeral-build-context"
     ephemeral_build_context.mkdir(parents=True, exist_ok=True)
