@@ -18,7 +18,6 @@ from science.platform import (
     CURRENT_PLATFORM,
     CURRENT_PLATFORM_SPEC,
     LibC,
-    Os,
     Platform,
     PlatformSpec,
 )
@@ -223,7 +222,8 @@ def test_platform_specs() -> None:
 
 
 @pytest.mark.skipif(
-    CURRENT_PLATFORM.os is not Os.Linux, reason="This test needs to run a Linux scie."
+    CURRENT_PLATFORM is not Platform.Linux_x86_64,
+    reason="This test needs to run a Linux x86_64 scie.",
 )
 def test_PBS_gnu_and_musl(tmp_path: Path, science_pyz: Path) -> None:
     with resources.as_file(resources.files("data") / "PBS-gnu-and-musl.toml") as config:
