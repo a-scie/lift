@@ -132,7 +132,7 @@ jobs:
           addgroup --gid $(id -g) build
           if [ "${{ matrix.docker-image }}" = "python:3.12-alpine" ]; then
             adduser -D -g '' -G build -u $(id -u) build
-            apk add git gcc python3-dev musl-dev linux-headers
+            apk add gcc git linux-headers musl-dev python3-dev
           else
             adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
           fi
@@ -181,7 +181,9 @@ jobs:
           addgroup --gid $(id -g) build
           if [ "${{ matrix.docker-image }}" = "python:3.12-alpine" ]; then
             adduser -D -g '' -G build -u $(id -u) build
-            apk add git gcc python3-dev musl-dev linux-headers
+            # N.B.: The bash and curl packages are additional needs for tests. The rest just
+            # supports building the psutil wheel needed for the science Python distribution.
+            apk add bash curl gcc git linux-headers musl-dev python3-dev
           else
             adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
           fi
@@ -208,7 +210,7 @@ jobs:
           addgroup --gid $(id -g) build
           if [ "${{ matrix.docker-image }}" = "python:3.12-alpine" ]; then
             adduser -D -g '' -G build -u $(id -u) build
-            apk add git gcc python3-dev musl-dev linux-headers
+            apk add gcc git linux-headers musl-dev python3-dev
           else
             adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
           fi
@@ -235,7 +237,7 @@ jobs:
           addgroup --gid $(id -g) build
           if [ "${{ matrix.docker-image }}" = "python:3.12-alpine" ]; then
             adduser -D -g '' -G build -u $(id -u) build
-            apk add git gcc python3-dev musl-dev linux-headers
+            apk add gcc git linux-headers musl-dev python3-dev
           else
             adduser --disabled-password --gecos '' --gid $(id -g) --uid $(id -u) build
           fi

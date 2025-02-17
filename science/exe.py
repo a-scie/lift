@@ -327,10 +327,10 @@ def _download(
         platforms = list(Platform)
         explicit_set = False
     else:
-        platforms = [CURRENT_PLATFORM]
+        platforms = [CURRENT_PLATFORM_SPEC.platform]
         explicit_set = True
 
-    libcs = libcs or [None]
+    libcs = libcs or [CURRENT_PLATFORM_SPEC.libc]
 
     ctx.obj = DownloadConfig(
         platform_specs=tuple(

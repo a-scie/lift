@@ -28,6 +28,7 @@ from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
 from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform
+from science.providers import PyPy
 
 
 @pytest.fixture(scope="module")
@@ -753,6 +754,10 @@ def working_pypy_versions() -> list[str]:
     return ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
 
 
+@pytest.mark.skipif(
+    CURRENT_PLATFORM_SPEC not in PyPy.iter_supported_platforms([CURRENT_PLATFORM_SPEC]),
+    reason=f"PyPy does not support the current platform: {CURRENT_PLATFORM_SPEC}",
+)
 @pytest.mark.parametrize("version", working_pypy_versions())
 def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
     dest = tmp_path / "dest"

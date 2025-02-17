@@ -30,7 +30,7 @@ from science.model import (
     Provider,
     Url,
 )
-from science.platform import Platform, PlatformSpec
+from science.platform import LibC, Platform, PlatformSpec
 
 
 @dataclass(frozen=True)
@@ -177,13 +177,14 @@ class PyPy(Provider[Config]):
             if platform_spec.platform in (
                 Platform.Linux_aarch64,
                 Platform.Linux_s390x,
-                Platform.Linux_x86_64,
                 Platform.Macos_aarch64,
                 Platform.Macos_x86_64,
                 Platform.Windows_aarch64,
                 Platform.Windows_x86_64,
             ):
                 yield PlatformSpec(platform_spec.platform)
+            elif platform_spec.platform is Platform.Linux_x86_64:
+                yield PlatformSpec(Platform.Linux_x86_64, LibC.GLIBC)
 
     @staticmethod
     def rank_compatibility(platform: Platform, arch: str) -> int | None:
