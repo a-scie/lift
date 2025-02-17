@@ -276,7 +276,7 @@ class PythonBuildStandalone(Provider[Config]):
                     case LibC.GLIBC, "x86_64_v3-unknown-linux-gnu":
                         return 2
                     case LibC.GLIBC, "x86_64_v4-unknown-linux-gnu":
-                        return 4
+                        return 3
             case Platform.Macos_aarch64:
                 match target_triple:
                     case "aarch64-apple-darwin":
@@ -421,7 +421,7 @@ class PythonBuildStandalone(Provider[Config]):
             if (
                 rank := self.rank_compatibility(
                     platform_spec.platform,
-                    platform_spec.libc or self.libc or LibC.GLIBC,
+                    self.libc or platform_spec.libc or LibC.GLIBC,
                     asset.target_triple,
                 )
             ) is not None and (asset_rank is None or rank < asset_rank):
