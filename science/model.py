@@ -35,7 +35,7 @@ from science.doc import Ref
 from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM_SPEC, PlatformSpec
 
 
 class FileType(Enum):
@@ -362,8 +362,11 @@ ConfigDataclass = TypeVar("ConfigDataclass", bound=Dataclass)
 @runtime_checkable
 class Provider(Protocol[ConfigDataclass]):
     @classmethod
-    def supported_platforms(cls) -> frozenset[Platform]:
-        return frozenset(Platform)
+    def iter_supported_platforms(
+        cls, requested_platforms: Iterable[PlatformSpec]
+    ) -> Iterator[PlatformSpec]:
+        for platform_spec in requested_platforms:
+            yield platform_spec
 
     @classmethod
     def config_dataclass(cls) -> type[ConfigDataclass]: ...
@@ -373,7 +376,7 @@ class Provider(Protocol[ConfigDataclass]):
 
     def distributions(self) -> DistributionsManifest: ...
 
-    def distribution(self, platform: Platform) -> Distribution | None: ...
+    def distribution(self, platform_spec: PlatformSpec) -> Distribution | None: ...
 
 
 @documented_dataclass(
@@ -498,13 +501,15 @@ class InterpreterGroup:
         )
     )
 
-    def _expand_placeholder(self, platform: Platform, match: Match) -> tuple[str, dict[str, str]]:
+    def _expand_placeholder(
+        self, platform_spec: PlatformSpec, match: Match
+    ) -> tuple[str, dict[str, str]]:
         if placeholder := match.group("placeholder"):
             env = {}
             ph = Identifier(placeholder)
             env_var_prefix = f"_SCIENCE_IG_{self.id}_{placeholder}_"
             for member in self.members:
-                distribution = member.provider.distribution(platform)
+                distribution = member.provider.distribution(platform_spec)
                 if distribution:
                     ph_value = distribution.placeholders[ph]
                     env[f"={env_var_prefix}{distribution.id}"] = ph_value
@@ -514,11 +519,13 @@ class InterpreterGroup:
             return path, env
         return self.selector, {}
 
-    def expand_placeholders(self, platform: Platform, value: str) -> tuple[str, dict[str, str]]:
+    def expand_placeholders(
+        self, platform_spec: PlatformSpec, value: str
+    ) -> tuple[str, dict[str, str]]:
         env = {}
 
         def expand_placeholder(match: Match) -> str:
-            expansion, ig_env = self._expand_placeholder(platform, match)
+            expansion, ig_env = self._expand_placeholder(platform_spec, match)
             env.update(ig_env)
             return expansion
 
@@ -536,7 +543,9 @@ class Application(Dataclass):
     description: str | None = None
     load_dotenv: bool = False
     build_info: BuildInfo | None = dataclasses.field(default=None, metadata=metadata(inline=True))
-    platforms: frozenset[Platform] = frozenset([CURRENT_PLATFORM])
+    platform_specs: frozenset[PlatformSpec] = dataclasses.field(
+        default=frozenset([CURRENT_PLATFORM_SPEC]), metadata=metadata(alias="platforms")
+    )
     base: str | None = dataclasses.field(
         default=None,
         metadata=metadata("An alternate path to use for the scie base `nce` CAS."),
@@ -579,7 +588,7 @@ class Application(Dataclass):
             )
 
     def __post_init__(self) -> None:
-        if not self.platforms:
+        if not self.platform_specs:
             raise InputError(
                 "There must be at least one platform defined for a science application. Leave "
                 "un-configured to request just the current platform."

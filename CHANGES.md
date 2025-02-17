@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.12.0
+
+This release adds support for targeting musl libc systems and dogfoods this to ship a `science`
+scie for 64 bit musl Linux.
+
 ## 0.11.3
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.9.

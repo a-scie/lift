@@ -10,7 +10,7 @@ import urllib.parse
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable, Iterator
 
 from bs4 import BeautifulSoup
 from packaging.version import Version
@@ -30,7 +30,7 @@ from science.model import (
     Provider,
     Url,
 )
-from science.platform import Platform
+from science.platform import LibC, Platform, PlatformSpec
 
 
 @dataclass(frozen=True)
@@ -170,18 +170,21 @@ class PyPy(Provider[Config]):
     """
 
     @classmethod
-    def supported_platforms(cls) -> frozenset[Platform]:
-        return frozenset(
-            (
+    def iter_supported_platforms(
+        cls, requested_platforms: Iterable[PlatformSpec]
+    ) -> Iterator[PlatformSpec]:
+        for platform_spec in requested_platforms:
+            if platform_spec.platform in (
                 Platform.Linux_aarch64,
                 Platform.Linux_s390x,
-                Platform.Linux_x86_64,
                 Platform.Macos_aarch64,
                 Platform.Macos_x86_64,
                 Platform.Windows_aarch64,
                 Platform.Windows_x86_64,
-            )
-        )
+            ):
+                yield PlatformSpec(platform_spec.platform)
+            elif platform_spec.platform is Platform.Linux_x86_64:
+                yield PlatformSpec(Platform.Linux_x86_64, LibC.GLIBC)
 
     @staticmethod
     def rank_compatibility(platform: Platform, arch: str) -> int | None:
@@ -304,13 +307,13 @@ class PyPy(Provider[Config]):
     def distributions(self) -> DistributionsManifest:
         return self._distributions
 
-    def distribution(self, platform: Platform) -> Distribution | None:
+    def distribution(self, platform_spec: PlatformSpec) -> Distribution | None:
         selected_asset: FingerprintedAsset | None = None
         asset_rank: int | None = None
         for asset in self._distributions.assets:
-            if (rank := self.rank_compatibility(platform, asset.arch)) is not None and (
-                asset_rank is None or rank < asset_rank
-            ):
+            if (
+                rank := self.rank_compatibility(platform_spec.platform, asset.arch)
+            ) is not None and (asset_rank is None or rank < asset_rank):
                 asset_rank = rank
                 selected_asset = asset
         if selected_asset is None:
@@ -352,7 +355,7 @@ class PyPy(Provider[Config]):
         # We correct for that discrepency here:
         top_level_archive_dir = re.sub(r"-portable$", "", selected_asset.file_stem())
 
-        if platform.is_windows:
+        if platform_spec.is_windows:
             pypy_binary = f"{top_level_archive_dir}\\{pypy}.exe"
             placeholders[Identifier("pypy")] = pypy_binary
             placeholders[Identifier("python")] = pypy_binary

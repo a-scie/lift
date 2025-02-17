@@ -30,6 +30,7 @@ _FIELD_METADATA_KEY = f"{__name__}.field_metadata"
 class FieldMetadata:
     DEFAULT: ClassVar[FieldMetadata]
 
+    alias: str | None = None
     doc_func: Callable[[], str] | None = None
     reference: bool = False
     inline: bool = False
@@ -46,6 +47,7 @@ FieldMetadata.DEFAULT = FieldMetadata()
 def metadata(
     doc: str | Callable[[], str] = "",
     *,
+    alias: str | None = None,
     reference: bool = False,
     inline: bool = False,
     hidden: bool = False,
@@ -59,7 +61,7 @@ def metadata(
 
     return {
         _FIELD_METADATA_KEY: FieldMetadata(
-            doc_func=doc_func, reference=reference, inline=inline, hidden=hidden
+            alias=alias, doc_func=doc_func, reference=reference, inline=inline, hidden=hidden
         )
     }
 
@@ -144,12 +146,17 @@ _F = TypeVar("_F")
 @dataclass(frozen=True)
 class FieldInfo(Generic[_F]):
     name: str
+    alias: str | None
     type: TypeInfo[_F]
     default: Any
     doc: str
     reference: bool
     inline: bool = False
     hidden: bool = False
+
+    @property
+    def display_name(self) -> str:
+        return self.alias or self.name
 
     @property
     def has_default(self) -> bool:
@@ -181,6 +188,7 @@ def dataclass_info(data_type: type[_D]) -> DataclassInfo[_D]:
             field_metadata = field.metadata.get(_FIELD_METADATA_KEY, FieldMetadata.DEFAULT)
             yield FieldInfo(
                 name=field.name,
+                alias=field_metadata.alias,
                 type=TypeInfo(type_hints.get(field.name, field.type)),
                 default=field.default,
                 doc=field_metadata.doc,

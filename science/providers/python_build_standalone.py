@@ -30,7 +30,7 @@ from science.model import (
     Provider,
     Url,
 )
-from science.platform import Platform
+from science.platform import LibC, Platform, PlatformSpec
 
 
 @dataclass(frozen=True)
@@ -168,6 +168,10 @@ class Config:
             """
         ),
     )
+    libc: LibC | None = dataclasses.field(
+        default=None,
+        metadata=metadata("For Linux x86_64 platforms, the libc to link against."),
+    )
     flavor: str = dataclasses.field(
         default="install_only",
         metadata=metadata(
@@ -241,7 +245,7 @@ class PythonBuildStandalone(Provider[Config]):
     """
 
     @staticmethod
-    def rank_compatibility(platform: Platform, target_triple: str) -> int | None:
+    def rank_compatibility(platform: Platform, libc: LibC, target_triple: str) -> int | None:
         match platform:
             case Platform.Linux_aarch64:
                 match target_triple:
@@ -262,17 +266,17 @@ class PythonBuildStandalone(Provider[Config]):
                     case "s390x-unknown-linux-gnu":
                         return 0
             case Platform.Linux_x86_64:
-                match target_triple:
-                    case "x86_64-unknown-linux-gnu":
+                match libc, target_triple:
+                    case LibC.MUSL, "x86_64-unknown-linux-musl":
                         return 0
-                    case "x86_64_v2-unknown-linux-gnu":
+                    case LibC.GLIBC, "x86_64-unknown-linux-gnu":
+                        return 0
+                    case LibC.GLIBC, "x86_64_v2-unknown-linux-gnu":
                         return 1
-                    case "x86_64_v3-unknown-linux-gnu":
+                    case LibC.GLIBC, "x86_64_v3-unknown-linux-gnu":
                         return 2
-                    case "x86_64-unknown-linux-musl":
+                    case LibC.GLIBC, "x86_64_v4-unknown-linux-gnu":
                         return 3
-                    case "x86_64_v4-unknown-linux-gnu":
-                        return 4
             case Platform.Macos_aarch64:
                 match target_triple:
                     case "aarch64-apple-darwin":
@@ -303,6 +307,7 @@ class PythonBuildStandalone(Provider[Config]):
             return cls(
                 id=identifier,
                 lazy=lazy,
+                libc=config.libc,
                 _distributions=Distributions.fetch(
                     base_url=config.base_url,
                     version=version,
@@ -386,6 +391,7 @@ class PythonBuildStandalone(Provider[Config]):
         return cls(
             id=identifier,
             lazy=lazy,
+            libc=config.libc,
             _distributions=Distributions(
                 release=release,
                 latest=config.release is None,
@@ -398,6 +404,7 @@ class PythonBuildStandalone(Provider[Config]):
 
     id: Identifier
     lazy: bool
+    libc: LibC | None
     _distributions: Distributions
 
     @property
@@ -407,13 +414,17 @@ class PythonBuildStandalone(Provider[Config]):
     def distributions(self) -> DistributionsManifest:
         return self._distributions
 
-    def distribution(self, platform: Platform) -> Distribution | None:
+    def distribution(self, platform_spec: PlatformSpec) -> Distribution | None:
         selected_asset: FingerprintedAsset | None = None
         asset_rank: int | None = None
         for asset in self._distributions.assets:
-            if (rank := self.rank_compatibility(platform, asset.target_triple)) is not None and (
-                asset_rank is None or rank < asset_rank
-            ):
+            if (
+                rank := self.rank_compatibility(
+                    platform_spec.platform,
+                    self.libc or platform_spec.libc or LibC.GLIBC,
+                    asset.target_triple,
+                )
+            ) is not None and (asset_rank is None or rank < asset_rank):
                 asset_rank = rank
                 selected_asset = asset
         if selected_asset is None:
@@ -433,7 +444,7 @@ class PythonBuildStandalone(Provider[Config]):
         placeholders = {}
         match self._distributions.flavor:
             case "install_only" | "install_only_stripped":
-                if platform.is_windows:
+                if platform_spec.is_windows:
                     placeholders[Identifier("python")] = "python\\python.exe"
                 else:
                     version = f"{selected_asset.version.major}.{selected_asset.version.minor}"

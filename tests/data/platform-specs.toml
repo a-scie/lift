@@ -1,0 +1,19 @@
+[lift]
+name = "platform-specs"
+description = "Test heterogeneous platform specifiers work."
+
+platforms = [
+    "linux-aarch64",
+    "linux-armv7l",
+    "linux-powerpc64",
+    "linux-s390x",
+    {platform = "linux-x86_64", libc = "gnu"},
+    {platform = "linux-x86_64", libc = "musl"},
+    "macos-aarch64",
+    "macos-x86_64",
+    "windows-aarch64",
+    "windows-x86_64",
+]
+
+[[lift.commands]]
+exe = "ignored"

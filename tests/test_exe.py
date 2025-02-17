@@ -27,7 +27,8 @@ from testing import issue
 from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform
+from science.providers import PyPy
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +70,7 @@ def science_exe(
 def test_use_platform_suffix(
     tmp_path: Path, science_exe: Path, config: Path, science_pyz: Path, docsite: Path
 ) -> None:
-    expected_executable = tmp_path / CURRENT_PLATFORM.qualified_binary_name("science")
+    expected_executable = tmp_path / CURRENT_PLATFORM_SPEC.qualified_binary_name("science")
     assert not expected_executable.exists()
     subprocess.run(
         args=[
@@ -88,7 +89,7 @@ def test_use_platform_suffix(
         check=True,
     )
     assert expected_executable.is_file()
-    assert not (tmp_path / CURRENT_PLATFORM.binary_name("science")).exists()
+    assert not (tmp_path / CURRENT_PLATFORM_SPEC.binary_name("science")).exists()
 
 
 def test_no_use_platform_suffix(
@@ -753,6 +754,10 @@ def working_pypy_versions() -> list[str]:
     return ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
 
 
+@pytest.mark.skipif(
+    CURRENT_PLATFORM_SPEC not in PyPy.iter_supported_platforms([CURRENT_PLATFORM_SPEC]),
+    reason=f"PyPy does not support the current platform: {CURRENT_PLATFORM_SPEC}",
+)
 @pytest.mark.parametrize("version", working_pypy_versions())
 def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
     dest = tmp_path / "dest"

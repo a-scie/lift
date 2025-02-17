@@ -25,7 +25,7 @@ from science.model import (
     InterpreterGroup,
     ScieJump,
 )
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM_SPEC, PlatformSpec
 
 
 @dataclass(frozen=True)
@@ -71,13 +71,13 @@ class PlatformInfo:
             use_suffix=(
                 use_suffix
                 if use_suffix is not None
-                else application.platforms != frozenset([CURRENT_PLATFORM])
+                else application.platform_specs != frozenset([CURRENT_PLATFORM_SPEC])
             ),
         )
 
     use_suffix: bool
 
-    def binary_name(self, name: str, target_platform: Platform) -> str:
+    def binary_name(self, name: str, target_platform: PlatformSpec) -> str:
         return (
             target_platform.qualified_binary_name(name)
             if self.use_suffix
@@ -92,7 +92,7 @@ class LiftConfig:
     include_provenance: bool = False
     app_info: tuple[AppInfo, ...] = ()
     app_name: str | None = None
-    platforms: tuple[Platform, ...] = ()
+    platform_specs: tuple[PlatformSpec, ...] = ()
 
 
 def export_manifest(
@@ -100,12 +100,12 @@ def export_manifest(
     application: Application,
     dest_dir: Path,
     *,
-    platforms: Iterable[Platform] | None = None,
-) -> Iterator[tuple[Platform, Path]]:
+    platform_specs: Iterable[PlatformSpec] | None = None,
+) -> Iterator[tuple[PlatformSpec, Path]]:
     app_info = AppInfo.assemble(lift_config.app_info)
 
-    for platform in platforms or application.platforms:
-        chroot = dest_dir / platform.value
+    for platform_spec in platform_specs or application.platform_specs:
+        chroot = dest_dir / platform_spec.value
         chroot.mkdir(parents=True, exist_ok=True)
 
         bindings = list[Command]()
@@ -135,11 +135,11 @@ def export_manifest(
             return file
 
         for interpreter in application.interpreters:
-            distribution = interpreter.provider.distribution(platform)
+            distribution = interpreter.provider.distribution(platform_spec)
             if distribution is None:
                 raise InputError(
                     f"No compatible {providers.name(interpreter.provider)} distribution was found "
-                    f"for {platform}."
+                    f"for {platform_spec}."
                 )
             if distribution:
                 distributions.append(distribution)
@@ -155,7 +155,7 @@ def export_manifest(
             isinstance(file.source, Fetch) and file.source.lazy for file in requested_files
         )
         if application.ptex or fetches_present:
-            ptex = a_scie.ptex(specification=application.ptex, platform=platform)
+            ptex = a_scie.ptex(specification=application.ptex, platform=platform_spec.platform)
             (chroot / ptex.binary_name).symlink_to(ptex.path)
             ptex_key = application.ptex.id if application.ptex and application.ptex.id else "ptex"
             ptex_file = File(
@@ -240,7 +240,7 @@ def export_manifest(
                 load_dotenv=application.load_dotenv,
                 base=application.base,
                 scie_jump=application.scie_jump or ScieJump(),
-                platform=platform,
+                platform_spec=platform_spec,
                 distributions=distributions,
                 interpreter_groups=application.interpreter_groups,
                 files=requested_files,
@@ -250,7 +250,7 @@ def export_manifest(
                 build_info=build_info,
                 app_info=app_info,
             )
-        yield platform, lift_manifest
+        yield platform_spec, lift_manifest
 
 
 def _render_file(file: File) -> dict[str, Any]:
@@ -275,7 +275,7 @@ def _render_file(file: File) -> dict[str, Any]:
 
 def _render_command(
     command: Command,
-    platform: Platform,
+    platform_spec: PlatformSpec,
     distributions: Iterable[Distribution],
     interpreter_groups: Iterable[InterpreterGroup],
 ) -> tuple[str, dict[str, Any]]:
@@ -285,7 +285,7 @@ def _render_command(
         for distribution in distributions:
             text = distribution.expand_placeholders(text)
         for interpreter_group in interpreter_groups:
-            text, ig_env = interpreter_group.expand_placeholders(platform, text)
+            text, ig_env = interpreter_group.expand_placeholders(platform_spec, text)
             env.update(ig_env)
         return text
 
@@ -320,7 +320,7 @@ def _emit_manifest(
     load_dotenv: bool,
     base: str | None,
     scie_jump: ScieJump,
-    platform: Platform,
+    platform_spec: PlatformSpec,
     distributions: Iterable[Distribution],
     interpreter_groups: Iterable[InterpreterGroup],
     files: Iterable[File],
@@ -335,7 +335,7 @@ def _emit_manifest(
 
     def render_commands(cmds: Iterable[Command]) -> dict[str, dict[str, Any]]:
         return dict(
-            _render_command(cmd, platform, distributions, interpreter_groups) for cmd in cmds
+            _render_command(cmd, platform_spec, distributions, interpreter_groups) for cmd in cmds
         )
 
     lift_data = {

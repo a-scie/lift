@@ -13,7 +13,7 @@ from science import a_scie
 from science.commands import lift
 from science.commands.lift import LiftConfig, PlatformInfo
 from science.model import Application
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM, PlatformSpec
 
 
 @dataclass(frozen=True)
@@ -33,7 +33,7 @@ def assemble_scies(
     lift_config: LiftConfig,
     application: Application,
     dest_dir: Path,
-    platforms: Iterable[Platform],
+    platform_specs: Iterable[PlatformSpec],
     platform_info: PlatformInfo,
     use_jump: Path | None,
     hash_functions: list[str],
@@ -41,13 +41,13 @@ def assemble_scies(
     native_jump_path = (a_scie.custom_jump(repo_path=use_jump) if use_jump else a_scie.jump()).path
 
     scies = list[ScieAssembly]()
-    for platform, lift_manifest in lift.export_manifest(
-        lift_config, application, dest_dir=dest_dir, platforms=platforms
+    for platform_spec, lift_manifest in lift.export_manifest(
+        lift_config, application, dest_dir=dest_dir, platform_specs=platform_specs
     ):
         jump_path = (
             a_scie.custom_jump(repo_path=use_jump)
             if use_jump
-            else a_scie.jump(specification=application.scie_jump, platform=platform)
+            else a_scie.jump(specification=application.scie_jump, platform=platform_spec.platform)
         ).path
         platform_export_dir = lift_manifest.parent
         subprocess.run(
@@ -58,7 +58,7 @@ def assemble_scies(
         )
 
         src_binary = platform_export_dir / CURRENT_PLATFORM.binary_name(application.name)
-        dst_binary_name = platform_info.binary_name(application.name, target_platform=platform)
+        dst_binary_name = platform_info.binary_name(application.name, target_platform=platform_spec)
         dst_binary = platform_export_dir / dst_binary_name
         if src_binary != dst_binary:
             os.rename(src=src_binary, dst=dst_binary)
