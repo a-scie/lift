@@ -54,15 +54,16 @@ def main() -> Any:
     arch_tag = options.arch.replace("/", "-")
     base_image = f"a-scie/lift/base:{arch_tag}"
 
+    # The type-ignores for os.get{uid,gid} cover Windows which we explicitly fail-fast for above.
     subprocess.run(
         args=[
             "docker",
             "buildx",
             "build",
             "--build-arg",
-            f"UID={os.getuid()}",
+            f"UID={os.getuid()}",  # type:ignore[attr-defined]
             "--build-arg",
-            f"GID={os.getgid()}",
+            f"GID={os.getgid()}",  # type:ignore[attr-defined]
             "--platform",
             platform,
             "--tag",
