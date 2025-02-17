@@ -251,7 +251,7 @@ jobs:
             -v $PWD:/code \
             -w /code \
             --platform ${{ matrix.docker-platform }} \
-            ${{ matrix.docker-image }} -eu _doc_linkcheck.sh
+            ${{ matrix.docker-image }} sh -eu _doc_linkcheck.sh
       - name: Cleanup
         if: always()
         run: |
