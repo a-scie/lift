@@ -9,8 +9,13 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
 
+from science.platform import CURRENT_OS, Os
+
 
 def main() -> Any:
+    if CURRENT_OS is Os.Windows:
+        return "This script does not work on Windows yet."
+
     parser = ArgumentParser()
     parser.add_argument("--image", default="debian", choices=["alpine", "debian"])
     parser.add_argument(
