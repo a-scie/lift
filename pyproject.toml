@@ -39,6 +39,7 @@ include = ["science*"]
 [dependency-groups]
 dev = [
     "ansicolors",
+    "coloredlogs",
     "dev-cmd",
     "docutils",
     "mypy",
@@ -75,6 +76,10 @@ follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
 module = "click_log"
+follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = "coloredlogs"
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]

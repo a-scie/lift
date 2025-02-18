@@ -4,13 +4,13 @@
 
 set -eu
 
-COLOR_RED="\x1b[31m"
-COLOR_GREEN="\x1b[32m"
-COLOR_YELLOW="\x1b[33m"
-COLOR_RESET="\x1b[0m"
+COLOR_RED="\e[31m"
+COLOR_GREEN="\e[32m"
+COLOR_YELLOW="\e[33m"
+COLOR_RESET="\e[0m"
 
 log() {
-  echo -e "$@" >&2
+  printf "$@\n" >&2
 }
 
 die() {
@@ -107,9 +107,9 @@ fetch() {
   curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
 }
 
-ensure_cmd $([ "${OS}" == "macos" ] && echo "shasum" || echo "sha256sum")
+ensure_cmd $([ "${OS}" = "macos" ] && echo "shasum" || echo "sha256sum")
 sha256() {
-  if [[ "${OS}" == "macos" ]]; then
+  if [ "${OS}" = "macos" ]; then
     shasum --algorithm 256 "$@"
   else
     sha256sum "$@"
@@ -204,7 +204,7 @@ done
 
 ARCH="$(determine_arch)"
 VARIANT="$(determine_variant)"
-DIRSEP=$([ "${OS}" == "windows" ] && echo "\\" || echo "/")
+DIRSEP=$([ "${OS}" = "windows" ] && echo "\\" || echo "/")
 EXE_EXT=$([ "${OS}" = "windows" ] && echo ".exe" || echo "")
 
 INSTALL_DEST="${INSTALL_PREFIX}${DIRSEP}science${EXE_EXT}"
