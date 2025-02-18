@@ -109,11 +109,11 @@ def main() -> Any:
 
     dev_image_context = parent_dir / "uv"
     fingerprint = fingerprint_paths(Path("pyproject.toml"), Path("uv.lock"), dev_image_context)
-    dev_image = f"a-scie/lift/dev:{arch_tag}-{fingerprint}"
+    dev_image = f"a-scie/lift/dev:{options.image}-{arch_tag}-{fingerprint}"
     if not image_exists(dev_image):
         base_image_context = parent_dir / options.image
         fingerprint = fingerprint_paths(base_image_context)
-        base_image = f"a-scie/lift/base:{arch_tag}-{fingerprint}"
+        base_image = f"a-scie/lift/base:{options.image}-{arch_tag}-{fingerprint}"
         if not image_exists(base_image):
             # The type-ignores for os.get{uid,gid} cover Windows which we explicitly fail-fast for above.
             subprocess.run(
