@@ -17,9 +17,6 @@ concurrency:
   group: CI-${{ github.ref }}
   # Queue on all branches and tags, but only cancel overlapping PR burns.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
-env:
-  # Work around SIGSEGVs and other errors under some qemu targets.
-  UV_CONCURRENT_BUILDS: 1
 jobs:
   org-check:
     name: Check GitHub Organization
@@ -115,14 +112,14 @@ jobs:
           path: .mypy_cache
           # We're using a key suffix / restore-keys prefix trick here to get an updatable cache.
           # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
-          key: ${{ matrix.docker-platform || format('{0}-{1}', matrix.os, runner.arch) }}-a-scie-lift-mypy-v1-${{ github.run_id }}
-          restore-keys: ${{ matrix.docker-platform || format('{0}-{1}', matrix.os, runner.arch) }}-a-scie-lift-mypy-v1
+          key: ${{ matrix.image || format('{0}-{1}', matrix.os, runner.arch) }}-a-scie-lift-mypy-v1-${{ github.run_id }}
+          restore-keys: ${{ matrix.image || format('{0}-{1}', matrix.os, runner.arch) }}-a-scie-lift-mypy-v1
       - name: Check Formatting & Lints
         if: matrix.image == ''
         run: |
           "${UV}" run dev-cmd ci --skip test
       - name: Check Formatting & Lints
-        if: matrix.image != ''
+        if: matrix.image == 'debian' && matrix.arch == 'amd64'
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             ci --skip test
@@ -143,13 +140,8 @@ jobs:
         run: |
           "${UV}" run dev-cmd test -- -vvs
       - name: Unit Tests
-        if: matrix.image != ''
+        if: matrix.image != '' && matrix.arch != 'ppc64le'
         run: |
-          if [ "${{ matrix.arch }}" = "ppc64le" ]; then
-            echo "Skipping tests on ppc64le."
-            exit 0
-          fi
-
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             test -- -vvs
       - name: Build & Package
@@ -166,7 +158,7 @@ jobs:
         run: |
           "${UV}" run dev-cmd doc linkcheck
       - name: Generate Doc Site
-        if: matrix.image != ''
+        if: matrix.image == 'debian' && matrix.arch == 'amd64'
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             doc linkcheck
