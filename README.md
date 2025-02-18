@@ -31,7 +31,7 @@ like so:
 
 + Linux and macOS:
     ```
-    curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | bash
+    curl --proto '=https' --tlsv1.2 -LSsf https://raw.githubusercontent.com/a-scie/lift/main/install.sh | sh
     ```
 + Windows PowerShell:
     ```

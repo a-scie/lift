@@ -1,48 +1,48 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Copyright 2024 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-set -euo pipefail
+set -eu
 
 COLOR_RED="\x1b[31m"
 COLOR_GREEN="\x1b[32m"
 COLOR_YELLOW="\x1b[33m"
 COLOR_RESET="\x1b[0m"
 
-function log() {
-  echo -e "$@" 1>&2
+log() {
+  echo -e "$@" >&2
 }
 
-function die() {
-  (($# > 0)) && log "${COLOR_RED}$*${COLOR_RESET}"
+die() {
+  [ "$#" -gt 0 ] && log "${COLOR_RED}$*${COLOR_RESET}"
   exit 1
 }
 
-function green() {
-  (($# > 0)) && log "${COLOR_GREEN}$*${COLOR_RESET}"
+green() {
+  [ "$#" -gt 0 ] && log "${COLOR_GREEN}$*${COLOR_RESET}"
 }
 
-function warn() {
-  (($# > 0)) && log "${COLOR_YELLOW}$*${COLOR_RESET}"
+warn() {
+  [ "$#" -gt 0 ] && log "${COLOR_YELLOW}$*${COLOR_RESET}"
 }
 
-function ensure_cmd() {
+ensure_cmd() {
   local cmd="$1"
   command -v "$cmd" > /dev/null || die "This script requires the ${cmd} binary to be on \$PATH."
 }
 
 ISSUES_URL="https://github.com/a-scie/lift/issues"
-_GC=()
+_GC=""
 
 ensure_cmd rm
-function gc() {
-  if (($# > 0)); then
-    _GC+=("$@")
+gc() {
+  if [ "$#" -gt 0 ]; then
+    _GC=" $@"
   else
     # Check if $_GC has members to avoid "unbound variable" warnings if gc w/ arguments is never
     # called.
-    if ! [ ${#_GC[@]} -eq 0 ]; then
-      rm -rf "${_GC[@]}"
+    if [ -n "${_GC}" ]; then
+      rm -rf "${_GC}"
     fi
   fi
 }
@@ -50,15 +50,15 @@ function gc() {
 trap gc EXIT
 
 ensure_cmd uname
-function determine_os() {
+determine_os() {
   local os
 
   os="$(uname -s)"
-  if [[ "${os}" =~ [Ll]inux ]]; then
+  if echo "${os}" | grep -E "[Ll]inux" >/dev/null; then
     echo linux
-  elif [[ "${os}" =~ [Dd]arwin ]]; then
+  elif echo "${os}" | grep -E "[Dd]arwin" >/dev/null; then
     echo macos
-  elif [[ "${os}" =~ [Ww]indow|[Mm][Ii][Nn][Gg] ]]; then
+  elif echo "${os}" | grep -E "[Ww]indow|[Mm][Ii][Nn][Gg]" >/dev/null; then
     # Powershell reports something like: Windows_NT
     # Git bash reports something like: MINGW64_NT-10.0-22621
     echo windows
@@ -69,7 +69,15 @@ function determine_os() {
 
 OS="$(determine_os)"
 
-function determine_arch() {
+determine_variant() {
+  if [ "${OS}" = "linux" ] && ldd /bin/sh 2>/dev/null | grep musl >/dev/null; then
+    echo "musl-"
+  else
+    echo ""
+  fi
+}
+
+determine_arch() {
   # Map platform architecture to released binary architecture.
   read_arch="$(uname -m)"
   case "$read_arch" in
@@ -87,7 +95,7 @@ function determine_arch() {
 
 ensure_cmd basename
 ensure_cmd curl
-function fetch() {
+fetch() {
   local url="$1"
   local dest_dir="$2"
 
@@ -99,8 +107,8 @@ function fetch() {
   curl --proto '=https' --tlsv1.2 -SfL --progress-bar -o "${dest}" "${url}"
 }
 
-ensure_cmd $([[ "${OS}" == "macos" ]] && echo "shasum" || echo "sha256sum")
-function sha256() {
+ensure_cmd $([ "${OS}" == "macos" ] && echo "shasum" || echo "sha256sum")
+sha256() {
   if [[ "${OS}" == "macos" ]]; then
     shasum --algorithm 256 "$@"
   else
@@ -113,7 +121,7 @@ ensure_cmd mktemp
 ensure_cmd install
 ensure_cmd tr
 ensure_cmd mv
-function install_from_url() {
+install_from_url() {
   local url="$1"
   local dest="$2"
 
@@ -126,19 +134,19 @@ function install_from_url() {
   (
     cd "${workdir}"
 
-    if [[ "${OS}" == "windows" ]]; then
+    if [ "${OS}" = "windows" ]; then
       # N.B. Windows sha256sum is sensitive to trailing \r in files.
       cat *.sha256 | tr -d "\r" > out.sanitized
       mv -f out.sanitized *.sha256
     fi
 
-    sha256 -c --status ./*.sha256 &&
+    sha256 -c ./*.sha256 >/dev/null &&
       green "Download matched it's expected sha256 fingerprint, proceeding" ||
         die "Download from ${url} did not match the fingerprint at ${url}.sha256"
   )
   rm "${workdir}/"*.sha256
 
-  if [[ "${OS}" == "macos" ]]; then
+  if [ "${OS}" = "macos" ]; then
     mkdir -p "$(dirname "${dest}")"
     install -m 755 "${workdir}/"* "${dest}"
   else
@@ -149,7 +157,7 @@ function install_from_url() {
 }
 
 ensure_cmd cat
-function usage() {
+usage() {
   cat << __EOF__
 Usage: $0
 
@@ -172,7 +180,7 @@ INSTALL_PREFIX="${HOME}/.local/bin"
 VERSION="latest/download"
 
 # Parse arguments.
-while (($# > 0)); do
+while [ "$#" -gt 0 ]; do
   case "$1" in
     --help | -h)
       usage
@@ -195,17 +203,18 @@ while (($# > 0)); do
 done
 
 ARCH="$(determine_arch)"
-DIRSEP=$([[ "${OS}" == "windows" ]] && echo "\\" || echo "/")
-EXE_EXT=$([[ "${OS}" == "windows" ]] && echo ".exe" || echo "")
+VARIANT="$(determine_variant)"
+DIRSEP=$([ "${OS}" == "windows" ] && echo "\\" || echo "/")
+EXE_EXT=$([ "${OS}" = "windows" ] && echo ".exe" || echo "")
 
 INSTALL_DEST="${INSTALL_PREFIX}${DIRSEP}science${EXE_EXT}"
-DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${OS}-${ARCH}${EXE_EXT}"
+DL_URL="https://github.com/a-scie/lift/releases/${VERSION}/science-fat-${VARIANT}${OS}-${ARCH}${EXE_EXT}"
 
 green "Download URL is: ${DL_URL}"
 install_from_url "${DL_URL}" "${INSTALL_DEST}"
 
 # Warn if the install prefix is not on $PATH.
-if ! [[ ":$PATH:" == *":${INSTALL_PREFIX}:"* ]]; then
+if ! echo ":$PATH:" | grep ":${INSTALL_PREFIX}:" >/dev/null; then
   warn "WARNING: ${INSTALL_PREFIX} is not detected on \$PATH"
   warn "You'll either need to invoke ${INSTALL_DEST} explicitly or else add ${INSTALL_PREFIX} \
 to your shell's PATH."

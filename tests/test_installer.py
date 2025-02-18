@@ -8,7 +8,6 @@ import pytest
 from _pytest.tmpdir import TempPathFactory
 
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM_SPEC, LibC, Platform, PlatformSpec
 
 
 @pytest.fixture(scope="module")
@@ -31,15 +30,6 @@ def test_installer_help(installer: list):
         assert long_help in result.stdout, f"Expected '{long_help}' in tool output"
 
 
-# TODO(John Sirois): Remove this skip once science is released with 64 bit musl Linux support.
-#  https://github.com/a-scie/lift/issues/139
-skip_64bit_musl_linux = pytest.mark.skipif(
-    CURRENT_PLATFORM_SPEC == PlatformSpec(Platform.Linux_x86_64, LibC.MUSL),
-    reason="No science executable has been released yet for 64 bit musl Linux.",
-)
-
-
-@skip_64bit_musl_linux
 def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: list):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
@@ -54,11 +44,10 @@ def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: li
     assert result.stdout.strip(), "Expected version output in tool stdout"
 
 
-@skip_64bit_musl_linux
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: list):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
-    test_ver = "0.10.0"
+    test_ver = "0.12.0"
     bin_dir = test_dir / "bin"
 
     assert (result := run_captured(installer + ["-V", test_ver, "-d", bin_dir])).returncode == 0
