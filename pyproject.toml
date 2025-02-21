@@ -107,6 +107,9 @@ check-lint = ["ruff", "check"]
 type-check = ["mypy", "docs/_ext", "science", "scripts", "setup.py", "tests", "test-support"]
 
 [tool.dev-cmd.commands.docker]
+# The script currently uses os.get{uid,gid} to ensure a repo volume mount doesn't mangle perms.
+# Not sure yet how this plays out on Windows; so disabled for now.
+when = "sys_platform != 'win32'"
 args = ["scripts/docker/uv.py"]
 accepts-extra-args = true
 hidden = true
