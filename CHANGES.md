@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.12.1
+
+This release fixes science to support scies where the scie name matches one of the lift file names.
+
 ## 0.12.0
 
 This release adds support for targeting musl libc systems and dogfoods this to ship a `science`

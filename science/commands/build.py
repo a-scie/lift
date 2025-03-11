@@ -3,7 +3,7 @@
 
 import hashlib
 import io
-import os
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +12,7 @@ from typing import Iterable
 from science import a_scie
 from science.commands import lift
 from science.commands.lift import LiftConfig, PlatformInfo
+from science.fs import temporary_directory
 from science.model import Application
 from science.platform import CURRENT_PLATFORM, PlatformSpec
 
@@ -49,19 +50,20 @@ def assemble_scies(
             if use_jump
             else a_scie.jump(specification=application.scie_jump, platform=platform_spec.platform)
         ).path
-        platform_export_dir = lift_manifest.parent
-        subprocess.run(
-            args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],
-            cwd=platform_export_dir,
-            stdout=subprocess.DEVNULL,
-            check=True,
-        )
+        with temporary_directory("assemble") as build_dir:
+            subprocess.run(
+                args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],
+                cwd=build_dir,
+                stdout=subprocess.DEVNULL,
+                check=True,
+            )
 
-        src_binary = platform_export_dir / CURRENT_PLATFORM.binary_name(application.name)
-        dst_binary_name = platform_info.binary_name(application.name, target_platform=platform_spec)
-        dst_binary = platform_export_dir / dst_binary_name
-        if src_binary != dst_binary:
-            os.rename(src=src_binary, dst=dst_binary)
+            src_binary = Path(build_dir) / CURRENT_PLATFORM.binary_name(application.name)
+            dst_binary_name = platform_info.binary_name(
+                application.name, target_platform=platform_spec
+            )
+            dst_binary = dest_dir / dst_binary_name
+            shutil.move(src_binary, dst_binary)
 
         hashes = list[Path]()
         if hash_functions:

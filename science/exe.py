@@ -781,7 +781,7 @@ def export(
 
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
-    with temporary_directory(cleanup=True) as td:
+    with temporary_directory("export") as td:
         for _, manifest_path in lift.export_manifest(
             lift_config, application, dest_dir=td, platform_specs=lift_config.platform_specs
         ):
@@ -789,10 +789,7 @@ def export(
                 manifest_path.relative_to(td) if platform_info.use_suffix else manifest_path.name
             )
             lift_manifest.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(
-                manifest_path,
-                lift_manifest,
-            )
+            shutil.move(manifest_path, lift_manifest)
             click.echo(lift_manifest)
 
 
@@ -898,7 +895,7 @@ def _build(
             f"requires at least 0.9.0."
         )
 
-    with temporary_directory(cleanup=not preserve_sandbox) as td:
+    with temporary_directory("build", delete=not preserve_sandbox) as td:
         assembly_info = build.assemble_scies(
             lift_config=lift_config,
             application=application,

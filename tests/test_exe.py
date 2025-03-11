@@ -792,3 +792,65 @@ def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
         version
         == subprocess.run(args=[scie], text=True, stdout=subprocess.PIPE, check=True).stdout.strip()
     )
+
+
+def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    exe = tmp_path / "exe"
+    exe.write_text(
+        dedent(
+            """\
+            import sys
+
+
+            if __name__ == "__main__":
+                print(".".join(map(str, sys.version_info[:3])))
+            """
+        )
+    )
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=dedent(
+            """\
+            [lift]
+            name = "exe"
+
+            [[lift.files]]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20241206"
+            version = "3.11"
+            lazy = true
+
+            [[lift.commands]]
+            exe = "#{cpython:python}"
+            args = ["{exe}"]
+            """
+        ),
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / "exe"
+    assert os.path.exists(scie)
+    assert (
+        "3.11.11"
+        == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
+    )
