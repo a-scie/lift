@@ -848,7 +848,7 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
         check=True,
     )
 
-    scie = dest / "exe"
+    scie = dest / CURRENT_PLATFORM.binary_name("exe")
     assert os.path.exists(scie)
     assert (
         "3.11.11"
