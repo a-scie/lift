@@ -16,7 +16,7 @@ from json import JSONDecodeError
 from netrc import NetrcParseError
 from pathlib import Path
 from types import TracebackType
-from typing import Any, BinaryIO, ClassVar, Iterator, Mapping, Protocol
+from typing import Any, BinaryIO, ClassVar, Generator, Iterator, Mapping, Protocol
 
 import click
 import httpx
@@ -75,7 +75,16 @@ class InvalidAuthError(InputError):
     """Indicates the configured authentication for a given URL is invalid."""
 
 
-def _configure_auth(url: Url) -> httpx.Auth | tuple[str, str] | None:
+class BearerAuth(httpx.Auth):
+    def __init__(self, token: str):
+        self._token = token
+
+    def auth_flow(self, request: Request) -> Generator[Request, Response, None]:
+        request.headers["Authorization"] = f"Bearer {self._token}"
+        yield request
+
+
+def _configure_auth(url: Url) -> httpx.Auth | None:
     if not url.info.hostname:
         return None
 
@@ -105,7 +114,7 @@ def _configure_auth(url: Url) -> httpx.Auth | tuple[str, str] | None:
 
     if bearer := env_auth.pop(f"{env_auth_prefix}_BEARER", None):
         check_ambiguous_auth("bearer")
-        return "Authorization", f"Bearer {bearer}"
+        return BearerAuth(bearer)
 
     if username := get_username("basic"):
         password = require_password("basic")

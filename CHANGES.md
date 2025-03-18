@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.12.2
+
+This release fixes a long standing bug in plumbing `SCIENCE_AUTH_<normalized_host>_BEARER` env var
+based bearer token auth through to http(s) requests to the host.
+
 ## 0.12.1
 
 This release fixes science to support scies where the scie name matches one of the lift file names.

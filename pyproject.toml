@@ -46,6 +46,7 @@ dev = [
     "myst-parser[linkify]",
     "packaging",
     "pytest",
+    "pytest-httpx",
     "pytest-xdist",
     "ruff",
     "shiv",
@@ -170,7 +171,7 @@ args = ["sphinx-build", "-b", "{-type:html}", "-aEW", "docs", "docs/build/{-type
 
 [tool.dev-cmd.commands.run-zipapp]
 env = {"SCIENCE_DOC_LOCAL" = "docs/build/html"}
-args = ["dist/science.pyz"]
+args = ["python", "dist/science.pyz"]
 accepts-extra-args = true
 hidden = true
 
