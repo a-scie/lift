@@ -481,6 +481,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-httpx"
+version = "0.35.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1f/89/5b12b7b29e3d0af3a4b9c071ee92fa25a9017453731a38f08ba01c280f4c/pytest_httpx-0.35.0.tar.gz", hash = "sha256:d619ad5d2e67734abfbb224c3d9025d64795d4b8711116b1a13f72a251ae511f", size = 54146 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/ed/026d467c1853dd83102411a78126b4842618e86c895f93528b0528c7a620/pytest_httpx-0.35.0-py3-none-any.whl", hash = "sha256:ee11a00ffcea94a5cbff47af2114d34c5b231c326902458deed73f9c459fd744", size = 19442 },
+]
+
+[[package]]
 name = "pytest-xdist"
 version = "3.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -577,6 +590,7 @@ dev = [
     { name = "myst-parser", extra = ["linkify"] },
     { name = "packaging" },
     { name = "pytest" },
+    { name = "pytest-httpx" },
     { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "shiv" },
@@ -618,6 +632,7 @@ dev = [
     { name = "myst-parser", extras = ["linkify"] },
     { name = "packaging" },
     { name = "pytest" },
+    { name = "pytest-httpx" },
     { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "shiv" },
