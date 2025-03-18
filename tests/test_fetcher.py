@@ -57,17 +57,19 @@ def assert_auth(
     ), f"Got headers: {headers}"
 
 
-def test_basic_auth(monkeypatch: MonkeyPatch, httpx_mock: HTTPXMock, cache_dir: Path) -> None:
-    monkeypatch.setenv("SCIENCE_AUTH_API_GITHUB_COM_BASIC_USER", "Arthur")
-    monkeypatch.setenv("SCIENCE_AUTH_API_GITHUB_COM_BASIC_PASS", "Dent")
-    assert_auth(
-        httpx_mock,
-        cache_dir,
-        expected_authorization_header_value=f"Basic {base64.b64encode(b'Arthur:Dent').decode()}",
-    )
+def test_basic_auth(httpx_mock: HTTPXMock, cache_dir: Path) -> None:
+    with MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setenv("SCIENCE_AUTH_API_GITHUB_COM_BASIC_USER", "Arthur")
+        monkeypatch.setenv("SCIENCE_AUTH_API_GITHUB_COM_BASIC_PASS", "Dent")
+        assert_auth(
+            httpx_mock,
+            cache_dir,
+            expected_authorization_header_value=f"Basic {base64.b64encode(b'Arthur:Dent').decode()}",
+        )
 
 
 @issue(127, ignore=True)
-def test_bearer_auth(_, monkeypatch: MonkeyPatch, httpx_mock: HTTPXMock, cache_dir: Path) -> None:
-    monkeypatch.setenv("SCIENCE_AUTH_API_GITHUB_COM_BEARER", "Zaphod")
-    assert_auth(httpx_mock, cache_dir, expected_authorization_header_value="Bearer Zaphod")
+def test_bearer_auth(_, httpx_mock: HTTPXMock, cache_dir: Path) -> None:
+    with MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setenv("SCIENCE_AUTH_API_GITHUB_COM_BEARER", "Zaphod")
+        assert_auth(httpx_mock, cache_dir, expected_authorization_header_value="Bearer Zaphod")
