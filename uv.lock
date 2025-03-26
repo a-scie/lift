@@ -163,7 +163,7 @@ wheels = [
 
 [[package]]
 name = "dev-cmd"
-version = "0.18.1"
+version = "0.18.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioconsole" },
@@ -172,9 +172,9 @@ dependencies = [
     { name = "packaging" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/de/7c9078df5937da87bb0e49ce5a69b0d216436ee2b18e3ec1acebdf11b131/dev_cmd-0.18.1.tar.gz", hash = "sha256:9d043003bfd27d5a04653828190b42c0d50dde7bbf3da5a543c3dc8d11f6d472", size = 44100 }
+sdist = { url = "https://files.pythonhosted.org/packages/72/e4/8362a3fad508035b6a53ace72dfb3631bb12412404f3c9a7b51489e994ed/dev_cmd-0.18.2.tar.gz", hash = "sha256:ea1d149c1ee28f3aa83c56e55df6821bd116659f9f2d02245a3eb17f28208d35", size = 44126 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/64/a830aea6189e7fc87226d41b94aaab40c872a88573be3f8c3a2e7c4336ae/dev_cmd-0.18.1-py3-none-any.whl", hash = "sha256:959d66e65af22d8a012f06df28be559750c99efc4242db341e648f821a72ad00", size = 35817 },
+    { url = "https://files.pythonhosted.org/packages/5c/73/b22d8389e0e47f25cd4368485e8452f64fefcac796c5a9d42373f8b03e11/dev_cmd-0.18.2-py3-none-any.whl", hash = "sha256:0ecd2b6d5741894623506777756a220ce770dae7fdce41064f9dc3993600d8b4", size = 35829 },
 ]
 
 [[package]]
@@ -638,7 +638,7 @@ dev = [
     { name = "shiv" },
     { name = "sphinx" },
     { name = "sphinx-click" },
-    { name = "sphinx-library", git = "https://github.com/vsalvino/sphinx-library?rev=5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b" },
+    { name = "sphinx-library", specifier = ">=1.1.3" },
     { name = "toml" },
     { name = "types-appdirs" },
     { name = "types-beautifulsoup4" },
@@ -742,8 +742,12 @@ wheels = [
 
 [[package]]
 name = "sphinx-library"
-version = "1.1.2"
-source = { git = "https://github.com/vsalvino/sphinx-library?rev=5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b#5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b" }
+version = "1.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/27/e0b22bacab1d2af58b874a00f295468a59a5df6a42aee96ba107746e965d/sphinx_library-1.1.3.tar.gz", hash = "sha256:b768e27672cc3cb34ec7d5a495856e62a6f55e4db3e0ed2c10148f82597c720a", size = 17040 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/1e/97a0deb6a45cf49c50fb9e7aac474920e38b85d4dcbf174ed677ea1e6fe0/sphinx_library-1.1.3-py3-none-any.whl", hash = "sha256:8f6feefee69b161c8c3c842e0c9e85c5ea4f7d0383033d072133efbda8f2340a", size = 16040 },
+]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
