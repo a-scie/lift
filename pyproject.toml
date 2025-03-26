@@ -53,9 +53,9 @@ dev = [
     "sphinx",
     "sphinx-click",
 
-    # We need https://github.com/vsalvino/sphinx-library/pull/3 for working html_logo support in modern
-    # Sphinx. It has been merged but not released to PyPI yet.
-    "sphinx-library @ git+https://github.com/vsalvino/sphinx-library@5cbb26686cf8d5b9201074ab7aa7ee5f6b3bd02b",
+    # N.B.: We submitted a fix we need that was released in 1.1.3:
+    #   https://github.com/vsalvino/sphinx-library/pull/3
+    "sphinx-library>=1.1.3",
 
     "toml",
     "types-appdirs",
