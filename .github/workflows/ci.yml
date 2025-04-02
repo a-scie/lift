@@ -117,12 +117,12 @@ jobs:
       - name: Check Formatting & Lints
         if: matrix.image == ''
         run: |
-          "${UV}" run dev-cmd ci --skip test
+          "${UV}" run dev-cmd ci --skip test --timings
       - name: Check Formatting & Lints
         if: matrix.image == 'debian' && matrix.arch == 'amd64'
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
-            ci --skip test
+            ci --skip test --timings
       - name: Cache MyPy
         uses: actions/cache/save@v4
         if: github.ref == 'refs/heads/main'
@@ -138,30 +138,30 @@ jobs:
       - name: Unit Tests
         if: matrix.image == ''
         run: |
-          "${UV}" run dev-cmd test -- -vvs
+          "${UV}" run dev-cmd --timings test -- -vvs
       - name: Unit Tests
         if: matrix.image != '' && matrix.arch != 'ppc64le'
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
-            test -- -vvs
+            --timings test -- -vvs
       - name: Build & Package
         if: matrix.image == ''
         run: |
-          "${UV}" run dev-cmd package
+          "${UV}" run dev-cmd --timings package
       - name: Build & Package
         if: matrix.image != ''
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
-            package
+            --timings package
       - name: Generate Doc Site
         if: matrix.image == ''
         run: |
-          "${UV}" run dev-cmd doc linkcheck
+          "${UV}" run dev-cmd --timings doc linkcheck
       - name: Generate Doc Site
         if: matrix.image == 'debian' && matrix.arch == 'amd64'
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
-            doc linkcheck
+            --timings doc linkcheck
       - name: Cleanup
         if: always()
         run: |

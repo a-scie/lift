@@ -136,12 +136,12 @@ jobs:
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
         if: matrix.image == ''
         run: |
-          "${UV}" run ${UV_PYTHON_ARGS} dev-cmd package
+          "${UV}" run ${UV_PYTHON_ARGS} dev-cmd --timings package
       - name: Package science ${{ needs.determine-tag.outputs.release-tag }} binary
         if: matrix.image != ''
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
-            package
+            --timings package
       - name: Generate science ${{ needs.determine-tag.outputs.release-tag }} artifact attestations
         uses: actions/attest-build-provenance@v1
         with:
