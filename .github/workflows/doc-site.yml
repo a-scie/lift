@@ -41,7 +41,7 @@ jobs:
         env:
           # N.B.: This makes default paths in generated docs generic.
           XDG_CACHE_HOME: "<USER_CACHE_DIR>"
-        run: uv run dev-cmd doc linkcheck
+        run: uv run dev-cmd --timings doc linkcheck
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
