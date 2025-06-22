@@ -257,4 +257,4 @@ def test_PBS_gnu_and_musl(tmp_path: Path, science_pyz: Path) -> None:
             )
             == result.stderr
         )
-        assert "Python 3.13.2\n" == result.stdout
+        assert "Python 3.13.5\n" == result.stdout

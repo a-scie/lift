@@ -17,18 +17,18 @@ size = 1131168
 id = "cpython-gnu"
 libc = "gnu"
 provider = "PythonBuildStandalone"
-release = "20250212"
+release = "20250612"
 lazy = false
-version = "3.13.2"
+version = "3.13.5"
 flavor = "install_only_stripped"
 
 [[lift.interpreters]]
 id = "cpython-musl"
 libc = "musl"
 provider = "PythonBuildStandalone"
-release = "20250212"
+release = "20250612"
 lazy = false 
-version = "3.13.2"
+version = "3.13.5"
 flavor = "install_only_stripped"
 
 [[lift.interpreter_groups]]
