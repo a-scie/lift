@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.12.3
+
+Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.11.
+
 ## 0.12.2
 
 This release fixes a long standing bug in plumbing `SCIENCE_AUTH_<normalized_host>_BEARER` env var
