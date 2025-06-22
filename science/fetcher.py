@@ -20,7 +20,15 @@ from typing import Any, BinaryIO, ClassVar, Generator, Iterator, Mapping, Protoc
 
 import click
 import httpx
-from httpx import HTTPStatusError, Request, Response, SyncByteStream, TimeoutException, codes
+from httpx import (
+    HTTPStatusError,
+    Request,
+    Response,
+    SyncByteStream,
+    Timeout,
+    TimeoutException,
+    codes,
+)
 from tenacity import (
     before_sleep_log,
     retry,
@@ -244,13 +252,17 @@ class FileClient:
             )
 
 
-def configured_client(url: Url, headers: Mapping[str, str] | None = None) -> Client:
+def configured_client(
+    url: Url,
+    headers: Mapping[str, str] | None = None,
+    timeout=Timeout(float(os.environ.get("SCIENCE_NET_TIMEOUT", "5.0"))),
+) -> Client:
     if "file" == url.info.scheme:
         return FileClient()
     headers = dict(headers) if headers else {}
     headers.setdefault("User-Agent", f"science/{VERSION}")
     auth = _configure_auth(url) if "Authorization" not in headers else None
-    return httpx.Client(follow_redirects=True, headers=headers, auth=auth)
+    return httpx.Client(follow_redirects=True, headers=headers, auth=auth, timeout=timeout)
 
 
 @retry_fetch

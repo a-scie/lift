@@ -69,6 +69,7 @@ jobs:
     env:
       FORCE_COLOR: 1
       SCIENCE_AUTH_API_GITHUB_COM_BEARER: ${{ secrets.GITHUB_TOKEN }}
+      SCIENCE_NET_TIMEOUT: 30.0
     steps:
       - name: Install the latest version of uv
         if: matrix.os != 'windows-arm64'
