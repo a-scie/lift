@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.12.4
+
+This release fixes building Unix scies on Windows. Previously, the unix scie would contain
+interpreter provider paths joined using the Windows `\` separator instead of `/`.
+
 ## 0.12.3
 
 Upgrade the science internal Python distribution to [PBS][PBS] CPython 3.12.11.

@@ -283,7 +283,7 @@ def _render_command(
 
     def expand_placeholders(text: str) -> str:
         for distribution in distributions:
-            text = distribution.expand_placeholders(text)
+            text = distribution.expand_placeholders(platform_spec, text)
         for interpreter_group in interpreter_groups:
             text, ig_env = interpreter_group.expand_placeholders(platform_spec, text)
             env.update(ig_env)

@@ -339,15 +339,17 @@ class Distribution:
     file: File
     placeholders: FrozenDict[Identifier, str]
 
-    def _expand_placeholder(self, match: Match) -> str:
-        if placeholder := match.group("placeholder"):
-            return os.path.join(self.file.placeholder, self.placeholders[Identifier(placeholder)])
-        return self.file.placeholder
+    def expand_placeholders(self, platform_spec: PlatformSpec, value: str) -> str:
+        def _expand_placeholder(match: Match) -> str:
+            if placeholder := match.group("placeholder"):
+                return platform_spec.join_path(
+                    self.file.placeholder, self.placeholders[Identifier(placeholder)]
+                )
+            return self.file.placeholder
 
-    def expand_placeholders(self, value: str) -> str:
         return re.sub(
             rf"#{{{re.escape(self.id)}(?::(?P<placeholder>[^{{}}:]+))?}}",
-            self._expand_placeholder,
+            _expand_placeholder,
             value,
         )
 
@@ -513,7 +515,7 @@ class InterpreterGroup:
                 if distribution:
                     ph_value = distribution.placeholders[ph]
                     env[f"={env_var_prefix}{distribution.id}"] = ph_value
-            path = os.path.join(
+            path = platform_spec.join_path(
                 f"{{scie.files.{self.selector}}}", f"{{scie.env.{env_var_prefix}{self.selector}}}"
             )
             return path, env

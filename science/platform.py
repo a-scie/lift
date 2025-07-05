@@ -66,6 +66,9 @@ class OsArch:
     def extension(self):
         return ".exe" if self.is_windows else ""
 
+    def join_path(self, *components: str) -> str:
+        return ("\\" if self.is_windows else "/").join(components)
+
     def binary_name(self, binary_name: str) -> str:
         return f"{binary_name}{self.extension}"
 
@@ -215,6 +218,9 @@ class PlatformSpec:
     @property
     def is_windows(self) -> bool:
         return self.platform.is_windows
+
+    def join_path(self, *components: str) -> str:
+        return self.platform.join_path(*components)
 
     def __repr__(self) -> str:
         if self.libc:
