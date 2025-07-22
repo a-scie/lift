@@ -244,6 +244,14 @@ class PythonBuildStandalone(Provider[Config]):
     [quirks]: https://gregoryszorc.com/docs/python-build-standalone/main/quirks.html
     """
 
+    _DROPPED_IN_RELEASE = {
+        # See: https://github.com/astral-sh/python-build-standalone/releases/tag/20210103
+        "3.7": "20210103",
+        # See: https://github.com/astral-sh/python-build-standalone/releases/tag/20241205
+        "3.8": "20241205",
+    }
+    _CURRENT_MIN_SUPPORTED_VERSION = Version("3.9")
+
     @staticmethod
     def rank_compatibility(platform: Platform, libc: LibC, target_triple: str) -> int | None:
         match platform:
@@ -320,6 +328,19 @@ class PythonBuildStandalone(Provider[Config]):
         if config.release:
             release_url = Url(f"{api_url}/tags/{config.release}")
             ttl = None
+        elif version < cls._CURRENT_MIN_SUPPORTED_VERSION:
+            simple_version = f"{version.major}.{version.minor}"
+            if dropped_in_release := cls._DROPPED_IN_RELEASE.get(simple_version):
+                raise InputError(
+                    f"No released assets available for Python {version} in the latest "
+                    f"PythonBuildStandalone release. Support for Python {simple_version} was "
+                    f"dropped in the {dropped_in_release} release. Try specifying an older "
+                    f"PythonBuildStandalone release."
+                )
+            raise InputError(
+                f"There are no released assets available for Python {version} in any "
+                f"PythonBuildStandalone release."
+            )
         else:
             release_url = Url(f"{api_url}/latest")
             ttl = timedelta(days=5)
