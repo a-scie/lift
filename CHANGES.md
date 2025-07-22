@@ -1,9 +1,13 @@
 # Release Notes
 
-## 0.12.6
+## 0.12.7
 
 This release fixes the PythonBuildStandalone provider to avoid making API calls for Python versions
 it knows are not supported.
+
+## 0.12.6
+
+Unreleased.
 
 ## 0.12.5
 
