@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.12.5
+
+This release fixes the PythonBuildStandalone provider to avoid making API calls for Python versions
+it knows are not supported.
+
 ## 0.12.4
 
 This release fixes building Unix scies on Windows. Previously, the unix scie would contain

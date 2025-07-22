@@ -225,6 +225,7 @@ def test_platform_specs() -> None:
     CURRENT_PLATFORM is not Platform.Linux_x86_64,
     reason="This test needs to run a Linux x86_64 scie.",
 )
+@pytest.mark.xfail(reason="As of 7/22/2025, https://www.busybox.net is down.")
 def test_PBS_gnu_and_musl(tmp_path: Path, science_pyz: Path) -> None:
     with resources.as_file(resources.files("data") / "PBS-gnu-and-musl.toml") as config:
         subprocess.run(
