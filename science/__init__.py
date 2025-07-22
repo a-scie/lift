@@ -3,6 +3,6 @@
 
 from packaging.version import Version
 
-__version__ = "0.12.7"
+__version__ = "0.12.8"
 
 VERSION = Version(__version__)
