@@ -80,7 +80,7 @@ jobs:
             name: macOS aarch64
           - os: windows-2022
             name: Windows x86-64
-          - os: windows-arm64
+          - os: windows-11-arm
             name: Windows aarch64
     environment: Release
     env:
@@ -93,31 +93,14 @@ jobs:
       discussions: write
     steps:
       - name: Install the latest version of uv
-        if: matrix.os != 'windows-arm64'
         uses: astral-sh/setup-uv@v5
       - name: Setup uv
-        if: matrix.os != 'windows-arm64'
         run: |
           export UV="$(which uv)"
           "${UV}" -V
           echo UV="${UV}" >> ${GITHUB_ENV}
-      - name: Install the latest version of uv
-        if: matrix.os == 'windows-arm64'
-        run: |
-          CI_BIN_DIR="$(mktemp -d)"
-          echo CI_BIN_DIR="${CI_BIN_DIR}" >> ${GITHUB_ENV}
-          (
-            cd "${CI_BIN_DIR}"
-            curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip
-            curl -fL -O https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip.sha256
-            shasum -c uv-x86_64-pc-windows-msvc.zip.sha256
-            unzip uv-x86_64-pc-windows-msvc.zip
-          )
-          export UV="${CI_BIN_DIR}/uv.exe"
-          "${UV}" -V
-          echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Setup x86_64 Python for Prism
-        if: matrix.os == 'windows-arm64'
+        if: matrix.os == 'windows-11-arm'
         run: |
           # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via
           # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
@@ -151,7 +134,6 @@ jobs:
         with:
           changelog-file: ${{ github.workspace }}/CHANGES.md
           version: ${{ needs.determine-tag.outputs.release-version }}
-          setup-python: ${{ matrix.os != 'windows-arm64' }}
       - name: Create ${{ needs.determine-tag.outputs.release-tag }} Release
         uses: softprops/action-gh-release@v2
         with:
