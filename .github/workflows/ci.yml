@@ -63,7 +63,7 @@ jobs:
             name: macOS aarch64
           - os: windows-2022
             name: Windows x86-64
-          - os: windows-arm64
+          - os: windows-11-arm
             name: Windows aarch64
     env:
       FORCE_COLOR: 1
@@ -71,16 +71,16 @@ jobs:
       SCIENCE_NET_TIMEOUT: 30.0
     steps:
       - name: Install the latest version of uv
-        if: matrix.os != 'windows-arm64'
+        if: matrix.os != 'windows-11-arm'
         uses: astral-sh/setup-uv@v5
       - name: Setup uv
-        if: matrix.os != 'windows-arm64'
+        if: matrix.os != 'windows-11-arm'
         run: |
           export UV="$(which uv)"
           "${UV}" -V
           echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Install the latest version of uv
-        if: matrix.os == 'windows-arm64'
+        if: matrix.os == 'windows-11-arm'
         run: |
           CI_BIN_DIR="$(mktemp -d)"
           echo CI_BIN_DIR="${CI_BIN_DIR}" >> ${GITHUB_ENV}
@@ -95,7 +95,7 @@ jobs:
           "${UV}" -V
           echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Setup x86_64 Python for Prism
-        if: matrix.os == 'windows-arm64'
+        if: matrix.os == 'windows-11-arm'
         run: |
           # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via
           # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
@@ -130,7 +130,7 @@ jobs:
           path: .mypy_cache
           key: ${{ steps.restore-mypy-cache.outputs.cache-primary-key }}
       - name: Configure Windows pytest short tmp dir path
-        if: matrix.os == 'windows-2022' || matrix.os == 'windows-arm64'
+        if: matrix.os == 'windows-2022' || matrix.os == 'windows-11-arm'
         run: |
           mkdir -p C:/tmp/gha
           echo PYTEST_ADDOPTS="--basetemp C:/tmp/gha/pytest" >> ${GITHUB_ENV}
