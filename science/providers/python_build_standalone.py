@@ -347,7 +347,7 @@ class PythonBuildStandalone(Provider[Config]):
         # For a given release (optional config parameter), get metadata.
         release_data = fetch_json(release_url, ttl=ttl)
 
-        release = release_data["name"]
+        release = release_data["tag_name"]
         # Names are like:
         #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
         name_re = re.compile(

@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.12.9
+
+This release fixes the PythonBuildStandalone provider GitHub API usage when probing the latest
+release.
+
 ## 0.12.8
 
 This release fixes the PythonBuildStandalone provider to avoid making API calls for Python versions
