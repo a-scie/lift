@@ -63,7 +63,7 @@ class BuildInfo:
             version=__version__,
             url=(
                 f"https://github.com/a-scie/lift/releases/download/v{__version__}/"
-                f"{CURRENT_PLATFORM_SPEC.qualified_binary_name("science")}"
+                f"{CURRENT_PLATFORM_SPEC.qualified_binary_name('science')}"
             ),
         )
         if self.digest:

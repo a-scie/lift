@@ -148,7 +148,7 @@ def export_manifest(
         if (actually_inverted := frozenset(inverted)) != lift_config.invert_lazy_ids:
             raise InputError(
                 "There following files were not present to invert laziness for: "
-                f"{", ".join(sorted(lift_config.invert_lazy_ids - actually_inverted))}"
+                f"{', '.join(sorted(lift_config.invert_lazy_ids - actually_inverted))}"
             )
 
         fetches_present = any(

@@ -751,7 +751,7 @@ def use_platform_suffix_option():
             """
         ).format(
             suffixes="\n ".join(
-                f"{"*" if platform == CURRENT_PLATFORM else " "} {platform.value}"
+                f"{'*' if platform == CURRENT_PLATFORM else ' '} {platform.value}"
                 for platform in Platform
             )
         ),
@@ -882,7 +882,7 @@ def _build(
         logger.warning("Cannot use a custom scie jump build with a multi-platform configuration.")
         logger.warning(
             "Restricting requested platforms of "
-            f"{", ".join(sorted(platform.value for platform in platform_specs))} to {CURRENT_PLATFORM}",
+            f"{', '.join(sorted(platform.value for platform in platform_specs))} to {CURRENT_PLATFORM}",
         )
         platform_specs = frozenset([CURRENT_PLATFORM_SPEC])
 

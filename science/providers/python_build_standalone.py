@@ -38,7 +38,7 @@ class FingerprintedAsset:
     @classmethod
     def from_dict(cls, data: dict[str, Any], base_url: Url) -> FingerprintedAsset:
         data["url"] = Url(
-            f"{base_url.rstrip("/")}/{urllib.parse.quote_plus(data.pop("rel_path"), safe="/")}"
+            f"{base_url.rstrip('/')}/{urllib.parse.quote_plus(data.pop('rel_path'), safe='/')}"
         )
 
         digest = data["digest"]
@@ -74,7 +74,7 @@ class Distributions:
             PurePath(f"download/{release}" if release else "latest/download")
             / f"distributions-{version}-{flavor}.json"
         )
-        data = fetch_json(Url(f"{base_url.rstrip("/")}/{rel_path.as_posix()}"))
+        data = fetch_json(Url(f"{base_url.rstrip('/')}/{rel_path.as_posix()}"))
         return cls(
             base_url=base_url,
             release=data["release"],
@@ -268,6 +268,10 @@ class PythonBuildStandalone(Provider[Config]):
             case Platform.Linux_powerpc64le:
                 match target_triple:
                     case "ppc64le-unknown-linux-gnu":
+                        return 0
+            case Platform.Linux_riscv64:
+                match target_triple:
+                    case "riscv64-unknown-linux-gnu":
                         return 0
             case Platform.Linux_s390x:
                 match target_triple:

@@ -36,7 +36,7 @@ def download_a_scie_executables(
         for platform in platforms:
             binary = dest / platform.qualified_binary_name(binary_name)
             click.echo(
-                f"Downloading {binary_name} {version or "latest"} for {platform} to {binary}...",
+                f"Downloading {binary_name} {version or 'latest'} for {platform} to {binary}...",
                 err=True,
             )
             result = a_scie.load_project_release(

@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A high level tool to build scies with."
 readme = "README.md"
-requires-python = "==3.12.*"
+requires-python = "==3.13.*"
 license = {file = "LICENSE"}
 dynamic = ["version"]
 dependencies = [
@@ -94,7 +94,7 @@ line-length = 100
 extend-select = ["I"]
 
 [tool.uv]
-required-version = ">=0.5.19"
+required-version = ">=0.7.13"
 
 [tool.dev-cmd.commands]
 check-python-version = ["scripts/check-python-version-alignment.py"]

@@ -36,9 +36,9 @@ def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: li
     bin_dir = test_dir / "bin"
 
     assert (result := run_captured(installer + ["-d", bin_dir])).returncode == 0
-    assert (
-        "success" in result.stdout if IS_WINDOWS else result.stderr
-    ), "Expected 'success' in tool stderr logging"
+    assert "success" in result.stdout if IS_WINDOWS else result.stderr, (
+        "Expected 'success' in tool stderr logging"
+    )
 
     assert (result := run_captured([bin_dir / "science", "-V"])).returncode == 0
     assert result.stdout.strip(), "Expected version output in tool stdout"
@@ -59,6 +59,6 @@ def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: l
 
     # Check expected versioned binary exists.
     assert (result := run_captured([bin_dir / "science", "-V"])).returncode == 0
-    assert (
-        result.stdout.strip() == test_ver
-    ), f"Expected version output in tool stdout to be {test_ver}"
+    assert result.stdout.strip() == test_ver, (
+        f"Expected version output in tool stdout to be {test_ver}"
+    )

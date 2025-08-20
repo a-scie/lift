@@ -66,9 +66,9 @@ def assert_auth(
             Url("https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest")
         )
     )
-    assert expected_authorization_header_value == headers.get(
-        "Authorization"
-    ), f"Got headers: {headers}"
+    assert expected_authorization_header_value == headers.get("Authorization"), (
+        f"Got headers: {headers}"
+    )
 
 
 def test_basic_auth(monkeypatch: MonkeyPatch, httpx_mock: HTTPXMock, cache_dir: Path) -> None:

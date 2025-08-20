@@ -42,6 +42,7 @@ class Arch(Enum):
     ARM64 = "aarch64"
     ARMv7l = "armv7l"
     PPC64le = "powerpc64"
+    RISCV64 = "riscv64"
     S390X = "s390x"
     X86_64 = "x86_64"
 
@@ -83,6 +84,7 @@ class Platform(OsArch, Enum):
     Linux_aarch64 = Os.Linux, Arch.ARM64
     Linux_armv7l = Os.Linux, Arch.ARMv7l
     Linux_powerpc64le = Os.Linux, Arch.PPC64le
+    Linux_riscv64 = Os.Linux, Arch.RISCV64
     Linux_s390x = Os.Linux, Arch.S390X
     Linux_x86_64 = Os.Linux, Arch.X86_64
     Macos_aarch64 = Os.Macos, Arch.ARM64
@@ -123,6 +125,8 @@ class Platform(OsArch, Enum):
                 return cls.Linux_armv7l
             case (Os.Linux, "ppc64le"):
                 return cls.Linux_powerpc64le
+            case (Os.Linux, "riscv64"):
+                return cls.Linux_riscv64
             case (Os.Linux, "s390x"):
                 return cls.Linux_s390x
             case (Os.Linux, "amd64" | "x86_64"):

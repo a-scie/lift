@@ -8,7 +8,7 @@ import click
 
 
 def to_option_string(word: str) -> str:
-    return f"--{word.replace("_", "-")}"
+    return f"--{word.replace('_', '-')}"
 
 
 @dataclass(frozen=True)

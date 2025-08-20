@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.13.0
+
+This release adds support for Linux riscv64 and upgrades the science internal Python distribution
+to [PBS][PBS] CPython 3.13.7.
+
 ## 0.12.9
 
 This release fixes the PythonBuildStandalone provider GitHub API usage when probing the latest

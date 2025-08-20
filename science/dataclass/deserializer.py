@@ -115,7 +115,7 @@ def _parse_field(
                 items.extend(
                     # We assume any mapping type used will be constructible with a single dict
                     # argument.
-                    cast(_F, item_type(data_item.data))  # type: ignore[misc]
+                    cast(_F, item_type(data_item.data))  # type: ignore[operator]
                     for data_item in data_list
                 )
             else:

@@ -164,7 +164,7 @@ def parse_config_data(data: Data) -> Application:
         if len(members) < 2:
             raise InputError(
                 f"At least two interpreter group members are needed to form an interpreter group. "
-                f"Given {f"just {next(iter(members))!r}" if members else "none"} for interpreter "
+                f"Given {f'just {next(iter(members))!r}' if members else 'none'} for interpreter "
                 f"group {fields.id}."
             )
         return InterpreterGroup.create(

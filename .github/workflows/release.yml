@@ -67,6 +67,10 @@ jobs:
             image: debian
             arch: arm/v7
           - os: ubuntu-24.04
+            name: Linux riscv64
+            image: debian
+            arch: riscv64
+          - os: ubuntu-24.04
             name: Linux s390x
             image: debian
             arch: s390x
@@ -105,7 +109,7 @@ jobs:
           # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via
           # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
           # native deps like psutil) for our shiv.
-          UV_PYTHON_VERSION=cpython-3.12.11-windows-x86_64-none
+          UV_PYTHON_VERSION=cpython-3.13.7-windows-x86_64-none
           "${UV}" python install ${UV_PYTHON_VERSION}
           echo UV_PYTHON_ARGS="--python ${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Installing emulators
