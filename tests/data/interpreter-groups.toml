@@ -3,7 +3,7 @@ name = "igs"
 description = "Test interpreter group selection."
 
 [lift.scie_jump]
-version = "1.5.0"
+version = "1.8.0"
 
 [[lift.interpreters]]
 id = "cpython310"

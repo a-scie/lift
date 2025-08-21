@@ -56,27 +56,27 @@ jobs:
             arch: amd64
           - os: ubuntu-24.04
             name: Linux x86-64 (glibc)
-            image: debian
+            image: debian/bookworm
             arch: amd64
           - os: ubuntu-24.04
             name: Linux aarch64
-            image: debian
+            image: debian/bookworm
             arch: arm64
           - os: ubuntu-24.04
             name: Linux armv7l
-            image: debian
+            image: debian/bookworm
             arch: arm/v7
           - os: ubuntu-24.04
             name: Linux riscv64
-            image: debian
+            image: debian/trixie
             arch: riscv64
           - os: ubuntu-24.04
             name: Linux s390x
-            image: debian
+            image: debian/bookworm
             arch: s390x
           - os: ubuntu-24.04
             name: Linux powerpc64le
-            image: debian
+            image: debian/bookworm
             arch: ppc64le
           - os: macos-x86_64
             name: macOS x86-64

@@ -305,7 +305,7 @@ def url_source_lift_toml_content(
         [[lift.interpreters]]
         id = "cpython311"
         provider = "PythonBuildStandalone"
-        release = "20241206"
+        release = "20250818"
         version = "3.11"
         lazy = true
 
@@ -832,7 +832,7 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
             [[lift.interpreters]]
             id = "cpython"
             provider = "PythonBuildStandalone"
-            release = "20241206"
+            release = "20250818"
             version = "3.11"
             lazy = true
 
@@ -849,6 +849,6 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
     scie = dest / CURRENT_PLATFORM.binary_name("exe")
     assert os.path.exists(scie)
     assert (
-        "3.11.11"
+        "3.11.13"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )

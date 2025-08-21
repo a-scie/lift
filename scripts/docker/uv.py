@@ -65,7 +65,9 @@ def main() -> Any:
     )
 
     parser = ArgumentParser()
-    parser.add_argument("--image", default="debian", choices=["alpine", "debian"])
+    parser.add_argument(
+        "--image", default="debian/bookworm", choices=["alpine", "debian/bookworm", "debian/trixie"]
+    )
     parser.add_argument(
         "--arch",
         default="amd64",
@@ -106,14 +108,17 @@ def main() -> Any:
 
     parent_dir = Path(__file__).parent
     arch_tag = options.arch.replace("/", "-")
+    image_tag = options.image.replace("/", "-")
 
     dev_image_context = parent_dir / "uv"
-    fingerprint = fingerprint_paths(Path("pyproject.toml"), Path("uv.lock"), dev_image_context)
-    dev_image = f"a-scie/lift/dev:{options.image}-{arch_tag}-{fingerprint}"
+    fingerprint = fingerprint_paths(
+        Path("pyproject.toml"), Path("uv.lock"), dev_image_context, parent_dir / options.image
+    )
+    dev_image = f"a-scie/lift/dev:{image_tag}-{arch_tag}-{fingerprint}"
     if not image_exists(dev_image):
         base_image_context = parent_dir / options.image
         fingerprint = fingerprint_paths(base_image_context)
-        base_image = f"a-scie/lift/base:{options.image}-{arch_tag}-{fingerprint}"
+        base_image = f"a-scie/lift/base:{image_tag}-{arch_tag}-{fingerprint}"
         if not image_exists(base_image):
             # The type-ignores for os.get{uid,gid} cover Windows which we explicitly fail-fast for above.
             subprocess.run(
