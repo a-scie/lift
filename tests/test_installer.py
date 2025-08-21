@@ -8,7 +8,6 @@ import pytest
 from _pytest.tmpdir import TempPathFactory
 
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, Platform
 
 
 @pytest.fixture(scope="module")
@@ -31,10 +30,6 @@ def test_installer_help(installer: list):
         assert long_help in result.stdout, f"Expected '{long_help}' in tool output"
 
 
-@pytest.mark.skipif(
-    CURRENT_PLATFORM is Platform.Linux_riscv64,
-    reason="There is no science binary released for Linux riscv64 yet.",
-)
 def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: list):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
@@ -49,14 +44,10 @@ def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: li
     assert result.stdout.strip(), "Expected version output in tool stdout"
 
 
-@pytest.mark.skipif(
-    CURRENT_PLATFORM is Platform.Linux_riscv64,
-    reason="There is no science binary released for Linux riscv64 yet.",
-)
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: list):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
-    test_ver = "0.12.0"
+    test_ver = "0.13.0"
     bin_dir = test_dir / "bin"
 
     assert (result := run_captured(installer + ["-V", test_ver, "-d", bin_dir])).returncode == 0
