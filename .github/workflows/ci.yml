@@ -127,7 +127,7 @@ jobs:
         run: |
           "${UV}" run dev-cmd --timings test -- -vvs
       - name: Unit Tests
-        if: matrix.image != '' && matrix.arch != 'ppc64le' && matrix.arch != 'riscv64'
+        if: matrix.image != ''
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             --timings test -- -vvs
