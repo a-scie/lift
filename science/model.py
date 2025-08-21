@@ -259,9 +259,9 @@ class Url(str):
         if not self.base_url.path:
             return path.relative_to("/")
         base_path = PurePath(urllib.parse.unquote_plus(self.base_url.path))
-        assert path.is_relative_to(
-            base_path
-        ), f"The base for Url {self} is configured as {self._base} which is not a not a sub-path."
+        assert path.is_relative_to(base_path), (
+            f"The base for Url {self} is configured as {self._base} which is not a not a sub-path."
+        )
         return path.relative_to(base_path)
 
 
@@ -287,7 +287,7 @@ class Identifier(str):
     def __new__(cls, value: str) -> Identifier:
         if any(char in value for char in ("{", "}", ":")):
             raise InputError(
-                f"An identifier can not contain any of '{", "}' or ':', given: {value}"
+                f"An identifier can not contain any of '{', '}' or ':', given: {value}"
             )
         return super().__new__(cls, value)
 
@@ -586,7 +586,7 @@ class Application(Dataclass):
             )
         if reserved_conflicts:
             raise InputError(
-                f"{subject} cannot use the reserved binding names: {", ".join(reserved_conflicts)}"
+                f"{subject} cannot use the reserved binding names: {', '.join(reserved_conflicts)}"
             )
 
     def __post_init__(self) -> None:

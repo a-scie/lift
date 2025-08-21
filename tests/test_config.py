@@ -30,15 +30,15 @@ def test_parse(build_root: Path) -> None:
 
     interpreter = interpreters[0]
     distribution = interpreter.provider.distribution(CURRENT_PLATFORM_SPEC)
-    assert (
-        distribution is not None
-    ), "Expected a Python interpreter distribution to be available for each platform tests run on."
-    assert (
-        distribution.file.source and distribution.file.source.lazy
-    ), "Expected science to ship as a gouged-out binary."
-    assert (
-        Identifier("python") in distribution.placeholders
-    ), "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."
+    assert distribution is not None, (
+        "Expected a Python interpreter distribution to be available for each platform tests run on."
+    )
+    assert distribution.file.source and distribution.file.source.lazy, (
+        "Expected science to ship as a gouged-out binary."
+    )
+    assert Identifier("python") in distribution.placeholders, (
+        "Expected the Python interpreter to expose a 'python' placeholder for its `python` binary."
+    )
 
 
 def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
@@ -208,6 +208,7 @@ def test_platform_specs() -> None:
                     PlatformSpec(Platform.Linux_aarch64),
                     PlatformSpec(Platform.Linux_armv7l),
                     PlatformSpec(Platform.Linux_powerpc64le),
+                    PlatformSpec(Platform.Linux_riscv64),
                     PlatformSpec(Platform.Linux_s390x),
                     PlatformSpec(Platform.Linux_x86_64, LibC.GLIBC),
                     PlatformSpec(Platform.Linux_x86_64, LibC.MUSL),

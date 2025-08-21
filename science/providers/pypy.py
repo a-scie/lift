@@ -38,7 +38,7 @@ class FingerprintedAsset:
     @classmethod
     def from_dict(cls, data: dict[str, Any], base_url: Url) -> FingerprintedAsset:
         data["url"] = Url(
-            f"{base_url.rstrip("/")}/{urllib.parse.quote_plus(data.pop("rel_path"), safe="/")}"
+            f"{base_url.rstrip('/')}/{urllib.parse.quote_plus(data.pop('rel_path'), safe='/')}"
         )
         data["version"] = Version(data["version"])
         data["fingerprint"] = Fingerprint(data["fingerprint"])
@@ -70,7 +70,7 @@ class Distributions:
     @classmethod
     def fetch(cls, base_url: Url, version: Version, release: str | None = None) -> Distributions:
         data = fetch_json(
-            Url(f"{base_url.rstrip("/")}/distributions-{version}-{release or "any"}.json")
+            Url(f"{base_url.rstrip('/')}/distributions-{version}-{release or 'any'}.json")
         )
         return cls(
             base_url=base_url,
@@ -88,7 +88,7 @@ class Distributions:
 
     def serialize(self, base_dir: Path) -> None:
         base_dir.mkdir(parents=True, exist_ok=True)
-        with (base_dir / f"distributions-{self.version}-{self.release or "any"}.json").open(
+        with (base_dir / f"distributions-{self.version}-{self.release or 'any'}.json").open(
             "w"
         ) as fp:
             json.dump(

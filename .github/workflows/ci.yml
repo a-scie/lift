@@ -39,23 +39,27 @@ jobs:
             arch: amd64
           - os: ubuntu-24.04
             name: Linux x86-64 (glibc)
-            image: debian
+            image: debian/bookworm
             arch: amd64
           - os: ubuntu-24.04
             name: Linux aarch64
-            image: debian
+            image: debian/bookworm
             arch: arm64
           - os: ubuntu-24.04
             name: Linux armv7l
-            image: debian
+            image: debian/bookworm
             arch: arm/v7
           - os: ubuntu-24.04
+            name: Linux riscv64
+            image: debian/trixie
+            arch: riscv64
+          - os: ubuntu-24.04
             name: Linux s390x
-            image: debian
+            image: debian/bookworm
             arch: s390x
           - os: ubuntu-24.04
             name: Linux powerpc64le
-            image: debian
+            image: debian/bookworm
             arch: ppc64le
           - os: macos-x86_64
             name: macOS x86-64
@@ -83,7 +87,7 @@ jobs:
           # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via
           # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
           # native deps like psutil) for our shiv.
-          UV_PYTHON_VERSION=cpython-3.12.11-windows-x86_64-none
+          UV_PYTHON_VERSION=cpython-3.13.7-windows-x86_64-none
           "${UV}" python install ${UV_PYTHON_VERSION}
           echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Checkout Lift
@@ -123,7 +127,7 @@ jobs:
         run: |
           "${UV}" run dev-cmd --timings test -- -vvs
       - name: Unit Tests
-        if: matrix.image != '' && matrix.arch != 'ppc64le'
+        if: matrix.image != ''
         run: |
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             --timings test -- -vvs

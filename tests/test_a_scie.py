@@ -16,10 +16,10 @@ def test_ptex_latest(tmp_path_factory: TempPathFactory) -> None:
 
 
 def test_ptex_version(tmp_path_factory: TempPathFactory) -> None:
-    latest = a_scie.ptex(specification=Ptex(version=version.parse("1.5.0")))
+    ptex_versioned = a_scie.ptex(specification=Ptex(version=version.parse("1.7.0")))
     assert (
-        "1.5.0"
+        "1.7.0"
         == subprocess.run(
-            args=[latest.path, "-V"], stdout=subprocess.PIPE, text=True, check=True
+            args=[ptex_versioned.path, "-V"], stdout=subprocess.PIPE, text=True, check=True
         ).stdout.strip()
     )

@@ -104,7 +104,7 @@ def _configure_auth(url: Url) -> httpx.Auth | None:
         if env_auth:
             raise AmbiguousAuthError(
                 f"{auth_type.capitalize()} auth was configured for {url} via env var but so was: "
-                f"{", ".join(env_auth)}"
+                f"{', '.join(env_auth)}"
             )
 
     def get_username(auth_type: str) -> str | None:

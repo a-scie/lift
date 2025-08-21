@@ -186,9 +186,9 @@ def test_hash(
                 for actual_digest in digests:
                     actual_digest.update(chunk)
         for actual_digest, expected_value in digests.items():
-            assert (
-                expected_value == actual_digest.hexdigest()
-            ), f"The {actual_digest.name} digest did not match."
+            assert expected_value == actual_digest.hexdigest(), (
+                f"The {actual_digest.name} digest did not match."
+            )
 
 
 def test_dogfood(
@@ -305,7 +305,7 @@ def url_source_lift_toml_content(
         [[lift.interpreters]]
         id = "cpython311"
         provider = "PythonBuildStandalone"
-        release = "20241206"
+        release = "20250818"
         version = "3.11"
         lazy = true
 
@@ -586,9 +586,9 @@ def test_error_handling(tmp_path: Path, science_exe: Path) -> None:
     assert index > 0, "Expected a backtrace in addition to an error message in verbose mode."
 
     error_message_line = error_lines[index]
-    assert (
-        error_message_line != expected_error_message
-    ), "Expected an exception type prefix in verbose mode."
+    assert error_message_line != expected_error_message, (
+        "Expected an exception type prefix in verbose mode."
+    )
     assert error_message_line.endswith(f": {expected_error_message}"), os.linesep.join(error_lines)
 
 
@@ -743,9 +743,7 @@ def working_pypy_versions() -> list[str]:
     match CURRENT_PLATFORM:
         case Platform.Linux_s390x:
             return ["2.7", "3.8", "3.9", "3.10"]
-        case Platform.Linux_powerpc64le:
-            return []
-        case Platform.Linux_armv7l:
+        case Platform.Linux_armv7l | Platform.Linux_powerpc64le | Platform.Linux_riscv64:
             return []
         case Platform.Macos_aarch64:
             return ["2.7", "3.8", "3.9", "3.10"]
@@ -834,7 +832,7 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
             [[lift.interpreters]]
             id = "cpython"
             provider = "PythonBuildStandalone"
-            release = "20241206"
+            release = "20250818"
             version = "3.11"
             lazy = true
 
@@ -851,6 +849,6 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
     scie = dest / CURRENT_PLATFORM.binary_name("exe")
     assert os.path.exists(scie)
     assert (
-        "3.11.11"
+        "3.11.13"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )

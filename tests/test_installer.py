@@ -8,6 +8,7 @@ import pytest
 from _pytest.tmpdir import TempPathFactory
 
 from science.os import IS_WINDOWS
+from science.platform import CURRENT_PLATFORM, Platform
 
 
 @pytest.fixture(scope="module")
@@ -30,20 +31,28 @@ def test_installer_help(installer: list):
         assert long_help in result.stdout, f"Expected '{long_help}' in tool output"
 
 
+@pytest.mark.skipif(
+    CURRENT_PLATFORM is Platform.Linux_riscv64,
+    reason="There is no science binary released for Linux riscv64 yet.",
+)
 def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: list):
     """Invokes install.sh to fetch the latest science release binary, then invokes it."""
     test_dir = tmp_path_factory.mktemp("install-test-default")
     bin_dir = test_dir / "bin"
 
     assert (result := run_captured(installer + ["-d", bin_dir])).returncode == 0
-    assert (
-        "success" in result.stdout if IS_WINDOWS else result.stderr
-    ), "Expected 'success' in tool stderr logging"
+    assert "success" in result.stdout if IS_WINDOWS else result.stderr, (
+        "Expected 'success' in tool stderr logging"
+    )
 
     assert (result := run_captured([bin_dir / "science", "-V"])).returncode == 0
     assert result.stdout.strip(), "Expected version output in tool stdout"
 
 
+@pytest.mark.skipif(
+    CURRENT_PLATFORM is Platform.Linux_riscv64,
+    reason="There is no science binary released for Linux riscv64 yet.",
+)
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: list):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
@@ -59,6 +68,6 @@ def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: l
 
     # Check expected versioned binary exists.
     assert (result := run_captured([bin_dir / "science", "-V"])).returncode == 0
-    assert (
-        result.stdout.strip() == test_ver
-    ), f"Expected version output in tool stdout to be {test_ver}"
+    assert result.stdout.strip() == test_ver, (
+        f"Expected version output in tool stdout to be {test_ver}"
+    )

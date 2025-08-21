@@ -43,9 +43,9 @@ class RenderProviders(MarkdownParser, DocGenDirective):
     def render_provider(
         self, provider_info: ProviderInfo, toml_type_renderer: TOMLTypeRenderer
     ) -> nodes.Node:
-        assert (
-            provider_info.short_name
-        ), "Expected all built-in providers to have short names defined."
+        assert provider_info.short_name, (
+            "Expected all built-in providers to have short names defined."
+        )
         provider_section = Section.create(title=provider_info.short_name)
 
         if provider_info.summary:

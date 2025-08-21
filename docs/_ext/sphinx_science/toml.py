@@ -129,8 +129,7 @@ class MissingDocError(ValueError):
         if field:
             error = os.linesep.join(
                 (
-                    f"Missing doc is not allowed and the field {field.name!r} in {type_} "
-                    f"has none.",
+                    f"Missing doc is not allowed and the field {field.name!r} in {type_} has none.",
                     "Use dataclasses.field(metadata=science.dataclass.reflect.metadata(...)) to "
                     "add doc for the field.",
                 )
