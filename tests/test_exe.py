@@ -746,10 +746,10 @@ def working_pypy_versions() -> list[str]:
         case Platform.Linux_armv7l | Platform.Linux_powerpc64le | Platform.Linux_riscv64:
             return []
         case Platform.Macos_aarch64:
-            return ["2.7", "3.8", "3.9", "3.10"]
+            return ["2.7", "3.8", "3.9", "3.10", "3.11"]
         case Platform.Linux_aarch64:
-            return ["2.7", "3.7", "3.8", "3.9", "3.10"]
-    return ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10"]
+            return ["2.7", "3.7", "3.8", "3.9", "3.10", "3.11"]
+    return ["2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
 
 
 @pytest.mark.skipif(
@@ -850,5 +850,66 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
     assert os.path.exists(scie)
     assert (
         "3.11.13"
+        == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
+    )
+
+
+def test_pbs_provider_pre_releases(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    exe = tmp_path / "exe"
+    exe.write_text(
+        dedent(
+            """\
+            import platform
+
+
+            if __name__ == "__main__":
+                print(platform.python_version())
+            """
+        )
+    )
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=dedent(
+            """\
+            [lift]
+            name = "exe"
+
+            [[lift.files]]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.15"
+
+            [[lift.commands]]
+            exe = "#{cpython:python}"
+            args = ["{exe}"]
+            """
+        ),
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / CURRENT_PLATFORM.binary_name("exe")
+    assert os.path.exists(scie)
+    assert (
+        "3.15.0a1"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )
