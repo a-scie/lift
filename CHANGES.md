@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.14.0
+
+This release adds support for CPython pre-releases to the [PBS][PBS] provider and upgrades the
+science internal Python distribution to [PBS][PBS] CPython 3.13.9.
+
 ## 0.13.0
 
 This release adds support for Linux riscv64 and upgrades the science internal Python distribution

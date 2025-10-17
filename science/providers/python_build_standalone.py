@@ -355,7 +355,7 @@ class PythonBuildStandalone(Provider[Config]):
         # Names are like:
         #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
         name_re = re.compile(
-            rf"^cpython-(?P<exact_version>{re.escape(str(version))}(?:\.\d+)*)"
+            rf"^cpython-(?P<exact_version>{re.escape(str(version))}(?:\.\d+)*((a|b|rc)\d+)?)"
             rf"\+{re.escape(release)}-(?P<target_triple>.+)-{re.escape(config.flavor)}"
             r"\.(?P<extension>.+)$"
         )
