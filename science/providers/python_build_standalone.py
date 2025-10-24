@@ -177,7 +177,7 @@ class Config:
         metadata=metadata(
             """The flavor of the Python Standalone Builds release to use.
 
-            Currently accepts 'install_only', 'install_only_stripped' and any '*-full' flavor.
+            Currently accepts 'install_only', 'install_only_stripped' and any '\*-full' flavor.
             """
         ),
     )
