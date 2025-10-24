@@ -27,7 +27,7 @@ from testing import issue
 from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Os, Platform
 from science.providers import PyPy
 
 
@@ -913,3 +913,301 @@ def test_pbs_provider_pre_releases(tmp_path: Path, science_exe: Path) -> None:
         "3.15.0a1"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )
+
+
+def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    exe = tmp_path / "exe"
+    exe.write_text(
+        dedent(
+            """\
+            import platform
+            import sysconfig
+
+
+            if __name__ == "__main__":
+                print(platform.python_version())
+                print(sysconfig.get_config_var("Py_GIL_DISABLED"))
+            """
+        )
+    )
+
+    match Platform.current():
+        case Platform.Linux_aarch64 | Platform.Linux_x86_64 if LibC.current() is LibC.GLIBC:
+            flavor = "freethreaded+pgo+lto-full"
+        case Platform.Macos_aarch64 | Platform.Macos_x86_64:
+            flavor = "freethreaded+pgo+lto-full"
+        case Platform.Windows_aarch64 | Platform.Windows_x86_64:
+            flavor = "freethreaded+pgo-full"
+        case platform if platform.os is Os.Linux:
+            flavor = "freethreaded+lto-full"
+        case _ as unknown_platform:
+            assert unknown_platform is None, f"The platform {unknown_platform} is unsupported."
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=dedent(
+            f"""\
+            [lift]
+            name = "exe"
+
+            [[lift.files]]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "python3.14"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14"
+
+            [[lift.interpreters]]
+            id = "python3.14t"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14"
+            flavor = "{flavor}"
+
+            [[lift.interpreter_groups]]
+            id = "cpython"
+            selector = "{{scie.env.PYTHON}}"
+            members = [
+                "python3.14",
+                "python3.14t",
+            ]
+
+            [[lift.commands]]
+            exe = "#{{cpython:python}}"
+            args = ["{{exe}}"]
+            """
+        ),
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / CURRENT_PLATFORM.binary_name("exe")
+    assert os.path.exists(scie)
+
+    assert ["3.14.0", "0"] == subprocess.run(
+        args=[scie],
+        env={**os.environ, "PYTHON": "python3.14"},
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+    assert ["3.14.0", "1"] == subprocess.run(
+        args=[scie],
+        env={**os.environ, "PYTHON": "python3.14t"},
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+
+def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    result = subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        input=dedent(
+            """\
+            [lift]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14.0t"
+            flavor = "install_only"
+
+            [[lift.commands]]
+            exe = "#{cpython:python}"
+            args = ["-VV"]
+            """
+        ),
+        cwd=chroot,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    assert result.returncode != 0
+    expected_error_message_lines = [
+        "Failed to parse `[lift.interpreters[1]] provider`.",
+        "",
+        "Tried:",
+        (
+            "Provider: The suffix 't' of version '3.14.0t' indicates a freethreaded flavor "
+            "CPython build should be selected and cannot be combined with the explicit flavor "
+            "'install_only'."
+        ),
+        "Either use a version suffix or an explicit flavor, but not both.",
+    ]
+    assert (
+        expected_error_message_lines
+        == result.stderr.strip().splitlines()[: len(expected_error_message_lines)]
+    ), result.stderr
+
+    exe = tmp_path / "exe"
+    exe.write_text(
+        dedent(
+            """\
+            import json
+            import platform
+            import sys
+            import sysconfig
+
+
+            if __name__ == "__main__":
+                json.dump(
+                    {
+                        "python_version": platform.python_version(),
+                        "debug": sysconfig.get_config_var("Py_DEBUG"),
+                        "free-threaded": sysconfig.get_config_var("Py_GIL_DISABLED"),
+                    },
+                    sys.stdout,
+                )
+            """
+        )
+    )
+
+    manifest = dedent(
+        """\
+        [lift]
+        name = "exe"
+
+        [[lift.files]]
+        name = "exe"
+
+        [[lift.interpreters]]
+        id = "python3.14"
+        provider = "PythonBuildStandalone"
+        release = "20251014"
+        version = "3.14"
+
+        [[lift.interpreters]]
+        id = "python3.14t"
+        provider = "PythonBuildStandalone"
+        release = "20251014"
+        version = "3.14t"
+
+        [[lift.commands]]
+        exe = "#{cpython:python}"
+        args = ["{exe}"]
+        """
+    )
+
+    # N.B.: PBS does not have debug builds for Windows.
+    if Os.current() == Os.Windows:
+        manifest = dedent(
+            """\
+            {manifest}
+
+            [[lift.interpreter_groups]]
+            id = "cpython"
+            selector = "{{scie.env.PYTHON}}"
+            members = [
+                "python3.14",
+                "python3.14t",
+            ]
+            """
+        ).format(manifest=manifest)
+    else:
+        manifest = dedent(
+            """\
+            {manifest}
+
+            [[lift.interpreters]]
+            id = "python3.14d"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14d"
+
+            [[lift.interpreters]]
+            id = "python3.14td"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14td"
+
+            [[lift.interpreter_groups]]
+            id = "cpython"
+            selector = "{{scie.env.PYTHON}}"
+            members = [
+                "python3.14",
+                "python3.14t",
+                "python3.14td",
+                "python3.14d",
+            ]
+            """
+        ).format(manifest=manifest)
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=manifest,
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / CURRENT_PLATFORM.binary_name("exe")
+    assert os.path.exists(scie)
+
+    def scie_select(python) -> dict[str, Any]:
+        return json.loads(
+            subprocess.run(
+                args=[scie],
+                env={**os.environ, "PYTHON": python},
+                stdout=subprocess.PIPE,
+                text=True,
+                check=True,
+            ).stdout
+        )
+
+    assert {
+        "python_version": "3.14.0",
+        "debug": 0,
+        "free-threaded": 0,
+    } == scie_select("python3.14")
+
+    assert {
+        "python_version": "3.14.0",
+        "debug": 0,
+        "free-threaded": 1,
+    } == scie_select("python3.14t")
+
+    # N.B.: PBS does not have debug builds for Windows.
+    if Os.current() is not Os.Windows:
+        assert {
+            "python_version": "3.14.0",
+            "debug": 1,
+            "free-threaded": 1,
+        } == scie_select("python3.14td")
+
+        assert {
+            "python_version": "3.14.0",
+            "debug": 1,
+            "free-threaded": 0,
+        } == scie_select("python3.14d")

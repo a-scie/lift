@@ -132,6 +132,10 @@ class Asset:
         )
 
 
+class _Default(str):
+    pass
+
+
 @dataclass(frozen=True)
 class Config:
     version: str = dataclasses.field(
@@ -139,12 +143,20 @@ class Config:
             """The CPython version to select.
 
             Can be either in `<major>.<minor>` form; e.g.: '3.11', or else fully specified as
-            `<major>.<minor>.<patch>`; e.g.: '3.11.3'.
+            `<major>.<minor>.<patch>`; e.g.: '3.11.3'. The version can also have a suffix to select
+            common flavors, in which case it is an error to specify a `flavor`.
+
+            Supported flavor suffixes are:
+
+            * `t`: A free-threaded build.
+            * `d`: A debug build.
+            * `td` (or `dt`): A free-threaded debug build.
 
             ```{caution}
             Python Standalone Builds does not provide all patch versions; so you should check
             [their releases](https://github.com/astral-sh/python-build-standalone/releases) if you
-            wish to pin down to the patch level.
+            wish to pin down to the patch level. Similarly, not all PBS versions have free-threaded,
+            debug or free-threaded debug builds available.
             ```
             """
         )
@@ -173,11 +185,18 @@ class Config:
         metadata=metadata("For Linux x86_64 platforms, the libc to link against."),
     )
     flavor: str = dataclasses.field(
-        default="install_only",
+        default=_Default("install_only"),
         metadata=metadata(
             """The flavor of the Python Standalone Builds release to use.
 
-            Currently only accepts 'install_only' and 'install_only_stripped'.
+            Currently accepts 'install_only', 'install_only_stripped' and any '-full' flavor.
+
+            ```{caution}
+            Python Standalone Builds does not provide all variants of '-full' flavors for all Python
+            versions or platforms they support; so you should check
+            [their releases](https://github.com/astral-sh/python-build-standalone/releases) for
+            available flavors.
+            ```
             """
         ),
     )
@@ -192,6 +211,51 @@ class Config:
             """
         ),
     )
+
+    def __post_init__(self) -> None:
+        @dataclass(frozen=True)
+        class FlavorRequest:
+            suffix: str
+            description: str
+            version: str
+            flavor: str
+
+        flavor_request: FlavorRequest | None = None
+        if self.version.endswith(("td", "dt")):
+            flavor_request = FlavorRequest(
+                suffix=self.version[-2:],
+                description="freethreaded debug",
+                version=self.version[:-2],
+                flavor=re.escape("freethreaded+debug-full"),
+            )
+        elif self.version.endswith("t"):
+            flavor_request = FlavorRequest(
+                suffix=self.version[-1:],
+                description="freethreaded",
+                version=self.version[:-1],
+                flavor=r"freethreaded(?:\+(?:pgo|lto)){1,2}-full",
+            )
+        elif self.version.endswith("d"):
+            flavor_request = FlavorRequest(
+                suffix=self.version[-1:],
+                description="debug",
+                version=self.version[:-1],
+                flavor=re.escape("debug-full"),
+            )
+
+        if flavor_request:
+            if self.flavor and not isinstance(self.flavor, _Default):
+                raise InputError(
+                    f"The suffix '{flavor_request.suffix}' of version "
+                    f"'{flavor_request.version}{flavor_request.suffix}' indicates a "
+                    f"{flavor_request.description} flavor CPython build should be selected and "
+                    f"cannot be combined with the explicit flavor '{self.flavor}'.\n"
+                    f"Either use a version suffix or an explicit flavor, but not both."
+                )
+            object.__setattr__(self, "version", flavor_request.version)
+            object.__setattr__(self, "flavor", flavor_request.flavor)
+        else:
+            object.__setattr__(self, "flavor", re.escape(self.flavor))
 
 
 @dataclass(frozen=True)
@@ -356,8 +420,7 @@ class PythonBuildStandalone(Provider[Config]):
         #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
         name_re = re.compile(
             rf"^cpython-(?P<exact_version>{re.escape(str(version))}(?:\.\d+)*((a|b|rc)\d+)?)"
-            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{re.escape(config.flavor)}"
-            r"\.(?P<extension>.+)$"
+            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{config.flavor}\.(?P<extension>.+)$"
         )
 
         # N.B.: There are 3 types of files in PythonBuildStandalone releases:
@@ -475,9 +538,16 @@ class PythonBuildStandalone(Provider[Config]):
                     version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
                     placeholders[Identifier("python")] = f"python/bin/python{version}"
                     placeholders[Identifier("pip")] = f"python/bin/pip{version}"
+            case flavor if flavor.endswith("-full"):
+                if platform_spec.is_windows:
+                    placeholders[Identifier("python")] = "python\\install\\python.exe"
+                else:
+                    version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
+                    placeholders[Identifier("python")] = f"python/install/bin/python{version}"
+                    placeholders[Identifier("pip")] = f"python/install/bin/pip{version}"
             case flavor:
                 raise InputError(
-                    "PythonBuildStandalone currently only understands the 'install_only' flavor of "
-                    f"distribution, given: {flavor}"
+                    "PythonBuildStandalone currently only understands 'install_only', "
+                    f"'install_only_stripped' and '*-full' flavors of distribution; given: {flavor}"
                 )
         return Distribution(id=self.id, file=file, placeholders=FrozenDict(placeholders))
