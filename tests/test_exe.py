@@ -27,7 +27,7 @@ from testing import issue
 from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Os, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Platform
 from science.providers import PyPy
 
 
@@ -935,10 +935,12 @@ def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> 
         )
     )
 
-    match Os.current():
-        case Os.Linux | Os.Macos:
+    match Platform.current():
+        case Platform.Linux_x86_64 if LibC.current() is LibC.GLIBC:
             flavor = "freethreaded+pgo+lto-full"
-        case Os.Windows:
+        case Platform.Macos_aarch64 | Platform.Macos_x86_64:
+            flavor = "freethreaded+pgo+lto-full"
+        case _:
             flavor = "freethreaded+pgo-full"
 
     subprocess.run(
