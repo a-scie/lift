@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.15.0
+
+This release adds support for all `*-full` flavor builds to the [PBS][PBS] provider. Notably, this
+enables selecting free-threaded CPython builds.
+
 ## 0.14.0
 
 This release adds support for CPython pre-releases to the [PBS][PBS] provider and upgrades the

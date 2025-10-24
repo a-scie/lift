@@ -177,7 +177,7 @@ class Config:
         metadata=metadata(
             """The flavor of the Python Standalone Builds release to use.
 
-            Currently only accepts 'install_only' and 'install_only_stripped'.
+            Currently accepts 'install_only', 'install_only_stripped' and any '*-full' flavor.
             """
         ),
     )
@@ -475,9 +475,16 @@ class PythonBuildStandalone(Provider[Config]):
                     version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
                     placeholders[Identifier("python")] = f"python/bin/python{version}"
                     placeholders[Identifier("pip")] = f"python/bin/pip{version}"
+            case flavor if flavor.endswith("-full"):
+                if platform_spec.is_windows:
+                    placeholders[Identifier("python")] = "python\\install\\python.exe"
+                else:
+                    version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
+                    placeholders[Identifier("python")] = f"python/install/bin/python{version}"
+                    placeholders[Identifier("pip")] = f"python/install/bin/pip{version}"
             case flavor:
                 raise InputError(
-                    "PythonBuildStandalone currently only understands the 'install_only' flavor of "
-                    f"distribution, given: {flavor}"
+                    "PythonBuildStandalone currently only understands 'install_only', "
+                    f"'install_only_stripped' and '*-full' flavors of distribution; given: {flavor}"
                 )
         return Distribution(id=self.id, file=file, placeholders=FrozenDict(placeholders))

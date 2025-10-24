@@ -27,7 +27,7 @@ from testing import issue
 from science import __version__
 from science.config import parse_config_file
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Os, Platform
 from science.providers import PyPy
 
 
@@ -913,3 +913,99 @@ def test_pbs_provider_pre_releases(tmp_path: Path, science_exe: Path) -> None:
         "3.15.0a1"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )
+
+
+def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    exe = tmp_path / "exe"
+    exe.write_text(
+        dedent(
+            """\
+            import platform
+            import sysconfig
+
+
+            if __name__ == "__main__":
+                print(platform.python_version())
+                print(sysconfig.get_config_var("Py_GIL_DISABLED"))
+            """
+        )
+    )
+
+    match Os.current():
+        case Os.Linux | Os.Macos:
+            flavor = "freethreaded+pgo+lto-full"
+        case Os.Windows:
+            flavor = "freethreaded+pgo-full"
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=dedent(
+            f"""\
+            [lift]
+            name = "exe"
+
+            [[lift.files]]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "python3.14"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14"
+
+            [[lift.interpreters]]
+            id = "python3.14t"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14"
+            flavor = "{flavor}"
+
+            [[lift.interpreter_groups]]
+            id = "cpython"
+            selector = "{{scie.env.PYTHON}}"
+            members = [
+                "python3.14",
+                "python3.14t",
+            ]
+
+            [[lift.commands]]
+            exe = "#{{cpython:python}}"
+            args = ["{{exe}}"]
+            """
+        ),
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / CURRENT_PLATFORM.binary_name("exe")
+    assert os.path.exists(scie)
+
+    assert ["3.14.0", "0"] == subprocess.run(
+        args=[scie],
+        env={**os.environ, "PYTHON": "python3.14"},
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+    assert ["3.14.0", "1"] == subprocess.run(
+        args=[scie],
+        env={**os.environ, "PYTHON": "python3.14t"},
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
