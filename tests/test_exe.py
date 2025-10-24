@@ -1015,3 +1015,169 @@ def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> 
         text=True,
         check=True,
     ).stdout.splitlines()
+
+
+def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    result = subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        input=dedent(
+            """\
+            [lift]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14.0t"
+            flavor = "install_only"
+
+            [[lift.commands]]
+            exe = "#{cpython:python}"
+            args = ["-VV"]
+            """
+        ),
+        cwd=chroot,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert [
+        "Failed to parse `[lift.interpreters[1]] provider`.",
+        "",
+        "Tried:",
+        (
+            "Provider: The suffix 't' of version '3.14.0t' indicates a freethreaded flavor "
+            "CPython build should be selected and cannot be combined with the explicit flavor "
+            "'install_only'."
+        ),
+        "Either use a version suffix or an explicit flavor, but not both.",
+    ] == result.stderr.strip().splitlines(), result.stderr
+
+    exe = tmp_path / "exe"
+    exe.write_text(
+        dedent(
+            """\
+            import json
+            import platform
+            import sys
+            import sysconfig
+
+
+            if __name__ == "__main__":
+                json.dump(
+                    {
+                        "python_version": platform.python_version(),
+                        "debug": sysconfig.get_config_var("Py_DEBUG"),
+                        "free-threaded": sysconfig.get_config_var("Py_GIL_DISABLED"),
+                    },
+                    sys.stdout,
+                )
+            """
+        )
+    )
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=dedent(
+            """\
+            [lift]
+            name = "exe"
+
+            [[lift.files]]
+            name = "exe"
+
+            [[lift.interpreters]]
+            id = "python3.14"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14"
+
+            [[lift.interpreters]]
+            id = "python3.14t"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14t"
+
+            [[lift.interpreters]]
+            id = "python3.14d"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14d"
+
+            [[lift.interpreters]]
+            id = "python3.14td"
+            provider = "PythonBuildStandalone"
+            release = "20251014"
+            version = "3.14td"
+
+            [[lift.interpreter_groups]]
+            id = "cpython"
+            selector = "{scie.env.PYTHON}"
+            members = [
+                "python3.14",
+                "python3.14t",
+                "python3.14td",
+                "python3.14d",
+            ]
+
+            [[lift.commands]]
+            exe = "#{cpython:python}"
+            args = ["{exe}"]
+            """
+        ),
+        cwd=chroot,
+        text=True,
+        check=True,
+    )
+
+    scie = dest / CURRENT_PLATFORM.binary_name("exe")
+    assert os.path.exists(scie)
+
+    def scie_select(python) -> dict[str, Any]:
+        return json.loads(
+            subprocess.run(
+                args=[scie],
+                env={**os.environ, "PYTHON": python},
+                stdout=subprocess.PIPE,
+                text=True,
+                check=True,
+            ).stdout
+        )
+
+    assert {
+        "python_version": "3.14.0",
+        "debug": 0,
+        "free-threaded": 0,
+    } == scie_select("python3.14")
+
+    assert {
+        "python_version": "3.14.0",
+        "debug": 1,
+        "free-threaded": 1,
+    } == scie_select("python3.14td")
+
+    assert {
+        "python_version": "3.14.0",
+        "debug": 0,
+        "free-threaded": 1,
+    } == scie_select("python3.14t")
+
+    assert {
+        "python_version": "3.14.0",
+        "debug": 1,
+        "free-threaded": 0,
+    } == scie_select("python3.14d")

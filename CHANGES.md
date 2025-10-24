@@ -3,7 +3,10 @@
 ## 0.15.0
 
 This release adds support for all `*-full` flavor builds to the [PBS][PBS] provider. Notably, this
-enables selecting free-threaded CPython builds.
+enables selecting free-threaded CPython builds. As a convenience, instead of specifying a `flavor`
+to select a free-threaded CPython build, you can append a `t` suffix to the version; e.g.: `3.14t`
+and the provider will select the appropriate free-threaded performance-optimized build for your
+targeted platform.
 
 ## 0.14.0
 
