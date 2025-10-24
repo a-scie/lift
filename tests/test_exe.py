@@ -1085,36 +1085,51 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
         )
     )
 
-    subprocess.run(
-        args=[
-            str(science_exe),
-            "lift",
-            "--file",
-            f"exe={exe}",
-            "build",
-            "--dest-dir",
-            str(dest),
-            "-",
-        ],
-        input=dedent(
+    manifest = dedent(
+        """\
+        [lift]
+        name = "exe"
+
+        [[lift.files]]
+        name = "exe"
+
+        [[lift.interpreters]]
+        id = "python3.14"
+        provider = "PythonBuildStandalone"
+        release = "20251014"
+        version = "3.14"
+
+        [[lift.interpreters]]
+        id = "python3.14t"
+        provider = "PythonBuildStandalone"
+        release = "20251014"
+        version = "3.14t"
+
+        [[lift.commands]]
+        exe = "#{cpython:python}"
+        args = ["{exe}"]
+        """
+    )
+
+    # N.B.: PBS does not have debug builds for Windows.
+    if Os.current() == Os.Windows:
+        manifest = dedent(
             """\
-            [lift]
-            name = "exe"
+            {manifest}
 
-            [[lift.files]]
-            name = "exe"
-
-            [[lift.interpreters]]
-            id = "python3.14"
-            provider = "PythonBuildStandalone"
-            release = "20251014"
-            version = "3.14"
-
-            [[lift.interpreters]]
-            id = "python3.14t"
-            provider = "PythonBuildStandalone"
-            release = "20251014"
-            version = "3.14t"
+            [[lift.interpreter_groups]]
+            id = "cpython"
+            selector = "{{scie.env.PYTHON}}"
+            members = [
+                "python3.14",
+                "python3.14t",
+            ]
+            """
+        ).format(manifest=manifest)
+    else:
+        manifest = dedent(
+            """\
+            {manifest}
 
             [[lift.interpreters]]
             id = "python3.14d"
@@ -1130,19 +1145,28 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
 
             [[lift.interpreter_groups]]
             id = "cpython"
-            selector = "{scie.env.PYTHON}"
+            selector = "{{scie.env.PYTHON}}"
             members = [
                 "python3.14",
                 "python3.14t",
                 "python3.14td",
                 "python3.14d",
             ]
-
-            [[lift.commands]]
-            exe = "#{cpython:python}"
-            args = ["{exe}"]
             """
-        ),
+        ).format(manifest=manifest)
+
+    subprocess.run(
+        args=[
+            str(science_exe),
+            "lift",
+            "--file",
+            f"exe={exe}",
+            "build",
+            "--dest-dir",
+            str(dest),
+            "-",
+        ],
+        input=manifest,
         cwd=chroot,
         text=True,
         check=True,
@@ -1170,18 +1194,20 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
 
     assert {
         "python_version": "3.14.0",
-        "debug": 1,
-        "free-threaded": 1,
-    } == scie_select("python3.14td")
-
-    assert {
-        "python_version": "3.14.0",
         "debug": 0,
         "free-threaded": 1,
     } == scie_select("python3.14t")
 
-    assert {
-        "python_version": "3.14.0",
-        "debug": 1,
-        "free-threaded": 0,
-    } == scie_select("python3.14d")
+    # N.B.: PBS does not have debug builds for Windows.
+    if Os.current() is not Os.Windows:
+        assert {
+            "python_version": "3.14.0",
+            "debug": 1,
+            "free-threaded": 1,
+        } == scie_select("python3.14td")
+
+        assert {
+            "python_version": "3.14.0",
+            "debug": 1,
+            "free-threaded": 0,
+        } == scie_select("python3.14d")
