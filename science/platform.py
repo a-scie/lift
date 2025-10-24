@@ -153,7 +153,7 @@ class LibC(Enum):
     @classmethod
     @cache
     def current(cls) -> LibC | None:
-        if CURRENT_PLATFORM.os is not Os.Linux or CURRENT_PLATFORM.arch is not Arch.X86_64:
+        if CURRENT_PLATFORM.os is not Os.Linux:
             return None
         if (
             "musl"

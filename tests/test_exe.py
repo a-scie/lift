@@ -935,15 +935,17 @@ def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> 
         )
     )
 
-    match Os.current():
-        case Os.Linux if LibC.current() is LibC.GLIBC:
+    match Platform.current():
+        case (Platform.Linux_aarch64 | Platform.Linux_x86_64) if LibC.current() is LibC.GLIBC:
             flavor = "freethreaded+pgo+lto-full"
-        case Os.Linux:
-            flavor = "freethreaded+lto-full"
-        case Os.Macos:
+        case Platform.Macos_aarch64 | Platform.Macos_x86_64:
             flavor = "freethreaded+pgo+lto-full"
-        case Os.Windows:
+        case Platform.Windows_aarch64 | Platform.Windows_x86_64:
             flavor = "freethreaded+pgo-full"
+        case platform if platform.os is Os.Linux:
+            flavor = "freethreaded+lto-full"
+        case _ as unknown_platform:
+            assert unknown_platform is None, f"The platform {unknown_platform} is unsupported."
 
     subprocess.run(
         args=[
