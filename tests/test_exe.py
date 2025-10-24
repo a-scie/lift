@@ -936,11 +936,14 @@ def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> 
     )
 
     match Platform.current():
-        case Platform.Linux_x86_64 if LibC.current() is LibC.GLIBC:
-            flavor = "freethreaded+pgo+lto-full"
+        case Platform.Linux_x86_64:
+            if LibC.current() is LibC.GLIBC:
+                flavor = "freethreaded+pgo+lto-full"
+            else:
+                flavor = "freethreaded+lto-full"
         case Platform.Macos_aarch64 | Platform.Macos_x86_64:
             flavor = "freethreaded+pgo+lto-full"
-        case _:
+        case Platform.Windows_aarch64 | Platform.Windows_x86_64:
             flavor = "freethreaded+pgo-full"
 
     subprocess.run(
