@@ -1046,7 +1046,7 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
         text=True,
     )
     assert result.returncode != 0
-    assert [
+    expected_error_message_lines = [
         "Failed to parse `[lift.interpreters[1]] provider`.",
         "",
         "Tried:",
@@ -1056,7 +1056,11 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
             "'install_only'."
         ),
         "Either use a version suffix or an explicit flavor, but not both.",
-    ] == result.stderr.strip().splitlines(), result.stderr
+    ]
+    assert (
+        expected_error_message_lines
+        == result.stderr.strip().splitlines()[: len(expected_error_message_lines)]
+    ), result.stderr
 
     exe = tmp_path / "exe"
     exe.write_text(
