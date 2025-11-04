@@ -828,7 +828,12 @@ def export(
 @click.option(
     "--hash",
     "hash_functions",
-    type=click.Choice(sorted(hashlib.algorithms_guaranteed)),
+    # N.B.: We skip the shake family of algorithms, when supported, since their digest functions
+    # require a length; i.e.: we cannot just call `.hexdigest()` to get a fingerprint.
+    # See: https://github.com/a-scie/lift/issues/176
+    type=click.Choice(
+        sorted(alg for alg in hashlib.algorithms_guaranteed if not alg.startswith("shake_"))
+    ),
     multiple=True,
     default=[],
     help=dedent(
