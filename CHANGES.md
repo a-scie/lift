@@ -1,5 +1,13 @@
 # Release Notes
 
+## 0.15.1
+
+This release fixes a bug present since the initial 0.1.0 release for `--hash shake_*`. The SHAKE
+family of hash algorithms requires a length when obtaining a digest unlike all other Python
+guaranteed hash algorithms. Previously, we did not pass a length, leading to failure when building a
+scie; now we just drop support for these hash algorithms instead trusting someone will speak up when
+they have a need for SHAKE.
+
 ## 0.15.0
 
 This release adds support for all `*-full` flavor builds to the [PBS][PBS] provider. Notably, this
