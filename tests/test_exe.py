@@ -17,7 +17,7 @@ from pathlib import Path
 from shutil import which
 from subprocess import CalledProcessError
 from textwrap import dedent
-from typing import Any, Iterable, Iterator
+from typing import Any, Iterable
 
 import pytest
 import toml
@@ -1262,28 +1262,6 @@ def test_load_dotenv(tmp_path: Path, science_exe: Path) -> None:
             args=[exe], stdout=subprocess.PIPE, text=True, check=True, cwd=dest
         ).stdout.strip()
     )
-
-
-def iter_scie_jump_specs() -> Iterator[ScieJump]:
-    yield ScieJump(version=Version("1.8.0"))
-    if Platform.current() is Platform.Linux_x86_64:
-        size = 2207392
-        fingerprint = Fingerprint(
-            "2812afbc3fdafbb8ac9472075b914cd85e79f6b77fd3840756de631eef7cebd7"
-        )
-        yield ScieJump(version=Version("1.8.0"), digest=Digest(size=size, fingerprint=fingerprint))
-        yield ScieJump(version=Version("1.8.0"), digest=Digest(size=size))
-        yield ScieJump(version=Version("1.8.0"), digest=Digest(fingerprint=fingerprint))
-
-    yield ScieJump(version=Version("1.8.2"))
-    if Platform.current() is Platform.Linux_x86_64:
-        size = 2223910
-        fingerprint = Fingerprint(
-            "e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3"
-        )
-        yield ScieJump(version=Version("1.8.2"), digest=Digest(size=size, fingerprint=fingerprint))
-        yield ScieJump(version=Version("1.8.2"), digest=Digest(size=size))
-        yield ScieJump(version=Version("1.8.2"), digest=Digest(fingerprint=fingerprint))
 
 
 @pytest.mark.parametrize("version", ["1.8.0", "1.8.1", "1.8.2"])
