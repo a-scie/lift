@@ -1327,6 +1327,11 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
 
 
 VERSION = "1.8.2"
+DOWNLOAD_URL = (
+    f"https://github.com/a-scie/jump/releases/download/v{VERSION}/"
+    f"{CURRENT_PLATFORM.qualified_binary_name('scie-jump')}"
+)
+
 BAD_SIZE = -1
 BAD_FINGERPRINT = Fingerprint("bad")
 
@@ -1447,17 +1452,13 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
     if digest.size == BAD_SIZE:
         assert result.returncode != 0
         assert (
-            "The content at "
-            f"https://github.com/a-scie/jump/releases/download/v{VERSION}/scie-jump-linux-x86_64 "
-            f"is expected to be {BAD_SIZE} bytes, but advertises a Content-Length of {GOOD_SIZE} "
-            "bytes."
+            f"The content at {DOWNLOAD_URL} is expected to be {BAD_SIZE} bytes, but advertises a "
+            f"Content-Length of {GOOD_SIZE} bytes."
         ) in result.stderr
     elif digest.fingerprint == BAD_FINGERPRINT:
         assert result.returncode != 0
         assert (
-            "The download from "
-            f"https://github.com/a-scie/jump/releases/download/v{VERSION}/scie-jump-linux-x86_64 "
-            f"has unexpected contents.\n"
+            f"The download from {DOWNLOAD_URL} has unexpected contents.\n"
             "Expected sha256 digest:\n"
             f"  {BAD_FINGERPRINT}\n"
             "Actual sha256 digest:\n"
