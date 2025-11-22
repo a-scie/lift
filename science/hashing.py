@@ -51,8 +51,8 @@ class _BinaryIOHasher:
 
 @documented_dataclass(frozen=True, alias="digest")
 class Digest:
-    size: int
-    fingerprint: Fingerprint
+    size: int | None = None
+    fingerprint: Fingerprint | None = None
 
     @classmethod
     def hasher(cls, underlying: BinaryIO, algorithm: str = DEFAULT_ALGORITHM) -> BinaryHasher:
@@ -71,7 +71,7 @@ class Digest:
 
 @dataclass(frozen=True)
 class ExpectedDigest:
-    fingerprint: Fingerprint
+    fingerprint: Fingerprint | None = None
     algorithm: str = DEFAULT_ALGORITHM
     size: int | None = None
 
@@ -86,7 +86,7 @@ class ExpectedDigest:
             )
 
     def check_fingerprint(self, subject: str, actual_fingerprint: Fingerprint) -> None:
-        if self.fingerprint != actual_fingerprint:
+        if self.fingerprint and self.fingerprint != actual_fingerprint:
             raise InputError(
                 f"The {subject} has unexpected contents.\n"
                 f"Expected {self.algorithm} digest:\n"

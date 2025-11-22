@@ -226,13 +226,13 @@ class File:
     def placeholder(self) -> str:
         return f"{{{self.id}}}"
 
-    def maybe_check_digest(self, path: Path):
+    def maybe_check_digest(self, path: Path) -> None:
         if not self.digest:
             return
         if self.source and self.source.lazy:
             return
         expected_digest = ExpectedDigest(fingerprint=self.digest.fingerprint, size=self.digest.size)
-        return expected_digest.check_path(path)
+        expected_digest.check_path(path)
 
 
 class Url(str):

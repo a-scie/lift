@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.15.2
+
+This release fixes validation of custom `scie_jump`s with some portion of their digest filled out.
+Now, if you specify a `size` or a `fingerprint` or both for the `lift.scie_jump.digest`, the
+corresponding property of the downloaded `scie-jump` binary will be validated or else the scie
+build will fail with an informative message.
+
 ## 0.15.1
 
 This release fixes a bug present since the initial 0.1.0 release for `--hash shake_*`. The SHAKE

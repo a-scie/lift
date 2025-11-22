@@ -42,14 +42,13 @@ def assemble_scies(
     native_jump_path = (a_scie.custom_jump(repo_path=use_jump) if use_jump else a_scie.jump()).path
 
     scies = list[ScieAssembly]()
-    for platform_spec, lift_manifest in lift.export_manifest(
-        lift_config, application, dest_dir=dest_dir, platform_specs=platform_specs
+    for platform_spec, lift_manifest, jump_path in lift.export_manifest(
+        lift_config,
+        application,
+        dest_dir=dest_dir,
+        platform_specs=platform_specs,
+        use_jump=use_jump,
     ):
-        jump_path = (
-            a_scie.custom_jump(repo_path=use_jump)
-            if use_jump
-            else a_scie.jump(specification=application.scie_jump, platform=platform_spec.platform)
-        ).path
         with temporary_directory("assemble") as build_dir:
             subprocess.run(
                 args=[str(native_jump_path), "-sj", str(jump_path), lift_manifest],
