@@ -1300,7 +1300,7 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
         env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
         check=True,
     )
-    exe = dest / "exe"
+    exe = dest / Platform.current().binary_name("exe")
 
     split_dir = tmp_path / "split"
     subprocess.run(args=[exe, split_dir], env={**os.environ, "SCIE": "split"}, check=True)
@@ -1326,6 +1326,7 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
     assert os.path.getsize(load_result.path) == manifest["scie"]["jump"]["size"]
 
 
+VERSION = "1.8.2"
 GOOD_SIZE = 2223910
 GOOD_FINGERPRINT = Fingerprint("e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3")
 
@@ -1333,34 +1334,38 @@ BAD_SIZE = -1
 BAD_FINGERPRINT = Fingerprint("bad")
 
 
-def digest_id(digest: Digest) -> str:
-    if digest.size and digest.fingerprint:
+def digest_id(size: int | None, fingerprint: str | None) -> str:
+    if size and fingerprint:
         components = ["digest"]
-        if digest.size == BAD_SIZE:
+        if size == BAD_SIZE:
             components.append("bad-size")
-        if digest.fingerprint == BAD_FINGERPRINT:
+        if fingerprint == BAD_FINGERPRINT:
             components.append("bad-fingerprint")
         return "-".join(components)
+    if size:
+        return "bad-size" if size == BAD_SIZE else "size"
+    if fingerprint:
+        return "bad-fingerprint" if fingerprint == BAD_FINGERPRINT else "fingerprint"
+    return "no-digest"
+
+
+def as_toml_line(digest: Digest) -> str:
+    digest_fields = []
     if digest.size:
-        return "bad-size" if digest.size == BAD_SIZE else "size"
+        digest_fields.append(f"size = {digest.size}")
     if digest.fingerprint:
-        return "bad-fingerprint" if digest.fingerprint == BAD_FINGERPRINT else "fingerprint"
-    raise AssertionError(f"Expected digest to have at least one field set: {digest}")
+        digest_fields.append(f'fingerprint = "{digest.fingerprint}"')
+    if not digest_fields:
+        return ""
+    return f"digest = {{ {', '.join(digest_fields)} }}"
 
 
 @pytest.mark.parametrize(
     "digest",
     [
-        pytest.param(digest, id=digest_id(digest))
-        for digest in (
-            Digest(size=GOOD_SIZE, fingerprint=GOOD_FINGERPRINT),
-            Digest(size=BAD_SIZE, fingerprint=BAD_FINGERPRINT),
-            Digest(size=BAD_SIZE, fingerprint=GOOD_FINGERPRINT),
-            Digest(size=GOOD_SIZE, fingerprint=BAD_FINGERPRINT),
-            Digest(size=GOOD_SIZE),
-            Digest(size=BAD_SIZE),
-            Digest(fingerprint=GOOD_FINGERPRINT),
-            Digest(fingerprint=BAD_FINGERPRINT),
+        pytest.param(Digest(size=size, fingerprint=fingerprint), id=digest_id(size, fingerprint))
+        for size, fingerprint in itertools.product(
+            (GOOD_SIZE, BAD_SIZE, None), (GOOD_FINGERPRINT, BAD_FINGERPRINT, None)
         )
     ],
 )
@@ -1369,43 +1374,31 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
     chroot = tmp_path / "chroot"
     chroot.mkdir(parents=True, exist_ok=True)
 
-    digest_fields = []
-    if digest.size:
-        digest_fields.append(f"size = {digest.size}")
-    if digest.fingerprint:
-        digest_fields.append(f'fingerprint = "{digest.fingerprint}"')
-    assert digest_fields, f"Expected digest to have at least one field set; given: {digest}"
-
     lift_manifest = chroot / "lift.toml"
     lift_manifest.write_text(
         dedent(
-            f"""\
+            """\
             [lift]
-            name = "exe"
+            name = "inspect"
             platforms = [{{ platform = "linux-x86_64", libc = "gnu" }}]
 
             [lift.scie_jump]
-            version = "1.8.2"
-            digest = {{ {", ".join(digest_fields)} }}
-
-            [[lift.interpreters]]
-            id = "cpython"
-            provider = "PythonBuildStandalone"
-            release = "20251120"
-            version = "3.14"
-            flavor = "install_only_stripped"
+            version = "{version}"
+            {digest}
 
             [[lift.commands]]
-            exe = "#{{cpython:python}}"
-            args = ["-V"]
+            exe = "{{scie}}"
+            [lift.commands.env.replace]
+            SCIE = "inspect"
             """
-        )
+        ).format(version=VERSION, digest=as_toml_line(digest))
     )
 
     cache_dir = tmp_path / "cache"
     result = subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), lift_manifest],
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest)],
         env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
+        cwd=chroot,
         stderr=subprocess.PIPE,
         text=True,
     )
@@ -1413,16 +1406,16 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
         assert result.returncode != 0
         assert (
             "The content at "
-            "https://github.com/a-scie/jump/releases/download/v1.8.2/scie-jump-linux-x86_64 is "
-            f"expected to be {BAD_SIZE} bytes, but advertises a Content-Length of {GOOD_SIZE} "
+            f"https://github.com/a-scie/jump/releases/download/v{VERSION}/scie-jump-linux-x86_64 "
+            f"is expected to be {BAD_SIZE} bytes, but advertises a Content-Length of {GOOD_SIZE} "
             "bytes."
         ) in result.stderr
     elif digest.fingerprint == BAD_FINGERPRINT:
         assert result.returncode != 0
         assert (
             "The download from "
-            "https://github.com/a-scie/jump/releases/download/v1.8.2/scie-jump-linux-x86_64 has "
-            "unexpected contents.\n"
+            f"https://github.com/a-scie/jump/releases/download/v{VERSION}/scie-jump-linux-x86_64 "
+            f"has unexpected contents.\n"
             "Expected sha256 digest:\n"
             f"  {BAD_FINGERPRINT}\n"
             "Actual sha256 digest:\n"
@@ -1430,3 +1423,12 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
         ) in result.stderr
     else:
         assert 0 == result.returncode
+        manifest = json.loads(
+            subprocess.run(
+                args=[dest / Platform.current().binary_name("inspect")],
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+        )
+        assert VERSION == manifest["scie"]["jump"]["version"]
+        assert (digest.size or GOOD_SIZE) == manifest["scie"]["jump"]["size"]
