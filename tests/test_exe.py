@@ -1423,7 +1423,6 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
             """\
             [lift]
             name = "inspect"
-            platforms = [{{ platform = "linux-x86_64", libc = "gnu" }}]
 
             [lift.scie_jump]
             version = "{version}"
