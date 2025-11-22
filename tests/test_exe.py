@@ -21,11 +21,13 @@ from typing import Any, Iterable
 
 import pytest
 import toml
+from packaging.version import Version
 from pytest import TempPathFactory
 from testing import issue
 
-from science import __version__
+from science import __version__, a_scie
 from science.config import parse_config_file
+from science.model import ScieJump
 from science.os import IS_WINDOWS
 from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Os, Platform
 from science.providers import PyPy
@@ -1259,3 +1261,62 @@ def test_load_dotenv(tmp_path: Path, science_exe: Path) -> None:
             args=[exe], stdout=subprocess.PIPE, text=True, check=True, cwd=dest
         ).stdout.strip()
     )
+
+
+@pytest.mark.parametrize("scie_jump_version", ["1.8.0", "1.8.1", "1.8.2"])
+def test_custom_jump(tmp_path: Path, science_exe: Path, scie_jump_version: str) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        input=dedent(
+            f"""\
+            [lift]
+            name = "exe"
+
+            [lift.scie_jump]
+            version = "{scie_jump_version}"
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20251120"
+            version = "3.14"
+            flavor = "install_only_stripped"
+
+            [[lift.commands]]
+            exe = "#{{cpython:python}}"
+            args = ["-V"]
+            """
+        ),
+        cwd=chroot,
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    exe = dest / "exe"
+
+    split_dir = tmp_path / "split"
+    subprocess.run(args=[exe, split_dir], env={**os.environ, "SCIE": "split"}, check=True)
+    assert (
+        scie_jump_version
+        == subprocess.run(
+            args=[split_dir / "scie-jump", "-V"], stdout=subprocess.PIPE, text=True, check=True
+        ).stdout.strip()
+    )
+
+    result = subprocess.run(
+        args=[exe],
+        env={**os.environ, "SCIE": "inspect"},
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    manifest = json.loads(result.stdout)
+    assert scie_jump_version == manifest["scie"]["jump"]["version"]
+
+    scie_jump = a_scie.jump(ScieJump(version=Version(scie_jump_version)))
+    assert scie_jump.digest.size == manifest["scie"]["jump"]["size"]
+    assert os.path.getsize(scie_jump.path) == manifest["scie"]["jump"]["size"]
