@@ -20,6 +20,7 @@ from science.platform import CURRENT_PLATFORM, Platform
 @dataclass(frozen=True)
 class LoadResult(FetchResult):
     binary_name: str
+    version: Version | None = None
 
 
 def load_project_release(
@@ -44,7 +45,9 @@ def load_project_release(
         executable=True,
         ttl=ttl,
     )
-    return LoadResult(path=result.path, digest=result.digest, binary_name=qualified_binary_name)
+    return LoadResult(
+        path=result.path, digest=result.digest, binary_name=qualified_binary_name, version=version
+    )
 
 
 def jump(

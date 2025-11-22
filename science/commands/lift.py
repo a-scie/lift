@@ -101,7 +101,8 @@ def export_manifest(
     dest_dir: Path,
     *,
     platform_specs: Iterable[PlatformSpec] | None = None,
-) -> Iterator[tuple[PlatformSpec, Path]]:
+    use_jump: Path | None = None,
+) -> Iterator[tuple[PlatformSpec, Path, Path]]:
     app_info = AppInfo.assemble(lift_config.app_info)
 
     for platform_spec in platform_specs or application.platform_specs:
@@ -232,6 +233,16 @@ def export_manifest(
 
         build_info = application.build_info if lift_config.include_provenance else None
 
+        load_result = (
+            a_scie.custom_jump(repo_path=use_jump)
+            if use_jump
+            else a_scie.jump(specification=application.scie_jump, platform=platform_spec.platform)
+        )
+        if load_result.version:
+            scie_jump = ScieJump(version=load_result.version, digest=load_result.digest)
+        else:
+            scie_jump = ScieJump()
+
         with open(lift_manifest, "w") as lift_manifest_output:
             _emit_manifest(
                 lift_manifest_output,
@@ -239,7 +250,7 @@ def export_manifest(
                 description=application.description,
                 load_dotenv=application.load_dotenv,
                 base=application.base,
-                scie_jump=application.scie_jump or ScieJump(),
+                scie_jump=scie_jump,
                 platform_spec=platform_spec,
                 distributions=distributions,
                 interpreter_groups=application.interpreter_groups,
@@ -250,7 +261,7 @@ def export_manifest(
                 build_info=build_info,
                 app_info=app_info,
             )
-        yield platform_spec, lift_manifest
+        yield platform_spec, lift_manifest, load_result.path
 
 
 def _render_file(file: File) -> dict[str, Any]:

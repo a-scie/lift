@@ -782,7 +782,7 @@ def export(
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
     with temporary_directory("export") as td:
-        for _, manifest_path in lift.export_manifest(
+        for _, manifest_path, _ in lift.export_manifest(
             lift_config, application, dest_dir=td, platform_specs=lift_config.platform_specs
         ):
             lift_manifest = dest_dir / (

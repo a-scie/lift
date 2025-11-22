@@ -17,7 +17,7 @@ from pathlib import Path
 from shutil import which
 from subprocess import CalledProcessError
 from textwrap import dedent
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 import pytest
 import toml
@@ -27,6 +27,7 @@ from testing import issue
 
 from science import __version__, a_scie
 from science.config import parse_config_file
+from science.hashing import Digest, Fingerprint
 from science.model import ScieJump
 from science.os import IS_WINDOWS
 from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Os, Platform
@@ -1263,21 +1264,43 @@ def test_load_dotenv(tmp_path: Path, science_exe: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("scie_jump_version", ["1.8.0", "1.8.1", "1.8.2"])
-def test_custom_jump(tmp_path: Path, science_exe: Path, scie_jump_version: str) -> None:
+def iter_scie_jump_specs() -> Iterator[ScieJump]:
+    yield ScieJump(version=Version("1.8.0"))
+    if Platform.current() is Platform.Linux_x86_64:
+        size = 2207392
+        fingerprint = Fingerprint(
+            "2812afbc3fdafbb8ac9472075b914cd85e79f6b77fd3840756de631eef7cebd7"
+        )
+        yield ScieJump(version=Version("1.8.0"), digest=Digest(size=size, fingerprint=fingerprint))
+        yield ScieJump(version=Version("1.8.0"), digest=Digest(size=size))
+        yield ScieJump(version=Version("1.8.0"), digest=Digest(fingerprint=fingerprint))
+
+    yield ScieJump(version=Version("1.8.2"))
+    if Platform.current() is Platform.Linux_x86_64:
+        size = 2223910
+        fingerprint = Fingerprint(
+            "e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3"
+        )
+        yield ScieJump(version=Version("1.8.2"), digest=Digest(size=size, fingerprint=fingerprint))
+        yield ScieJump(version=Version("1.8.2"), digest=Digest(size=size))
+        yield ScieJump(version=Version("1.8.2"), digest=Digest(fingerprint=fingerprint))
+
+
+@pytest.mark.parametrize("version", ["1.8.0", "1.8.1", "1.8.2"])
+def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) -> None:
     dest = tmp_path / "dest"
     chroot = tmp_path / "chroot"
     chroot.mkdir(parents=True, exist_ok=True)
 
-    subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
-        input=dedent(
+    lift_manifest = chroot / "lift.toml"
+    lift_manifest.write_text(
+        dedent(
             f"""\
             [lift]
             name = "exe"
 
             [lift.scie_jump]
-            version = "{scie_jump_version}"
+            version = "{version}"
 
             [[lift.interpreters]]
             id = "cpython"
@@ -1290,10 +1313,13 @@ def test_custom_jump(tmp_path: Path, science_exe: Path, scie_jump_version: str) 
             exe = "#{{cpython:python}}"
             args = ["-V"]
             """
-        ),
-        cwd=chroot,
-        stdout=subprocess.PIPE,
-        text=True,
+        )
+    )
+
+    cache_dir = tmp_path / "cache"
+    subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), lift_manifest],
+        env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
         check=True,
     )
     exe = dest / "exe"
@@ -1301,7 +1327,7 @@ def test_custom_jump(tmp_path: Path, science_exe: Path, scie_jump_version: str) 
     split_dir = tmp_path / "split"
     subprocess.run(args=[exe, split_dir], env={**os.environ, "SCIE": "split"}, check=True)
     assert (
-        scie_jump_version
+        version
         == subprocess.run(
             args=[split_dir / "scie-jump", "-V"], stdout=subprocess.PIPE, text=True, check=True
         ).stdout.strip()
@@ -1315,8 +1341,114 @@ def test_custom_jump(tmp_path: Path, science_exe: Path, scie_jump_version: str) 
         check=True,
     )
     manifest = json.loads(result.stdout)
-    assert scie_jump_version == manifest["scie"]["jump"]["version"]
+    assert version == manifest["scie"]["jump"]["version"]
 
-    scie_jump = a_scie.jump(ScieJump(version=Version(scie_jump_version)))
-    assert scie_jump.digest.size == manifest["scie"]["jump"]["size"]
-    assert os.path.getsize(scie_jump.path) == manifest["scie"]["jump"]["size"]
+    load_result = a_scie.jump(ScieJump(version=Version(version)))
+    assert load_result.digest.size == manifest["scie"]["jump"]["size"]
+    assert os.path.getsize(load_result.path) == manifest["scie"]["jump"]["size"]
+
+
+GOOD_SIZE = 2223910
+GOOD_FINGERPRINT = Fingerprint("e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3")
+
+BAD_SIZE = -1
+BAD_FINGERPRINT = Fingerprint("bad")
+
+
+def digest_id(digest: Digest) -> str:
+    if digest.size and digest.fingerprint:
+        components = ["digest"]
+        if digest.size == BAD_SIZE:
+            components.append("bad-size")
+        if digest.fingerprint == BAD_FINGERPRINT:
+            components.append("bad-fingerprint")
+        return "-".join(components)
+    if digest.size:
+        return "bad-size" if digest.size == BAD_SIZE else "size"
+    if digest.fingerprint:
+        return "bad-fingerprint" if digest.fingerprint == BAD_FINGERPRINT else "fingerprint"
+    raise AssertionError(f"Expected digest to have at least one field set: {digest}")
+
+
+@pytest.mark.parametrize(
+    "digest",
+    [
+        pytest.param(digest, id=digest_id(digest))
+        for digest in (
+            Digest(size=GOOD_SIZE, fingerprint=GOOD_FINGERPRINT),
+            Digest(size=BAD_SIZE, fingerprint=BAD_FINGERPRINT),
+            Digest(size=BAD_SIZE, fingerprint=GOOD_FINGERPRINT),
+            Digest(size=GOOD_SIZE, fingerprint=BAD_FINGERPRINT),
+            Digest(size=GOOD_SIZE),
+            Digest(size=BAD_SIZE),
+            Digest(fingerprint=GOOD_FINGERPRINT),
+            Digest(fingerprint=BAD_FINGERPRINT),
+        )
+    ],
+)
+def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    digest_fields = []
+    if digest.size:
+        digest_fields.append(f"size = {digest.size}")
+    if digest.fingerprint:
+        digest_fields.append(f'fingerprint = "{digest.fingerprint}"')
+    assert digest_fields, f"Expected digest to have at least one field set; given: {digest}"
+
+    lift_manifest = chroot / "lift.toml"
+    lift_manifest.write_text(
+        dedent(
+            f"""\
+            [lift]
+            name = "exe"
+            platforms = [{{ platform = "linux-x86_64", libc = "gnu" }}]
+
+            [lift.scie_jump]
+            version = "1.8.2"
+            digest = {{ {", ".join(digest_fields)} }}
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20251120"
+            version = "3.14"
+            flavor = "install_only_stripped"
+
+            [[lift.commands]]
+            exe = "#{{cpython:python}}"
+            args = ["-V"]
+            """
+        )
+    )
+
+    cache_dir = tmp_path / "cache"
+    result = subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), lift_manifest],
+        env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if digest.size == BAD_SIZE:
+        assert result.returncode != 0
+        assert (
+            "The content at "
+            "https://github.com/a-scie/jump/releases/download/v1.8.2/scie-jump-linux-x86_64 is "
+            f"expected to be {BAD_SIZE} bytes, but advertises a Content-Length of {GOOD_SIZE} "
+            "bytes."
+        ) in result.stderr
+    elif digest.fingerprint == BAD_FINGERPRINT:
+        assert result.returncode != 0
+        assert (
+            "The download from "
+            "https://github.com/a-scie/jump/releases/download/v1.8.2/scie-jump-linux-x86_64 has "
+            "unexpected contents.\n"
+            "Expected sha256 digest:\n"
+            f"  {BAD_FINGERPRINT}\n"
+            "Actual sha256 digest:\n"
+            f"  {GOOD_FINGERPRINT}"
+        ) in result.stderr
+    else:
+        assert 0 == result.returncode
