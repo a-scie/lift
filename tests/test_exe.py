@@ -1211,3 +1211,51 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
             "debug": 1,
             "free-threaded": 0,
         } == scie_select("python3.14d")
+
+
+def test_load_dotenv(tmp_path: Path, science_exe: Path) -> None:
+    dest = tmp_path / "dest"
+    chroot = tmp_path / "chroot"
+    chroot.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        input=dedent(
+            """\
+            [lift]
+            name = "exe"
+            load_dotenv = true
+
+            [[lift.interpreters]]
+            id = "cpython"
+            provider = "PythonBuildStandalone"
+            release = "20251120"
+            version = "3.14"
+            flavor = "install_only_stripped"
+
+            [[lift.commands]]
+            exe = "#{cpython:python}"
+            args = ["-c", "import os; print(os.environ.get('SLARTIBARTFAST', '<unset>'))"]
+            """
+        ),
+        cwd=chroot,
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+    exe = dest / "exe"
+    assert (
+        "<unset>"
+        == subprocess.run(args=[exe], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
+    )
+    (dest / ".env").write_text("SLARTIBARTFAST=42")
+    assert (
+        "<unset>"
+        == subprocess.run(args=[exe], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
+    )
+    assert (
+        "42"
+        == subprocess.run(
+            args=[exe], stdout=subprocess.PIPE, text=True, check=True, cwd=dest
+        ).stdout.strip()
+    )
