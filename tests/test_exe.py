@@ -1300,7 +1300,7 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
         env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
         check=True,
     )
-    exe = dest / "exe"
+    exe = dest / Platform.current().binary_name("exe")
 
     split_dir = tmp_path / "split"
     subprocess.run(args=[exe, split_dir], env={**os.environ, "SCIE": "split"}, check=True)
@@ -1326,41 +1326,94 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
     assert os.path.getsize(load_result.path) == manifest["scie"]["jump"]["size"]
 
 
-GOOD_SIZE = 2223910
-GOOD_FINGERPRINT = Fingerprint("e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3")
+VERSION = "1.8.2"
+DOWNLOAD_URL = (
+    f"https://github.com/a-scie/jump/releases/download/v{VERSION}/"
+    f"{CURRENT_PLATFORM.qualified_binary_name('scie-jump')}"
+)
 
 BAD_SIZE = -1
 BAD_FINGERPRINT = Fingerprint("bad")
 
+GOOD_SIZE = {
+    Platform.Linux_aarch64: 1899710,
+    Platform.Linux_armv7l: 1808106,
+    Platform.Linux_powerpc64le: 2236262,
+    Platform.Linux_riscv64: 1881230,
+    Platform.Linux_s390x: 2269030,
+    Platform.Linux_x86_64: 2223910,
+    Platform.Macos_aarch64: 1866014,
+    Platform.Macos_x86_64: 2031962,
+    Platform.Windows_aarch64: 1828366,
+    Platform.Windows_x86_64: 2203150,
+}[CURRENT_PLATFORM]
 
-def digest_id(digest: Digest) -> str:
-    if digest.size and digest.fingerprint:
+GOOD_FINGERPRINT = {
+    Platform.Linux_aarch64: Fingerprint(
+        "74951ec0b3820664fbdd0fa15f5057932ac3d92d4d37d5f8aadfe70220c9e80f"
+    ),
+    Platform.Linux_armv7l: Fingerprint(
+        "3e288aacccb0f8c63dcbdf585afb6e214e3832b4dda4a98da4ed2c6767578fb4"
+    ),
+    Platform.Linux_powerpc64le: Fingerprint(
+        "d30e9a0bf779d382a8186c9a139dadf664cad5fc42598d5f5826b2ffb1162503"
+    ),
+    Platform.Linux_riscv64: Fingerprint(
+        "4b466ad4171b090d7abacb6dba08e0fb76db43a67880700bcfe33e811ab3d6bc"
+    ),
+    Platform.Linux_s390x: Fingerprint(
+        "c6b6915ea3d420a138e8cf334cd2b45032728ceb56d4304f0e5b4d5533adef20"
+    ),
+    Platform.Linux_x86_64: Fingerprint(
+        "e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3"
+    ),
+    Platform.Macos_aarch64: Fingerprint(
+        "e886e4e85c82d484e083d0426dcba236311d10a796b1387ee070aa82752efea1"
+    ),
+    Platform.Macos_x86_64: Fingerprint(
+        "74f05a39eedb61615c68b07b551c7fce2a08d3196fb1c692a7163f6d3d59fd32"
+    ),
+    Platform.Windows_aarch64: Fingerprint(
+        "14fdd2a13164e282f7670f30e0a9e7bccaf34affbcfeff9e86415eaa22c34ae3"
+    ),
+    Platform.Windows_x86_64: Fingerprint(
+        "1e34ec9abc06ec75727f9cc89df3c23f783dda4e68a176481d447cace60bafb4"
+    ),
+}[CURRENT_PLATFORM]
+
+
+def digest_id(size: int | None, fingerprint: str | None) -> str:
+    if size and fingerprint:
         components = ["digest"]
-        if digest.size == BAD_SIZE:
+        if size == BAD_SIZE:
             components.append("bad-size")
-        if digest.fingerprint == BAD_FINGERPRINT:
+        if fingerprint == BAD_FINGERPRINT:
             components.append("bad-fingerprint")
         return "-".join(components)
+    if size:
+        return "bad-size" if size == BAD_SIZE else "size"
+    if fingerprint:
+        return "bad-fingerprint" if fingerprint == BAD_FINGERPRINT else "fingerprint"
+    return "no-digest"
+
+
+def as_toml_line(digest: Digest) -> str:
+    digest_fields = []
     if digest.size:
-        return "bad-size" if digest.size == BAD_SIZE else "size"
+        digest_fields.append(f"size = {digest.size}")
     if digest.fingerprint:
-        return "bad-fingerprint" if digest.fingerprint == BAD_FINGERPRINT else "fingerprint"
-    raise AssertionError(f"Expected digest to have at least one field set: {digest}")
+        digest_fields.append(f'fingerprint = "{digest.fingerprint}"')
+    if not digest_fields:
+        return ""
+    return f"digest = {{ {', '.join(digest_fields)} }}"
 
 
 @pytest.mark.parametrize(
     "digest",
     [
-        pytest.param(digest, id=digest_id(digest))
-        for digest in (
-            Digest(size=GOOD_SIZE, fingerprint=GOOD_FINGERPRINT),
-            Digest(size=BAD_SIZE, fingerprint=BAD_FINGERPRINT),
-            Digest(size=BAD_SIZE, fingerprint=GOOD_FINGERPRINT),
-            Digest(size=GOOD_SIZE, fingerprint=BAD_FINGERPRINT),
-            Digest(size=GOOD_SIZE),
-            Digest(size=BAD_SIZE),
-            Digest(fingerprint=GOOD_FINGERPRINT),
-            Digest(fingerprint=BAD_FINGERPRINT),
+        pytest.param(Digest(size=size, fingerprint=fingerprint), id=digest_id(size, fingerprint))
+        for size, fingerprint in itertools.product(
+            (GOOD_SIZE, BAD_SIZE, None), (GOOD_FINGERPRINT, BAD_FINGERPRINT, None)
         )
     ],
 )
@@ -1369,60 +1422,43 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
     chroot = tmp_path / "chroot"
     chroot.mkdir(parents=True, exist_ok=True)
 
-    digest_fields = []
-    if digest.size:
-        digest_fields.append(f"size = {digest.size}")
-    if digest.fingerprint:
-        digest_fields.append(f'fingerprint = "{digest.fingerprint}"')
-    assert digest_fields, f"Expected digest to have at least one field set; given: {digest}"
-
     lift_manifest = chroot / "lift.toml"
     lift_manifest.write_text(
         dedent(
-            f"""\
+            """\
             [lift]
-            name = "exe"
-            platforms = [{{ platform = "linux-x86_64", libc = "gnu" }}]
+            name = "inspect"
 
             [lift.scie_jump]
-            version = "1.8.2"
-            digest = {{ {", ".join(digest_fields)} }}
-
-            [[lift.interpreters]]
-            id = "cpython"
-            provider = "PythonBuildStandalone"
-            release = "20251120"
-            version = "3.14"
-            flavor = "install_only_stripped"
+            version = "{version}"
+            {digest}
 
             [[lift.commands]]
-            exe = "#{{cpython:python}}"
-            args = ["-V"]
+            exe = "{{scie}}"
+            [lift.commands.env.replace]
+            SCIE = "inspect"
             """
-        )
+        ).format(version=VERSION, digest=as_toml_line(digest))
     )
 
     cache_dir = tmp_path / "cache"
     result = subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), lift_manifest],
+        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest)],
         env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
+        cwd=chroot,
         stderr=subprocess.PIPE,
         text=True,
     )
     if digest.size == BAD_SIZE:
         assert result.returncode != 0
         assert (
-            "The content at "
-            "https://github.com/a-scie/jump/releases/download/v1.8.2/scie-jump-linux-x86_64 is "
-            f"expected to be {BAD_SIZE} bytes, but advertises a Content-Length of {GOOD_SIZE} "
-            "bytes."
+            f"The content at {DOWNLOAD_URL} is expected to be {BAD_SIZE} bytes, but advertises a "
+            f"Content-Length of {GOOD_SIZE} bytes."
         ) in result.stderr
     elif digest.fingerprint == BAD_FINGERPRINT:
         assert result.returncode != 0
         assert (
-            "The download from "
-            "https://github.com/a-scie/jump/releases/download/v1.8.2/scie-jump-linux-x86_64 has "
-            "unexpected contents.\n"
+            f"The download from {DOWNLOAD_URL} has unexpected contents.\n"
             "Expected sha256 digest:\n"
             f"  {BAD_FINGERPRINT}\n"
             "Actual sha256 digest:\n"
@@ -1430,3 +1466,12 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
         ) in result.stderr
     else:
         assert 0 == result.returncode
+        manifest = json.loads(
+            subprocess.run(
+                args=[dest / Platform.current().binary_name("inspect")],
+                stdout=subprocess.PIPE,
+                check=True,
+            ).stdout
+        )
+        assert VERSION == manifest["scie"]["jump"]["version"]
+        assert (digest.size or GOOD_SIZE) == manifest["scie"]["jump"]["size"]

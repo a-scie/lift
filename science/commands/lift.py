@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import atexit
 import dataclasses
 import json
+import shutil
+import zipfile
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +17,7 @@ from science import a_scie, providers
 from science.build_info import BuildInfo
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
+from science.fs import temporary_directory
 from science.model import (
     Application,
     Binding,
@@ -173,6 +177,15 @@ def export_manifest(
                 )
                 bindings.append(Fetch.create_binding(fetch_exe=ptex_file, argv1=argv1))
         bindings.extend(application.bindings)
+
+        if not requested_files:
+            empty_scie_tote = File(name="empty-scie-tote")
+            with temporary_directory(empty_scie_tote.name, delete=False) as td:
+                empty_zip = td / "empty.zip"
+                zipfile.ZipFile(empty_zip, "w").close()
+            atexit.register(shutil.rmtree, td, ignore_errors=True)
+            file_paths_by_id[empty_scie_tote.id] = empty_zip
+            requested_files.append(empty_scie_tote)
 
         files = list[File]()
         fetch_urls = dict[str, str]()

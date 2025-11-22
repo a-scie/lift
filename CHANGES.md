@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.15.3
+
+This release fixes handling of the case of a scie with no files. These would build previously, but
+then fail to run. This is a decidedly unlikely corner-case usage in the real world, but can be a
+valid use.
+
 ## 0.15.2
 
 This release fixes validation of custom `scie_jump`s with some portion of their digest filled out.
