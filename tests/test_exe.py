@@ -1327,11 +1327,54 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
 
 
 VERSION = "1.8.2"
-GOOD_SIZE = 2223910
-GOOD_FINGERPRINT = Fingerprint("e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3")
-
 BAD_SIZE = -1
 BAD_FINGERPRINT = Fingerprint("bad")
+
+GOOD_SIZE = {
+    Platform.Linux_aarch64: 1899710,
+    Platform.Linux_armv7l: 1808106,
+    Platform.Linux_powerpc64le: 2236262,
+    Platform.Linux_riscv64: 1881230,
+    Platform.Linux_s390x: 2269030,
+    Platform.Linux_x86_64: 2223910,
+    Platform.Macos_aarch64: 1866014,
+    Platform.Macos_x86_64: 2031962,
+    Platform.Windows_aarch64: 1828366,
+    Platform.Windows_x86_64: 2203150,
+}[CURRENT_PLATFORM]
+
+GOOD_FINGERPRINT = {
+    Platform.Linux_aarch64: Fingerprint(
+        "74951ec0b3820664fbdd0fa15f5057932ac3d92d4d37d5f8aadfe70220c9e80f"
+    ),
+    Platform.Linux_armv7l: Fingerprint(
+        "3e288aacccb0f8c63dcbdf585afb6e214e3832b4dda4a98da4ed2c6767578fb4"
+    ),
+    Platform.Linux_powerpc64le: Fingerprint(
+        "d30e9a0bf779d382a8186c9a139dadf664cad5fc42598d5f5826b2ffb1162503"
+    ),
+    Platform.Linux_riscv64: Fingerprint(
+        "4b466ad4171b090d7abacb6dba08e0fb76db43a67880700bcfe33e811ab3d6bc"
+    ),
+    Platform.Linux_s390x: Fingerprint(
+        "c6b6915ea3d420a138e8cf334cd2b45032728ceb56d4304f0e5b4d5533adef20"
+    ),
+    Platform.Linux_x86_64: Fingerprint(
+        "e7ebc56578041eb5c92d819f948f9c8d5a671afaa337720d7d310f5311a2c5c3"
+    ),
+    Platform.Macos_aarch64: Fingerprint(
+        "e886e4e85c82d484e083d0426dcba236311d10a796b1387ee070aa82752efea1"
+    ),
+    Platform.Macos_x86_64: Fingerprint(
+        "74f05a39eedb61615c68b07b551c7fce2a08d3196fb1c692a7163f6d3d59fd32"
+    ),
+    Platform.Windows_aarch64: Fingerprint(
+        "14fdd2a13164e282f7670f30e0a9e7bccaf34affbcfeff9e86415eaa22c34ae3"
+    ),
+    Platform.Windows_x86_64: Fingerprint(
+        "1e34ec9abc06ec75727f9cc89df3c23f783dda4e68a176481d447cace60bafb4"
+    ),
+}[CURRENT_PLATFORM]
 
 
 def digest_id(size: int | None, fingerprint: str | None) -> str:
