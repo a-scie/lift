@@ -313,8 +313,10 @@ class PythonBuildStandalone(Provider[Config]):
     def rank_compatibility(platform: Platform, libc: LibC, target_triple: str) -> int | None:
         match platform:
             case Platform.Linux_aarch64:
-                match target_triple:
-                    case "aarch64-unknown-linux-gnu":
+                match libc, target_triple:
+                    case LibC.MUSL, "aarch64-unknown-linux-musl":
+                        return 0
+                    case LibC.GLIBC, "aarch64-unknown-linux-gnu":
                         return 0
             case Platform.Linux_armv7l:
                 match target_triple:

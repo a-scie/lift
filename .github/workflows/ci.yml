@@ -42,7 +42,11 @@ jobs:
             image: debian/bookworm
             arch: amd64
           - os: ubuntu-24.04
-            name: Linux aarch64
+            name: Linux aarch64 (musl)
+            image: alpine
+            arch: arm64
+          - os: ubuntu-24.04
+            name: Linux aarch64 (glibc)
             image: debian/bookworm
             arch: arm64
           - os: ubuntu-24.04
