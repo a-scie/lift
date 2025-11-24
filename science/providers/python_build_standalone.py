@@ -1,7 +1,6 @@
 # Copyright 2022 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-from __future__ import annotations
 
 import dataclasses
 import json
@@ -264,12 +263,6 @@ class PythonBuildStandalone(Provider[Config]):
 
     All science platforms are supported for Python 3 minor versions >= 8.
 
-    ```{note}
-    Windows ARM64 uses the x86-64 binaries since there are currently no Windows ARM64 releases
-    from [Python Standalone Builds][PBS]. This means slow execution when the Windows Prism
-    emulation system has to warm up its instruction caches.
-    ```
-
     For all platforms, a `python` placeholder (`#{<id>:python}`) is supported and will be
     substituted with the selected distribution's Python binary path.
 
@@ -320,8 +313,10 @@ class PythonBuildStandalone(Provider[Config]):
     def rank_compatibility(platform: Platform, libc: LibC, target_triple: str) -> int | None:
         match platform:
             case Platform.Linux_aarch64:
-                match target_triple:
-                    case "aarch64-unknown-linux-gnu":
+                match libc, target_triple:
+                    case LibC.MUSL, "aarch64-unknown-linux-musl":
+                        return 0
+                    case LibC.GLIBC, "aarch64-unknown-linux-gnu":
                         return 0
             case Platform.Linux_armv7l:
                 match target_triple:
@@ -361,6 +356,13 @@ class PythonBuildStandalone(Provider[Config]):
                 match target_triple:
                     case "x86_64-apple-darwin":
                         return 0
+            case Platform.Windows_aarch64:
+                match target_triple:
+                    # cpython-3.13.9+20251120-aarch64-pc-windows-msvc-install_only.tar.gz
+                    case "aarch64-pc-windows-msvc":
+                        return 0
+                    # We fall through to Prism emulation only if native aarch64 binaries are not
+                    # available for the release.
             case Platform.Windows_aarch64 | Platform.Windows_x86_64:
                 match target_triple:
                     # N.B.: The -shared tag was removed in

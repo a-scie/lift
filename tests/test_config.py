@@ -64,23 +64,23 @@ def test_interpreter_groups(tmp_path: Path, science_pyz: Path) -> None:
         data1 = json.loads(
             subprocess.run(
                 args=[exe_path],
-                env={**os.environ, "PYTHON": "cpython310", "SCIE_BASE": str(scie_base)},
+                env={**os.environ, "PYTHON": "cpython313", "SCIE_BASE": str(scie_base)},
                 stdout=subprocess.PIPE,
                 check=True,
             ).stdout
         )
-        assert [3, 10] == data1["version"]
+        assert [3, 13] == data1["version"]
         assert (scie_base / data1["hash"]).is_dir()
 
         data2 = json.loads(
             subprocess.run(
                 args=[exe_path],
-                env={**os.environ, "PYTHON": "cpython311", "SCIE_BASE": str(scie_base)},
+                env={**os.environ, "PYTHON": "cpython314", "SCIE_BASE": str(scie_base)},
                 stdout=subprocess.PIPE,
                 check=True,
             ).stdout
         )
-        assert [3, 11] == data2["version"]
+        assert [3, 14] == data2["version"]
         assert (scie_base / data2["hash"]).is_dir()
 
         assert data1["hash"] != data2["hash"]

@@ -138,7 +138,7 @@ def test_pbs_mirror(tmp_path: Path, current_platform: Platform) -> None:
             "--version",
             "3.13",
             "--release",
-            "20250818",
+            "20251120",
             "--flavor",
             "install_only_stripped",
             download_dir,
@@ -162,7 +162,7 @@ def test_pbs_mirror(tmp_path: Path, current_platform: Platform) -> None:
             [[lift.interpreters]]
             id = "cpython"
             provider = "PythonBuildStandalone"
-            release = "20250818"
+            release = "20251120"
             version = "3.13"
             flavor = "install_only_stripped"
             base_url = "{download_dir_url}/providers/PythonBuildStandalone"
@@ -176,7 +176,7 @@ def test_pbs_mirror(tmp_path: Path, current_platform: Platform) -> None:
     subprocess.run(args=["science", "lift", "build", lift_manifest], cwd=tmp_path, check=True)
 
     assert (
-        "Python 3.13.7"
+        "Python 3.13.9"
         == subprocess.run(
             args=[tmp_path / current_platform.binary_name("mirror")],
             stdout=subprocess.PIPE,

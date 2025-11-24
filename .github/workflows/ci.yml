@@ -42,7 +42,11 @@ jobs:
             image: debian/bookworm
             arch: amd64
           - os: ubuntu-24.04
-            name: Linux aarch64
+            name: Linux aarch64 (musl)
+            image: alpine
+            arch: arm64
+          - os: ubuntu-24.04
+            name: Linux aarch64 (glibc)
             image: debian/bookworm
             arch: arm64
           - os: ubuntu-24.04
@@ -81,17 +85,15 @@ jobs:
           export UV="$(which uv)"
           "${UV}" -V
           echo UV="${UV}" >> ${GITHUB_ENV}
-      - name: Setup x86_64 Python for Prism
-        if: matrix.os == 'windows-11-arm'
-        run: |
-          # N.B.: We use an x86-64 Python for Windows ARM64 because this is what we ship with via
-          # PBS, and we need to be able to resolve x86-64 compatible requirements (which include
-          # native deps like psutil) for our shiv.
-          UV_PYTHON_VERSION=cpython-3.13.7-windows-x86_64-none
-          "${UV}" python install ${UV_PYTHON_VERSION}
-          echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Checkout Lift
         uses: actions/checkout@v4
+      - name: Ensure aarch64 Python for Windows ARM
+        if: matrix.os == 'windows-11-arm'
+        run: |
+          # N.B.: uv still defaults to x86_64 / Prism emulation; so we have to force aarch64 here.
+          UV_PYTHON_VERSION="cpython-$(cat .python-version)-windows-aarch64"
+          "${UV}" python install ${UV_PYTHON_VERSION}
+          echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Restore MyPy Cache
         id: restore-mypy-cache
         uses: actions/cache/restore@v4

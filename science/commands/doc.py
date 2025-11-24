@@ -1,7 +1,6 @@
 # Copyright 2024 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-from __future__ import annotations
 
 import json
 import logging
@@ -17,9 +16,10 @@ from functools import cache
 from pathlib import Path, PurePath
 from typing import Any
 
+import psutil
+
 from science import __version__
 from science.cache import science_cache
-from science.commands import _psutil as psutil
 from science.platform import CURRENT_PLATFORM
 
 logger = logging.getLogger(__name__)
