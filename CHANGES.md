@@ -1,5 +1,13 @@
 # Release Notes
 
+## 0.16.0
+
+This release adds support for musl Linux on aarch64 and upgrades the `science` internal Python
+distribution to [PBS][PBS] CPython 3.14.0. As part of this work, the [PBS][PBS] provider now
+supports musl Linux on aarch64. The [PBS][PBS] provider also now favors native CPython distributions
+on Windows aarch64 when available and only falls back to Prism emulation with x86_64 distributions
+when needed.
+
 ## 0.15.3
 
 This release fixes handling of the case of a scie with no files. These would build previously, but
