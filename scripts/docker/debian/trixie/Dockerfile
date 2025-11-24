@@ -4,7 +4,7 @@ ARG UID
 ARG GID
 
 RUN apt update && \
-    apt install -y curl gcc python3-dev python3.13-venv python-is-python3 && \
+    apt install -y curl gcc python3-dev python3.14-venv python-is-python3 && \
     groupadd --gid ${GID} build && \
     useradd --create-home --gid ${GID} --uid ${UID} build
 

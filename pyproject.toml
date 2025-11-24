@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A high level tool to build scies with."
 readme = "README.md"
-requires-python = "==3.13.*"
+requires-python = "==3.14.*"
 license = {file = "LICENSE"}
 dynamic = ["version"]
 dependencies = [
