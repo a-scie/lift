@@ -17,9 +17,10 @@ from functools import cache
 from pathlib import Path, PurePath
 from typing import Any
 
+import psutil
+
 from science import __version__
 from science.cache import science_cache
-from science.commands import _psutil as psutil
 from science.platform import CURRENT_PLATFORM
 
 logger = logging.getLogger(__name__)

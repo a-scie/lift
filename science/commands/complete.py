@@ -6,7 +6,8 @@ from enum import Enum
 from functools import cache
 from typing import Self
 
-from science.commands import _psutil as psutil
+import psutil
+
 from science.os import EXE_EXT
 
 logger = logging.getLogger(__name__)
