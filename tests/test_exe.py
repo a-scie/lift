@@ -308,7 +308,7 @@ def url_source_lift_toml_content(
         [[lift.interpreters]]
         id = "cpython311"
         provider = "PythonBuildStandalone"
-        release = "20250818"
+        release = "20251120"
         version = "3.11"
         lazy = true
 
@@ -835,7 +835,7 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
             [[lift.interpreters]]
             id = "cpython"
             provider = "PythonBuildStandalone"
-            release = "20250818"
+            release = "20251120"
             version = "3.11"
             lazy = true
 
@@ -852,7 +852,7 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
     scie = dest / CURRENT_PLATFORM.binary_name("exe")
     assert os.path.exists(scie)
     assert (
-        "3.11.13"
+        "3.11.14"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )
 
@@ -897,7 +897,7 @@ def test_pbs_provider_pre_releases(tmp_path: Path, science_exe: Path) -> None:
             [[lift.interpreters]]
             id = "cpython"
             provider = "PythonBuildStandalone"
-            release = "20251014"
+            release = "20251120"
             version = "3.15"
 
             [[lift.commands]]
@@ -913,7 +913,7 @@ def test_pbs_provider_pre_releases(tmp_path: Path, science_exe: Path) -> None:
     scie = dest / CURRENT_PLATFORM.binary_name("exe")
     assert os.path.exists(scie)
     assert (
-        "3.15.0a1"
+        "3.15.0a2"
         == subprocess.run(args=[scie], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     )
 
@@ -972,13 +972,13 @@ def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> 
             [[lift.interpreters]]
             id = "python3.14"
             provider = "PythonBuildStandalone"
-            release = "20251014"
+            release = "20251120"
             version = "3.14"
 
             [[lift.interpreters]]
             id = "python3.14t"
             provider = "PythonBuildStandalone"
-            release = "20251014"
+            release = "20251120"
             version = "3.14"
             flavor = "{flavor}"
 
@@ -1035,7 +1035,7 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
             [[lift.interpreters]]
             id = "cpython"
             provider = "PythonBuildStandalone"
-            release = "20251014"
+            release = "20251120"
             version = "3.14.0t"
             flavor = "install_only"
 
@@ -1099,13 +1099,13 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
         [[lift.interpreters]]
         id = "python3.14"
         provider = "PythonBuildStandalone"
-        release = "20251014"
+        release = "20251120"
         version = "3.14"
 
         [[lift.interpreters]]
         id = "python3.14t"
         provider = "PythonBuildStandalone"
-        release = "20251014"
+        release = "20251120"
         version = "3.14t"
 
         [[lift.commands]]
@@ -1137,13 +1137,13 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
             [[lift.interpreters]]
             id = "python3.14d"
             provider = "PythonBuildStandalone"
-            release = "20251014"
+            release = "20251120"
             version = "3.14d"
 
             [[lift.interpreters]]
             id = "python3.14td"
             provider = "PythonBuildStandalone"
-            release = "20251014"
+            release = "20251120"
             version = "3.14td"
 
             [[lift.interpreter_groups]]
