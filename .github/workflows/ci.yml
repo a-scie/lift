@@ -87,6 +87,13 @@ jobs:
           echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Checkout Lift
         uses: actions/checkout@v4
+      - name: Ensure aarch64 Python for Windows ARM
+        if: matrix.os == 'windows-11-arm'
+        run: |
+          # N.B.: uv still defaults to x86_64 / Prism emulation; so we have to force aarch64 here.
+          UV_PYTHON_VERSION="cpython-$(cat .python-version)-windows-aarch64"
+          "${UV}" python install ${UV_PYTHON_VERSION}
+          echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Restore MyPy Cache
         id: restore-mypy-cache
         uses: actions/cache/restore@v4
