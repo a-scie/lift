@@ -47,7 +47,7 @@ def test_installer_fetch_latest(tmp_path_factory: TempPathFactory, installer: li
 def test_installer_fetch_argtest(tmp_path_factory: TempPathFactory, installer: list):
     """Exercises all the options in the installer."""
     test_dir = tmp_path_factory.mktemp("install-test")
-    test_ver = "0.13.0"
+    test_ver = "0.16.0"
     bin_dir = test_dir / "bin"
 
     assert (result := run_captured(installer + ["-V", test_ver, "-d", bin_dir])).returncode == 0
