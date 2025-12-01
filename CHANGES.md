@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.17.0
+
+This release adds support for `scie-jump` binaries linked against glibc for Linux aarch64 and
+x86_64.
+
 ## 0.16.0
 
 This release adds support for musl Linux on aarch64 and upgrades the `science` internal Python

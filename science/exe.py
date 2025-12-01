@@ -412,9 +412,7 @@ def _download_ptex(
         project_name="ptex",
         binary_name="ptex",
         versions=versions,
-        platforms=dict.fromkeys(
-            platform_spec.platform for platform_spec in download_config.platform_specs
-        ),
+        platform_specs=dict.fromkeys(download_config.platform_specs),
         dest_dir=dest_dir,
     )
 
@@ -431,9 +429,7 @@ def _download_scie_jump(
         project_name="jump",
         binary_name="scie-jump",
         versions=versions,
-        platforms=dict.fromkeys(
-            platform_spec.platform for platform_spec in download_config.platform_specs
-        ),
+        platform_specs=dict.fromkeys(download_config.platform_specs),
         dest_dir=dest_dir,
     )
 

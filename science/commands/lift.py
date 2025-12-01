@@ -159,7 +159,7 @@ def export_manifest(
             isinstance(file.source, Fetch) and file.source.lazy for file in requested_files
         )
         if application.ptex or fetches_present:
-            ptex = a_scie.ptex(specification=application.ptex, platform=platform_spec.platform)
+            ptex = a_scie.ptex(specification=application.ptex, platform_spec=platform_spec)
             (chroot / ptex.binary_name).symlink_to(ptex.path)
             ptex_key = application.ptex.id if application.ptex and application.ptex.id else "ptex"
             ptex_file = File(
@@ -248,7 +248,7 @@ def export_manifest(
         load_result = (
             a_scie.custom_jump(repo_path=use_jump)
             if use_jump
-            else a_scie.jump(specification=application.scie_jump, platform=platform_spec.platform)
+            else a_scie.jump(specification=application.scie_jump, platform_spec=platform_spec)
         )
         if load_result.version:
             scie_jump = ScieJump(version=load_result.version, digest=load_result.digest)
