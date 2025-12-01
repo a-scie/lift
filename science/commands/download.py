@@ -14,7 +14,7 @@ from science import a_scie
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
 from science.model import Fetch, Identifier
-from science.platform import Platform, PlatformSpec
+from science.platform import PlatformSpec
 from science.providers import ProviderInfo
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def download_a_scie_executables(
     project_name: str,
     binary_name: str,
     versions: Iterable[Version | None],
-    platforms: Iterable[Platform],
+    platform_specs: Iterable[PlatformSpec],
     dest_dir: Path,
 ) -> None:
     for version in versions or [None]:
@@ -33,17 +33,20 @@ def download_a_scie_executables(
         else:
             dest = dest_dir / project_name / "latest" / "download"
         dest.mkdir(parents=True, exist_ok=True)
-        for platform in platforms:
-            binary = dest / platform.qualified_binary_name(binary_name)
+        for platform_spec in platform_specs:
+            binary = dest / a_scie.qualify_binary_name(
+                binary_name, version=version, platform_spec=platform_spec
+            )
             click.echo(
-                f"Downloading {binary_name} {version or 'latest'} for {platform} to {binary}...",
+                f"Downloading {binary_name} {version or 'latest'} for {platform_spec} to "
+                f"{binary}...",
                 err=True,
             )
             result = a_scie.load_project_release(
                 project_name=project_name,
                 binary_name=binary_name,
                 version=version,
-                platform=platform,
+                platform_spec=platform_spec,
             )
             shutil.copy(result.path, binary)
             binary.with_name(f"{binary.name}.sha256").write_text(

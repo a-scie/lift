@@ -15,8 +15,9 @@ from typing import Iterator
 import pytest
 from pytest import MonkeyPatch
 
+from science import a_scie
 from science.hashing import Digest
-from science.platform import CURRENT_PLATFORM_SPEC, Platform
+from science.platform import CURRENT_PLATFORM_SPEC, Platform, PlatformSpec
 from science.providers import PyPy
 
 
@@ -71,13 +72,15 @@ def server(tmp_path: Path) -> Iterator[Server]:
 
 
 def assert_download_mirror(
-    tmp_path: Path, current_platform: Platform, *, download_dir: Path, download_url: str
+    tmp_path: Path, current_platform_spec: PlatformSpec, *, download_dir: Path, download_url: str
 ) -> None:
     subprocess.run(args=["science", "download", "ptex", download_dir], check=True)
     subprocess.run(args=["science", "download", "scie-jump", download_dir], check=True)
 
     lift_manifest = tmp_path / "lift.toml"
-    scie_jump_qualified_binary_name = current_platform.qualified_binary_name("scie-jump")
+    scie_jump_qualified_binary_name = a_scie.qualify_binary_name(
+        "scie-jump", platform_spec=current_platform_spec
+    )
     lift_manifest.write_text(
         dedent(
             f"""\
@@ -99,31 +102,33 @@ def assert_download_mirror(
     )
     subprocess.run(args=["science", "lift", "build", lift_manifest], cwd=tmp_path, check=True)
 
-    scie = tmp_path / current_platform.binary_name("mirror")
+    scie = tmp_path / current_platform_spec.binary_name("mirror")
     split_dir = tmp_path / "split"
     subprocess.run(args=[scie, split_dir], env={**os.environ, "SCIE": "split"}, check=True)
     subprocess.run(args=[scie], cwd=tmp_path, check=True)
 
     assert Digest.hash(tmp_path / scie_jump_qualified_binary_name) == Digest.hash(
-        split_dir / current_platform.binary_name("scie-jump")
+        split_dir / current_platform_spec.binary_name("scie-jump")
     )
 
 
-def test_download_http_mirror(tmp_path: Path, current_platform: Platform, server: Server) -> None:
+def test_download_http_mirror(
+    tmp_path: Path, current_platform_spec: PlatformSpec, server: Server
+) -> None:
     assert_download_mirror(
-        tmp_path, current_platform, download_dir=server.root, download_url=server.url
+        tmp_path, current_platform_spec, download_dir=server.root, download_url=server.url
     )
 
 
-def test_download_file_mirror(tmp_path: Path, current_platform: Platform) -> None:
+def test_download_file_mirror(tmp_path: Path, current_platform_spec: PlatformSpec) -> None:
     download_dir = tmp_path / "download-dir"
     download_dir_url = (
         f"file:///{download_dir.as_posix()}"
-        if current_platform.is_windows
+        if current_platform_spec.is_windows
         else f"file://{download_dir}"
     )
     assert_download_mirror(
-        tmp_path, current_platform, download_dir=download_dir, download_url=download_dir_url
+        tmp_path, current_platform_spec, download_dir=download_dir, download_url=download_dir_url
     )
 
 

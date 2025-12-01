@@ -207,8 +207,8 @@ class PlatformSpec:
     def binary_name(self, binary_name: str) -> str:
         return self.platform.binary_name(binary_name)
 
-    def qualified_binary_name(self, binary_name: str) -> str:
-        if LibC.MUSL is self.libc:
+    def qualified_binary_name(self, binary_name: str, gnu_prefix: bool = False) -> str:
+        if LibC.MUSL is self.libc or (LibC.GLIBC is self.libc and gnu_prefix):
             return self.platform.qualified_binary_name(binary_name, self.libc.value)
         return self.platform.qualified_binary_name(binary_name)
 

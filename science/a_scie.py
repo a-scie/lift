@@ -14,7 +14,25 @@ from packaging.version import Version
 from science.fetcher import FetchResult, fetch_and_verify
 from science.hashing import Digest, Fingerprint
 from science.model import Ptex, ScieJump, Url
-from science.platform import CURRENT_PLATFORM, Platform
+from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform, PlatformSpec
+
+
+def qualify_binary_name(
+    binary_name: str,
+    version: Version | None = None,
+    platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
+) -> str:
+    # N.B.: The scie-jump added support for `-{gnu,musl}-linux-{aarch,x86_}64` suffixes in the
+    # 1.9.0 release.
+    if (
+        platform_spec.libc
+        and binary_name == "scie-jump"
+        and platform_spec.platform in (Platform.Linux_aarch64, Platform.Linux_x86_64)
+        and (not version or version >= Version("1.9.0"))
+    ):
+        return platform_spec.qualified_binary_name(binary_name, gnu_prefix=True)
+
+    return platform_spec.platform.qualified_binary_name(binary_name)
 
 
 @dataclass(frozen=True)
@@ -28,10 +46,12 @@ def load_project_release(
     binary_name: str,
     version: Version | None = None,
     fingerprint: Digest | Fingerprint | None = None,
-    platform: Platform = CURRENT_PLATFORM,
+    platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
     base_url: Url | None = None,
 ) -> LoadResult:
-    qualified_binary_name = platform.qualified_binary_name(binary_name)
+    qualified_binary_name = qualify_binary_name(
+        binary_name, version=version, platform_spec=platform_spec
+    )
     root_url = (base_url or f"https://github.com/a-scie/{project_name}/releases").rstrip("/")
     if version:
         version_path = f"download/v{version}"
@@ -51,7 +71,7 @@ def load_project_release(
 
 
 def jump(
-    specification: ScieJump | None = None, platform: Platform = CURRENT_PLATFORM
+    specification: ScieJump | None = None, platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC
 ) -> LoadResult:
     version = specification.version if specification else None
     fingerprint = specification.digest if specification and specification.digest else None
@@ -61,7 +81,7 @@ def jump(
         binary_name="scie-jump",
         version=version,
         fingerprint=fingerprint,
-        platform=platform,
+        platform_spec=platform_spec,
         base_url=base_url,
     )
 
@@ -77,7 +97,9 @@ def custom_jump(repo_path: Path) -> LoadResult:
     return LoadResult(path=path, digest=Digest.hash(path), binary_name=qualified_binary_name)
 
 
-def ptex(specification: Ptex | None = None, platform: Platform = CURRENT_PLATFORM) -> LoadResult:
+def ptex(
+    specification: Ptex | None = None, platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC
+) -> LoadResult:
     version = specification.version if specification else None
     fingerprint = specification.digest if specification and specification.digest else None
     base_url = specification.base_url if specification else None
@@ -86,6 +108,6 @@ def ptex(specification: Ptex | None = None, platform: Platform = CURRENT_PLATFOR
         binary_name="ptex",
         version=version,
         fingerprint=fingerprint,
-        platform=platform,
+        platform_spec=platform_spec,
         base_url=base_url,
     )
