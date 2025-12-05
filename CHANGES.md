@@ -1,5 +1,11 @@
 # Release Notes
 
+## 0.17.1
+
+This release improves the Linux compatibility ot the `science` binary by building science itself
+with the latest `scie-jump` (1.9.2). Any scies produced by this or older `science` releases can
+themselves enjoy this compatibility improvement by using the latest `scie-jump` as well.
+
 ## 0.17.0
 
 This release adds support for `scie-jump` binaries linked against glibc for Linux aarch64 and
