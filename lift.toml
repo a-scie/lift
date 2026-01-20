@@ -8,11 +8,11 @@ description = "Ship your interpreted executables using science."
 id = "cpython"
 provider = "PythonBuildStandalone"
 
-release = "20251120"
-version = "3.14.0"
+release = "20260114"
+version = "3.14.2"
 flavor = "install_only_stripped"
 
-# By default, science ships as a "thin" scie that fetches CPython 3.13 on first run.
+# By default, science ships as a "thin" scie that fetches CPython 3.14 on first run.
 # We use `science lift --invert-lazy cpython ...` when producing "fat" scies.
 lazy = true
 
@@ -27,7 +27,7 @@ name = "docsite"
 name = "science.pyz"
 
 [[lift.commands]]
-# This selects the `python` binary from within the CPython 3.13 interpreter distribution
+# This selects the `python` binary from within the CPython 3.14 interpreter distribution
 # (a tarball) provided by PythonBuildStandalone above.
 exe = "#{cpython:python}"
 args = [
@@ -36,7 +36,7 @@ args = [
 
 [lift.commands.env]
 # We strip any ambient SHIV_* env vars and set the SHIV_ROOT to ensure hermetic operation. Although
-# `science` is a Python 3.13 shiv zipapp application under the covers; this should be opaque to the
+# `science` is a Python 3.14 shiv zipapp application under the covers; this should be opaque to the
 # end user. For their puposes `science` is just a native binary.
 remove_re = [
     "SHIV_.*",

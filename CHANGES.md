@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.17.2
+
+This release updates the [PBS][PBS] provider to realize that CPython 3.10 is the new minimum
+supported version in current PBS releases (3.9 was dropped in the 20251120 release).
+
 ## 0.17.1
 
 This release improves the Linux compatibility ot the `science` binary by building science itself
