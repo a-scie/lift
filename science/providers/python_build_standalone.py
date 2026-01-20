@@ -306,8 +306,10 @@ class PythonBuildStandalone(Provider[Config]):
         "3.7": "20210103",
         # See: https://github.com/astral-sh/python-build-standalone/releases/tag/20241205
         "3.8": "20241205",
+        # See: https://github.com/astral-sh/python-build-standalone/releases/tag/20251120
+        "3.9": "20251120",
     }
-    _CURRENT_MIN_SUPPORTED_VERSION = Version("3.9")
+    _CURRENT_MIN_SUPPORTED_VERSION = Version("3.10")
 
     @staticmethod
     def rank_compatibility(platform: Platform, libc: LibC, target_triple: str) -> int | None:
