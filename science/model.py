@@ -204,6 +204,7 @@ class File:
             """
         ),
     )
+    zipped_directory: bool = dataclasses.field(default=False, metadata=metadata(hidden=True))
 
     def __post_init__(self) -> None:
         if self.source and not self.digest:
@@ -211,7 +212,7 @@ class File:
                 f"File {self.id!r} has a {self.source.source_type} source it must also specify "
                 "`size` and `fingerprint`."
             )
-        if self.digest and self.type is FileType.Directory:
+        if self.digest and self.type is FileType.Directory and not self.zipped_directory:
             raise InputError(
                 f"File {self.id!r} is a directory and has a digest defined but digests are not "
                 "supported for directories."

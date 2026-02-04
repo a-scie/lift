@@ -18,7 +18,7 @@ from io import BytesIO
 from pathlib import Path, PurePath
 from textwrap import dedent
 from types import TracebackType
-from typing import Any, BinaryIO, Callable
+from typing import Any, BinaryIO, Callable, Sequence
 from urllib.parse import urlparse, urlunparse
 
 import click
@@ -711,7 +711,7 @@ def _lift(
 
 def config_arg():
     return click.argument(
-        "config", metavar="LIFT_TOML_PATH", type=click.File("rb"), default="lift.toml"
+        "config", nargs=1, metavar="LIFT_TOML_PATH", type=click.File("rb"), default="lift.toml"
     )
 
 
@@ -777,7 +777,7 @@ def export(
     application = parse_application(lift_config, config)
     platform_info = PlatformInfo.create(application, use_suffix=use_platform_suffix)
     with temporary_directory("export") as td:
-        for _, manifest_path, _ in lift.export_manifest(
+        for _, manifest_path, _, _ in lift.export_manifest(
             lift_config, application, dest_dir=td, platform_specs=lift_config.platform_specs
         ):
             lift_manifest = dest_dir / (
@@ -788,38 +788,88 @@ def export(
             click.echo(lift_manifest)
 
 
+def preserve_sandbox_option():
+    return click.option(
+        "--preserve-sandbox",
+        is_flag=True,
+        help=dedent(
+            """\
+            Preserve the scie assembly sandbox and print its path to stderr.
+
+            When `science` builds a scie it creates a temporary sandbox to house the exported JSON lift
+            manifest and any application files that will be included in the scie. If you preserve the
+            sandbox, the native `scie-jump` binary is also included such that you can change directory
+            to the sandbox and run `scie-jump` (or `scie-jump.exe` on Windows) to test assembling the
+            scie "by hand".
+            """
+        ),
+    )
+
+
+def use_jump_option():
+    return click.option(
+        "--use-jump",
+        metavar="REPO_PATH",
+        type=Path,
+        help=dedent(
+            """\
+            The path to a clone of the scie-jump repo.
+
+            Mainly useful for testing new `scie-jump` fixes or integrating new `scie-jump` features
+            into science. The canonical repo to clone is at https://github.com/a-scie/jump.
+            """
+        ),
+    )
+
+
+@_lift.command
+@config_arg()
+@preserve_sandbox_option()
+@use_jump_option()
+@click.argument("scie_args", nargs=-1, metavar="SCIE_ARGS")
+@pass_lift
+def run(
+    lift_config: LiftConfig,
+    config: BinaryIO,
+    preserve_sandbox: bool,
+    use_jump: Path | None,
+    scie_args: Sequence[str],
+) -> None:
+    application = parse_application(lift_config, config)
+    with temporary_directory("build", delete=not preserve_sandbox) as td:
+        for _, lift_manifest, jump_path, scie_jump in lift.export_manifest(
+            lift_config,
+            application,
+            dest_dir=td,
+            platform_specs=[CURRENT_PLATFORM_SPEC],
+            use_jump=use_jump,
+            hydrate_files=True,
+        ):
+            if scie_jump.version and scie_jump.version < Version("1.11.0"):
+                click.secho(
+                    f"In order to run scie-jump 1.11.0 or greater is needed; you have "
+                    f"configured version {scie_jump.version}.",
+                    fg="red",
+                )
+                sys.exit(1)
+
+            with temporary_directory("assemble") as build_dir:
+                result = subprocess.run(
+                    args=[str(jump_path), f"--launch={lift_manifest}", *scie_args],
+                    cwd=build_dir,
+                )
+        if preserve_sandbox:
+            (lift_manifest.parent / jump_path.name).symlink_to(jump_path)
+            click.secho(f"Sandbox preserved at {lift_manifest.parent}", fg="yellow")
+    sys.exit(result.returncode)
+
+
 @_lift.command(name="build")
 @config_arg()
 @dest_dir_option()
 @use_platform_suffix_option()
-@click.option(
-    "--preserve-sandbox",
-    is_flag=True,
-    help=dedent(
-        """\
-        Preserve the scie assembly sandbox and print its path to stderr.
-
-        When `science` builds a scie it creates a temporary sandbox to house the exported JSON lift
-        manifest and any application files that will be included in the scie. If you preserve the
-        sandbox, the native `scie-jump` binary is also included such that you can change directory
-        to the sandbox and run `scie-jump` (or `scie-jump.exe` on Windows) to test assembling the
-        scie "by hand".
-        """
-    ),
-)
-@click.option(
-    "--use-jump",
-    metavar="REPO_PATH",
-    type=Path,
-    help=dedent(
-        """\
-        The path to a clone of the scie-jump repo.
-
-        Mainly useful for testing new `scie-jump` fixes or integrating new `scie-jump` features
-        into science. The canonical repo to clone is at https://github.com/a-scie/jump.
-        """
-    ),
-)
+@preserve_sandbox_option()
+@use_jump_option()
 @click.option(
     "--hash",
     "hash_functions",
