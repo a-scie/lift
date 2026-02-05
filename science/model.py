@@ -3,8 +3,10 @@
 
 
 import dataclasses
+import logging
 import os.path
 import re
+import subprocess
 import urllib.parse
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -35,6 +37,8 @@ from science.errors import InputError
 from science.frozendict import FrozenDict
 from science.hashing import Digest, ExpectedDigest
 from science.platform import CURRENT_PLATFORM_SPEC, PlatformSpec
+
+logger = logging.getLogger(__name__)
 
 
 class FileType(Enum):
@@ -267,6 +271,22 @@ class Url(str):
 
 @documented_dataclass(frozen=True, alias="scie_jump")
 class ScieJump:
+    @classmethod
+    def load(cls, scie_jump_path: Path, digest: Digest | None = None) -> ScieJump:
+        version: Version | None = None
+        process = subprocess.Popen(
+            args=[scie_jump_path, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        stdout, _ = process.communicate()
+        if process.returncode == 0:
+            version = Version(stdout.decode("utf-8").strip())
+        else:
+            logger.warning(
+                f"The scie-jump at {scie_jump_path} does not support `-V` / `--version`. "
+                f"Some science operations may not work as expected."
+            )
+        return cls(version=version, digest=digest or Digest.hash(scie_jump_path))
+
     _DEFAULT_BASE_URL: ClassVar[Url] = Url("https://github.com/a-scie/jump/releases")
 
     version: Version | None = dataclasses.field(default=None, metadata=metadata(reference=True))
