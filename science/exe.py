@@ -837,27 +837,25 @@ def run(
 ) -> None:
     application = parse_application(lift_config, config)
     with temporary_directory("build", delete=not preserve_sandbox) as td:
-        for _, lift_manifest, jump_path, scie_jump in lift.export_manifest(
-            lift_config,
-            application,
-            dest_dir=td,
-            platform_specs=[CURRENT_PLATFORM_SPEC],
-            use_jump=use_jump,
-            hydrate_files=True,
-        ):
-            if scie_jump.version and scie_jump.version < Version("1.11.0"):
-                click.secho(
-                    f"In order to run scie-jump 1.11.0 or greater is needed; you have "
-                    f"configured version {scie_jump.version}.",
-                    fg="red",
-                )
-                sys.exit(1)
+        _, lift_manifest, jump_path, scie_jump = next(
+            lift.export_manifest(
+                lift_config,
+                application,
+                dest_dir=td,
+                platform_specs=[CURRENT_PLATFORM_SPEC],
+                use_jump=use_jump,
+                hydrate_files=True,
+            )
+        )
+        if scie_jump.version and scie_jump.version < Version("1.11.0"):
+            click.secho(
+                f"In order to run scie-jump 1.11.0 or greater is needed; you have "
+                f"configured version {scie_jump.version}.",
+                fg="red",
+            )
+            sys.exit(1)
 
-            with temporary_directory("assemble") as build_dir:
-                result = subprocess.run(
-                    args=[str(jump_path), f"--launch={lift_manifest}", *scie_args],
-                    cwd=build_dir,
-                )
+        result = subprocess.run(args=[str(jump_path), f"--launch={lift_manifest}", *scie_args])
         if preserve_sandbox:
             (lift_manifest.parent / jump_path.name).symlink_to(jump_path)
             click.secho(f"Sandbox preserved at {lift_manifest.parent}", fg="yellow")

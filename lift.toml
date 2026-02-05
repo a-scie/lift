@@ -8,8 +8,8 @@ description = "Ship your interpreted executables using science."
 id = "cpython"
 provider = "PythonBuildStandalone"
 
-release = "20260114"
-version = "3.14.2"
+release = "20260203"
+version = "3.14.3"
 flavor = "install_only_stripped"
 
 # By default, science ships as a "thin" scie that fetches CPython 3.14 on first run.
