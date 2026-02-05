@@ -11,12 +11,14 @@ from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, TextIO
+from zipfile import ZipInfo
 
 from science import a_scie, providers
 from science.build_info import BuildInfo
 from science.errors import InputError
 from science.fetcher import fetch_and_verify
 from science.fs import temporary_directory
+from science.hashing import Digest
 from science.model import (
     Application,
     Binding,
@@ -105,7 +107,8 @@ def export_manifest(
     *,
     platform_specs: Iterable[PlatformSpec] | None = None,
     use_jump: Path | None = None,
-) -> Iterator[tuple[PlatformSpec, Path, Path]]:
+    hydrate_files: bool = False,
+) -> Iterator[tuple[PlatformSpec, Path, Path, ScieJump]]:
     app_info = AppInfo.assemble(lift_config.app_info)
 
     for platform_spec in platform_specs or application.platform_specs:
@@ -163,7 +166,11 @@ def export_manifest(
             (chroot / ptex.binary_name).symlink_to(ptex.path)
             ptex_key = application.ptex.id if application.ptex and application.ptex.id else "ptex"
             ptex_file = File(
-                name=ptex.binary_name, key=ptex_key, digest=ptex.digest, is_executable=True
+                name=ptex.binary_name,
+                key=ptex_key,
+                digest=ptex.digest,
+                type=FileType.Blob,
+                is_executable=True,
             )
 
             file_paths_by_id[ptex_file.id] = chroot / ptex_file.name
@@ -217,14 +224,58 @@ def export_manifest(
                             f"The file for {requested_file.id} is not mapped or cannot be found at "
                             f"{file_path}."
                         )
+
+            if file_path and not file.type:
+                if file_path.is_dir():
+                    file_type = FileType.Directory
+                elif extension := file_path.suffixes:
+                    try:
+                        file_type = FileType.for_extension("".join(extension))
+                    except InputError:
+                        file_type = FileType.Blob
+                else:
+                    file_type = FileType.Blob
+                if file_type:
+                    file = dataclasses.replace(file, type=file_type)
+
+            if hydrate_files and file_path and file.type is FileType.Directory:
+                zip_path = dest_dir / f"{file.name}.zip"
+                with zipfile.ZipFile(zip_path, "w") as zip_fp:
+                    for root, dir_names, file_names in file_path.walk():
+                        for rel_path in sorted(dir_names + file_names):
+                            src_path = root / rel_path
+                            arc_name = "/".join(src_path.relative_to(file_path).parts)
+                            zip_info = ZipInfo.from_file(src_path, arc_name)
+                            zip_info.date_time = 1980, 1, 1, 0, 0, 0
+                            if zip_info.is_dir():
+                                # See: https://github.com/python/cpython/issues/119052
+                                zip_info.CRC = 0
+                                zip_fp.mkdir(zip_info)
+                            else:
+                                with (
+                                    src_path.open("rb") as src_fp,
+                                    zip_fp.open(zip_info, "w") as dst_fp,
+                                ):
+                                    shutil.copyfileobj(src_fp, dst_fp)
+                file_path = Path(zip_path)
+            if hydrate_files and file_path and not file.digest and not file_path.is_dir():
+                file = dataclasses.replace(
+                    file,
+                    digest=Digest.hash(file_path),
+                    zipped_directory=file.type is FileType.Directory,
+                )
             files.append(file)
 
-            target = chroot / requested_file.name
-            if file_path and file_path.is_dir():
-                if requested_file.type and requested_file.type is not FileType.Directory:
+            target = chroot / (
+                f"{file.name}.zip"
+                if hydrate_files and file.type is FileType.Directory
+                else file.name
+            )
+            if not hydrate_files and file_path and file_path.is_dir():
+                if file.type and file.type is not FileType.Directory:
                     raise InputError(
-                        f"The file for {requested_file.id} is expected to be a "
-                        f"{requested_file.type} but maps to the directory {file_path}."
+                        f"The file for {file.id} is expected to be a {file.type} but maps to the "
+                        f"directory {file_path}."
                     )
 
                 # N.B.: The scie-jump boot pack expects a local directory to zip up as a sibling. It
@@ -236,7 +287,7 @@ def export_manifest(
                 for entry in file_path.iterdir():
                     (target / entry.name).symlink_to(entry)
             elif file_path:
-                requested_file.maybe_check_digest(file_path)
+                file.maybe_check_digest(file_path)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 if not target.exists():
                     target.symlink_to(file_path)
@@ -266,14 +317,14 @@ def export_manifest(
                 platform_spec=platform_spec,
                 distributions=distributions,
                 interpreter_groups=application.interpreter_groups,
-                files=requested_files,
+                files=files,
                 commands=application.commands,
                 bindings=bindings,
                 fetch_urls=fetch_urls,
                 build_info=build_info,
                 app_info=app_info,
             )
-        yield platform_spec, lift_manifest, load_result.path
+        yield platform_spec, lift_manifest, load_result.path, scie_jump
 
 
 def _render_file(file: File) -> dict[str, Any]:

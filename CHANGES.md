@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.18.0
+
+This release adds a `science lift run` command for running lift manifests directly. This can be
+useful when iterating on the application manifest before producing a scie binary from it.
+
 ## 0.17.2
 
 This release updates the [PBS][PBS] provider to realize that CPython 3.10 is the new minimum
