@@ -305,8 +305,10 @@ def export_manifest(
         )
         if load_result.version:
             scie_jump = ScieJump(version=load_result.version, digest=load_result.digest)
-        else:
+        elif platform_spec == CURRENT_PLATFORM_SPEC:
             scie_jump = ScieJump.load(scie_jump_path=load_result.path, digest=load_result.digest)
+        else:
+            scie_jump = ScieJump(digest=load_result.digest)
 
         with open(lift_manifest, "w") as lift_manifest_output:
             _emit_manifest(
