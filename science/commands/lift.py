@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping, TextIO
 from zipfile import ZipInfo
 
+from packaging.version import Version
+
 from science import a_scie, providers
 from science.build_info import BuildInfo
 from science.errors import InputError
@@ -304,7 +306,7 @@ def export_manifest(
         if load_result.version:
             scie_jump = ScieJump(version=load_result.version, digest=load_result.digest)
         else:
-            scie_jump = ScieJump()
+            scie_jump = ScieJump.load(scie_jump_path=load_result.path, digest=load_result.digest)
 
         with open(lift_manifest, "w") as lift_manifest_output:
             _emit_manifest(
@@ -435,6 +437,10 @@ def _emit_manifest(
     scie_jump_data = dict[str, Any]()
     if (scie_jump_version := scie_jump.version) and (scie_jump_digest := scie_jump.digest):
         scie_jump_data.update(version=str(scie_jump_version), size=scie_jump_digest.size)
+        if scie_jump.version >= Version("1.11.0"):
+            # N.B.: scie.jump.hash support was added in 1.11.0:
+            #   https://github.com/a-scie/jump/releases/tag/v1.11.0
+            scie_jump_data.update(hash=scie_jump.digest.fingerprint)
     if scie_jump_data:
         scie_data.update(jump=scie_jump_data)
 

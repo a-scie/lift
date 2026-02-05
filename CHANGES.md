@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.18.1
+
+This release passes the `scie_jump.digest.fingerprint` through to the `scie.jump.hash` lift manifest
+field when building scies using a scie-jump version 1.11.0 or newer.
+
 ## 0.18.0
 
 This release adds a `science lift run` command for running lift manifests directly. This can be

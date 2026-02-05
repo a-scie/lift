@@ -52,7 +52,7 @@ def science_exe(
     subprocess.run(
         args=[
             sys.executable,
-            str(science_pyz),
+            science_pyz,
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
@@ -60,7 +60,7 @@ def science_exe(
             f"docsite={docsite}",
             "build",
             "--dest-dir",
-            str(dest),
+            dest,
         ],
         check=True,
         cwd=build_root,
@@ -77,7 +77,7 @@ def test_use_platform_suffix(
     assert not expected_executable.exists()
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
@@ -85,7 +85,7 @@ def test_use_platform_suffix(
             f"docsite={docsite}",
             "build",
             "--dest-dir",
-            str(tmp_path),
+            tmp_path,
             "--use-platform-suffix",
             config,
         ],
@@ -104,7 +104,7 @@ def test_no_use_platform_suffix(
     assert not expected_executable.exists()
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
@@ -114,7 +114,7 @@ def test_no_use_platform_suffix(
             foreign_platform.value,
             "build",
             "--dest-dir",
-            str(tmp_path),
+            tmp_path,
             "--no-use-platform-suffix",
             config,
         ],
@@ -157,7 +157,7 @@ def test_hash(
 
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
@@ -165,7 +165,7 @@ def test_hash(
             f"docsite={docsite}",
             "build",
             "--dest-dir",
-            str(tmp_path),
+            tmp_path,
             *itertools.chain.from_iterable(("--hash", algorithm) for algorithm in algorithms),
             config,
         ],
@@ -176,7 +176,7 @@ def test_hash(
     if shasum:
         subprocess.run(
             args=[shasum, "-c", *(checksum_file.name for checksum_file in expected_checksum_paths)],
-            cwd=str(tmp_path),
+            cwd=tmp_path,
             check=True,
         )
     else:
@@ -200,7 +200,7 @@ def test_dogfood(
     dest = tmp_path / "dest"
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"science.pyz={science_pyz}",
@@ -250,7 +250,7 @@ def test_nested_filenames(
     (tmp_path / "docsite").mkdir()
     dest1 = tmp_path / "dest1"
     subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest1)], check=True, cwd=tmp_path
+        args=[science_exe, "lift", "build", "--dest-dir", str(dest1)], check=True, cwd=tmp_path
     )
     science_exe1 = dest1 / science_exe.name
     assert science_exe1.is_file()
@@ -382,7 +382,7 @@ def create_url_source_scie(
 
     scie = dest / CURRENT_PLATFORM.binary_name(expected_name)
     result = subprocess.run(
-        args=[str(science_exe), "lift", *extra_lift_args, "build", "--dest-dir", str(dest), "-"],
+        args=[science_exe, "lift", *extra_lift_args, "build", "--dest-dir", str(dest), "-"],
         input=lift_toml_content,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -766,7 +766,7 @@ def test_pypy_provider(tmp_path: Path, science_exe: Path, version: str) -> None:
     chroot.mkdir(parents=True, exist_ok=True)
 
     subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        args=[science_exe, "lift", "build", "--dest-dir", str(dest), "-"],
         input=dedent(
             f"""\
             [lift]
@@ -815,7 +815,7 @@ def test_scie_name_collision_with_file(tmp_path: Path, science_exe: Path) -> Non
 
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"exe={exe}",
@@ -877,7 +877,7 @@ def test_pbs_provider_pre_releases(tmp_path: Path, science_exe: Path) -> None:
 
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"exe={exe}",
@@ -952,7 +952,7 @@ def test_pbs_provider_freethreaded_builds(tmp_path: Path, science_exe: Path) -> 
 
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"exe={exe}",
@@ -1026,7 +1026,7 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
     chroot.mkdir(parents=True, exist_ok=True)
 
     result = subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        args=[science_exe, "lift", "build", "--dest-dir", str(dest), "-"],
         input=dedent(
             """\
             [lift]
@@ -1160,7 +1160,7 @@ def test_pbs_provider_version_suffix(tmp_path: Path, science_exe: Path) -> None:
 
     subprocess.run(
         args=[
-            str(science_exe),
+            science_exe,
             "lift",
             "--file",
             f"exe={exe}",
@@ -1222,7 +1222,7 @@ def test_load_dotenv(tmp_path: Path, science_exe: Path) -> None:
     chroot.mkdir(parents=True, exist_ok=True)
 
     subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), "-"],
+        args=[science_exe, "lift", "build", "--dest-dir", str(dest), "-"],
         input=dedent(
             """\
             [lift]
@@ -1296,7 +1296,7 @@ def test_custom_jump_nominal(tmp_path: Path, science_exe: Path, version: str) ->
 
     cache_dir = tmp_path / "cache"
     subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest), lift_manifest],
+        args=[science_exe, "lift", "build", "--dest-dir", str(dest), lift_manifest],
         env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
         check=True,
     )
@@ -1443,7 +1443,7 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
 
     cache_dir = tmp_path / "cache"
     result = subprocess.run(
-        args=[str(science_exe), "lift", "build", "--dest-dir", str(dest)],
+        args=[science_exe, "lift", "build", "--dest-dir", str(dest)],
         env={**os.environ, "SCIENCE_CACHE_DIR": str(cache_dir)},
         cwd=chroot,
         stderr=subprocess.PIPE,
