@@ -97,11 +97,12 @@ jobs:
     permissions:
       id-token: write
       attestations: write
+      artifact-metadata: write
       contents: write
       discussions: write
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
       - name: Setup uv
         run: |
           export UV="$(which uv)"
@@ -111,7 +112,7 @@ jobs:
         if: matrix.image != ''
         run: docker run --privileged --rm tonistiigi/binfmt --install all
       - name: Checkout lift ${{ needs.determine-tag.outputs.release-tag }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.determine-tag.outputs.release-tag }}
       - name: Ensure aarch64 Python for Windows ARM
@@ -131,7 +132,7 @@ jobs:
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             --timings package
       - name: Generate science ${{ needs.determine-tag.outputs.release-tag }} artifact attestations
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest@v4
         with:
           subject-path: dist/science-*
       - name: Prepare Changelog
