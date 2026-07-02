@@ -65,7 +65,7 @@ jobs:
             name: Linux powerpc64le
             image: debian/bookworm
             arch: ppc64le
-          - os: macos-x86_64
+          - os: macos-15-intel
             name: macOS x86-64
           - os: macos-14
             name: macOS aarch64

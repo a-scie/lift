@@ -4,6 +4,7 @@
 
 import dataclasses
 import json
+import os
 import re
 import urllib.parse
 from dataclasses import dataclass
@@ -67,7 +68,11 @@ class FingerprintedAsset:
 class Distributions:
     @classmethod
     def fetch(
-        cls, base_url: Url, version: Version, flavor: str, release: str | None = None
+        cls,
+        base_url: Url,
+        version: Version,
+        flavor: Flavor,
+        release: str | None = None,
     ) -> Distributions:
         rel_path = (
             PurePath(f"download/{release}" if release else "latest/download")
@@ -89,7 +94,7 @@ class Distributions:
     release: str
     latest: bool
     version: Version
-    flavor: str
+    flavor: Flavor
     assets: tuple[FingerprintedAsset, ...]
 
     def serialize(self, base_dir: Path) -> None:
@@ -131,7 +136,23 @@ class Asset:
         )
 
 
-class _Default(str):
+class Flavor(str):
+    __match_args__ = ("value",)
+
+    def __init__(self, value):
+        self.value = value
+        str.__init__(value)
+
+
+class DefaultFlavor(Flavor):
+    pass
+
+
+class FlavorRe(Flavor):
+    pass
+
+
+class SynthesizedFlavor(Flavor):
     pass
 
 
@@ -183,12 +204,24 @@ class Config:
         default=None,
         metadata=metadata("For Linux x86_64 platforms, the libc to link against."),
     )
-    flavor: str = dataclasses.field(
-        default=_Default("install_only"),
+    flavor: Flavor = dataclasses.field(
+        default=DefaultFlavor("install_only"),
         metadata=metadata(
             """The flavor of the Python Standalone Builds release to use.
 
             Currently accepts 'install_only', 'install_only_stripped' and any '-full' flavor.
+
+            ```{note}
+            To select a free-threaded install_only or install_only_stripped build, use the 't'
+            version suffix.
+            ```
+
+            ```{caution}
+            Older Python Standalone Builds do not provide install_only and install_only_stripped
+            distributions for free-threaded builds; so you should check
+            [their releases](https://github.com/astral-sh/python-build-standalone/releases) for
+            availability.
+            ```
 
             ```{caution}
             Python Standalone Builds does not provide all variants of '-full' flavors for all Python
@@ -217,7 +250,7 @@ class Config:
             suffix: str
             description: str
             version: str
-            flavor: str
+            flavor: Flavor
 
         flavor_request: FlavorRequest | None = None
         if self.version.endswith(("td", "dt")):
@@ -225,25 +258,44 @@ class Config:
                 suffix=self.version[-2:],
                 description="freethreaded debug",
                 version=self.version[:-2],
-                flavor=re.escape("freethreaded+debug-full"),
+                flavor=Flavor("freethreaded+debug-full"),
+            )
+        elif (
+            self.version.endswith("t")
+            and not isinstance(self.flavor, DefaultFlavor)
+            and self.flavor
+            in (
+                Flavor("install_only"),
+                Flavor("install_only_stripped"),
+            )
+        ):
+            flavor_request = FlavorRequest(
+                suffix=self.version[-1:],
+                description="freethreaded",
+                version=self.version[:-1],
+                flavor=SynthesizedFlavor(f"freethreaded-{self.flavor}"),
             )
         elif self.version.endswith("t"):
             flavor_request = FlavorRequest(
                 suffix=self.version[-1:],
                 description="freethreaded",
                 version=self.version[:-1],
-                flavor=r"freethreaded(?:\+(?:pgo|lto)){1,2}-full",
+                flavor=FlavorRe(r"freethreaded(?:\+(?:pgo|lto)){1,2}-full"),
             )
         elif self.version.endswith("d"):
             flavor_request = FlavorRequest(
                 suffix=self.version[-1:],
                 description="debug",
                 version=self.version[:-1],
-                flavor=re.escape("debug-full"),
+                flavor=Flavor("debug-full"),
             )
 
         if flavor_request:
-            if self.flavor and not isinstance(self.flavor, _Default):
+            if (
+                self.flavor
+                and not isinstance(self.flavor, DefaultFlavor)
+                and not isinstance(flavor_request.flavor, SynthesizedFlavor)
+            ):
                 raise InputError(
                     f"The suffix '{flavor_request.suffix}' of version "
                     f"'{flavor_request.version}{flavor_request.suffix}' indicates a "
@@ -254,7 +306,7 @@ class Config:
             object.__setattr__(self, "version", flavor_request.version)
             object.__setattr__(self, "flavor", flavor_request.flavor)
         else:
-            object.__setattr__(self, "flavor", re.escape(self.flavor))
+            object.__setattr__(self, "flavor", self.flavor)
 
 
 @dataclass(frozen=True)
@@ -422,14 +474,15 @@ class PythonBuildStandalone(Provider[Config]):
         release = release_data["tag_name"]
         # Names are like:
         #  cpython-3.9.16+20221220-x86_64_v3-unknown-linux-musl-install_only.tar.gz
+        flavor = config.flavor if isinstance(config.flavor, FlavorRe) else re.escape(config.flavor)
         name_re = re.compile(
             rf"^cpython-(?P<exact_version>{re.escape(str(version))}(?:\.\d+)*((a|b|rc)\d+)?)"
-            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{config.flavor}\.(?P<extension>.+)$"
+            rf"\+{re.escape(release)}-(?P<target_triple>.+)-{flavor}\.(?P<extension>.+)$"
         )
 
         # N.B.: There are 3 types of files in PythonBuildStandalone releases:
         # 1. The release archive.
-        # 2. The release archive .sah256 file with its individual checksum.
+        # 2. The release archive .sha256 file with its individual checksum.
         # 3. The SHA256SUMS file with all the release archive checksums.
         base_url = Url("https://github.com/astral-sh/python-build-standalone/releases")
         sha256sums_url: Url | None = None
@@ -535,7 +588,12 @@ class PythonBuildStandalone(Provider[Config]):
         )
         placeholders = {}
         match self._distributions.flavor:
-            case "install_only" | "install_only_stripped":
+            case (
+                Flavor("install_only")
+                | Flavor("install_only_stripped")
+                | SynthesizedFlavor("freethreaded-install_only")
+                | SynthesizedFlavor("freethreaded-install_only_stripped")
+            ):
                 if platform_spec.is_windows:
                     placeholders[Identifier("python")] = "python\\python.exe"
                 else:
@@ -550,8 +608,13 @@ class PythonBuildStandalone(Provider[Config]):
                     placeholders[Identifier("python")] = f"python/install/bin/python{version}"
                     placeholders[Identifier("pip")] = f"python/install/bin/pip{version}"
             case flavor:
-                raise InputError(
+                error_lines = [
                     "PythonBuildStandalone currently only understands 'install_only', "
                     f"'install_only_stripped' and '*-full' flavors of distribution; given: {flavor}"
-                )
+                ]
+                if "freethreaded" in flavor:
+                    error_lines.append(
+                        "To select a free-threaded build, use the 't' version suffix instead."
+                    )
+                raise InputError(os.linesep.join(error_lines))
         return Distribution(id=self.id, file=file, placeholders=FrozenDict(placeholders))

@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.19.0
+
+This release adds [PBS][PBS] provider support for free-threaded install_only and
+install_only_stripped interpreter distributions.
+
 ## 0.18.1
 
 This release passes the `scie_jump.digest.fingerprint` through to the `scie.jump.hash` lift manifest
