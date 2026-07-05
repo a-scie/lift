@@ -31,7 +31,7 @@ from science.config import parse_config_file
 from science.hashing import Digest, Fingerprint
 from science.model import ScieJump
 from science.os import IS_WINDOWS
-from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Os, Platform
+from science.platform import CURRENT_OS, CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, LibC, Os, Platform
 from science.providers import PyPy
 
 
@@ -1692,10 +1692,12 @@ def musl_static(tmp_path: Path, science_pyz: Path) -> Path:
     return tmp_path / CURRENT_PLATFORM.binary_name("musl-static")
 
 
-@pytest.mark.skipif(
-    CURRENT_PLATFORM is not Platform.Linux_x86_64,
-    reason="This test needs to run a Linux x86_64 scie.",
+skip_if_not_linux = pytest.mark.skipif(
+    CURRENT_OS is not Os.Linux, reason="This test needs to run a Linux scie."
 )
+
+
+@skip_if_not_linux
 def test_PBS_musl_static_variants(tmp_path: Path, musl_static: Path) -> None:
     scie_base = tmp_path / "scie-base"
     script = dedent(
@@ -1728,6 +1730,7 @@ def test_PBS_musl_static_variants(tmp_path: Path, musl_static: Path) -> None:
     assert_scie(debug=True)
 
 
+@skip_if_not_linux
 @pytest.mark.skipif(
     which("docker") is None, reason="The docker binary must be present to run this test."
 )
