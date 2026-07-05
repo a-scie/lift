@@ -1,0 +1,30 @@
+[lift]
+name = "musl-static"
+description = "Tests a Python scie that can run on either a gnu or musl libc Linux machine."
+
+[[lift.interpreters]]
+id = "regular"
+libc = "musl+static"
+provider = "PythonBuildStandalone"
+release = "20260623"
+lazy = false
+version = "3.14.6"
+
+[[lift.interpreters]]
+id = "debug"
+libc = "musl+static"
+provider = "PythonBuildStandalone"
+release = "20260623"
+lazy = false
+version = "3.14.6d"
+
+[[lift.interpreter_groups]]
+id = "cpython"
+selector = "{scie.env.PYTHON=regular}"
+members = [
+    "regular",
+    "debug"
+]
+
+[[lift.commands]]
+exe = "#{cpython:python}"

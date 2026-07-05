@@ -252,6 +252,14 @@ class Config:
             version: str
             flavor: Flavor
 
+        if self.libc is LibC.MUSL_STATIC and self.version.endswith(("td", "dt", "t")):
+            raise InputError(
+                "The libc selection of musl+static cannot be combined with a free-threaded version "
+                "suffix.\n"
+                "Python Build Standalone does not publish free-threaded builds statically linked "
+                "against musl libc."
+            )
+
         flavor_request: FlavorRequest | None = None
         if self.version.endswith(("td", "dt")):
             flavor_request = FlavorRequest(
@@ -287,7 +295,16 @@ class Config:
                 suffix=self.version[-1:],
                 description="debug",
                 version=self.version[:-1],
-                flavor=Flavor("debug-full"),
+                flavor=Flavor(
+                    "debug+static-full" if self.libc is LibC.MUSL_STATIC else "debug-full"
+                ),
+            )
+        elif self.libc is LibC.MUSL_STATIC:
+            flavor_request = FlavorRequest(
+                suffix="",
+                description="static",
+                version=self.version,
+                flavor=Flavor("lto+static-full"),
             )
 
         if flavor_request:
@@ -296,13 +313,20 @@ class Config:
                 and not isinstance(self.flavor, DefaultFlavor)
                 and not isinstance(flavor_request.flavor, SynthesizedFlavor)
             ):
-                raise InputError(
-                    f"The suffix '{flavor_request.suffix}' of version "
-                    f"'{flavor_request.version}{flavor_request.suffix}' indicates a "
-                    f"{flavor_request.description} flavor CPython build should be selected and "
-                    f"cannot be combined with the explicit flavor '{self.flavor}'.\n"
-                    f"Either use a version suffix or an explicit flavor, but not both."
-                )
+                if flavor_request.suffix:
+                    raise InputError(
+                        f"The suffix '{flavor_request.suffix}' of version "
+                        f"'{flavor_request.version}{flavor_request.suffix}' indicates a "
+                        f"{flavor_request.description} flavor CPython build should be selected and "
+                        f"cannot be combined with the explicit flavor '{self.flavor}'.\n"
+                        f"Either use a version suffix or an explicit flavor, but not both."
+                    )
+                else:
+                    raise InputError(
+                        f"The libc selection of musl+static cannot be combined with the explicit "
+                        f"flavor '{self.flavor}'.\n"
+                        f"Remove the explicit flavor if you want a static musl distribution."
+                    )
             object.__setattr__(self, "version", flavor_request.version)
             object.__setattr__(self, "flavor", flavor_request.flavor)
         else:
@@ -368,9 +392,9 @@ class PythonBuildStandalone(Provider[Config]):
         match platform:
             case Platform.Linux_aarch64:
                 match libc, target_triple:
-                    case LibC.MUSL, "aarch64-unknown-linux-musl":
+                    case LibC.MUSL | LibC.MUSL_STATIC, "aarch64-unknown-linux-musl":
                         return 0
-                    case LibC.GLIBC, "aarch64-unknown-linux-gnu":
+                    case LibC.GLIBC | LibC.MUSL_STATIC, "aarch64-unknown-linux-gnu":
                         return 0
             case Platform.Linux_armv7l:
                 match target_triple:
@@ -392,15 +416,15 @@ class PythonBuildStandalone(Provider[Config]):
                         return 0
             case Platform.Linux_x86_64:
                 match libc, target_triple:
-                    case LibC.MUSL, "x86_64-unknown-linux-musl":
+                    case LibC.MUSL | LibC.MUSL_STATIC, "x86_64-unknown-linux-musl":
                         return 0
-                    case LibC.GLIBC, "x86_64-unknown-linux-gnu":
+                    case LibC.GLIBC | LibC.MUSL_STATIC, "x86_64-unknown-linux-gnu":
                         return 0
-                    case LibC.GLIBC, "x86_64_v2-unknown-linux-gnu":
+                    case LibC.GLIBC | LibC.MUSL_STATIC, "x86_64_v2-unknown-linux-gnu":
                         return 1
-                    case LibC.GLIBC, "x86_64_v3-unknown-linux-gnu":
+                    case LibC.GLIBC | LibC.MUSL_STATIC, "x86_64_v3-unknown-linux-gnu":
                         return 2
-                    case LibC.GLIBC, "x86_64_v4-unknown-linux-gnu":
+                    case LibC.GLIBC | LibC.MUSL_STATIC, "x86_64_v4-unknown-linux-gnu":
                         return 3
             case Platform.Macos_aarch64:
                 match target_triple:
