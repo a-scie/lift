@@ -696,6 +696,7 @@ def _lift(
 ) -> None:
     # N.B.: Help is defined above in the _lift group decorator since it's a dynamic string.
 
+    platforms = [Platform.current()] if libcs and not platforms else platforms
     libcs = libcs or [None]
     ctx.obj = LiftConfig(
         file_mappings=tuple(file_mappings),

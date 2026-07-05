@@ -13,6 +13,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
+from importlib import resources
 from pathlib import Path
 from shutil import which
 from subprocess import CalledProcessError
@@ -1669,3 +1670,88 @@ def test_custom_jump_invalid(tmp_path: Path, science_exe: Path, digest: Digest) 
         )
         assert VERSION == manifest["scie"]["jump"]["version"]
         assert (digest.size or GOOD_SIZE) == manifest["scie"]["jump"]["size"]
+
+
+@pytest.fixture
+def musl_static(tmp_path: Path, science_pyz: Path) -> Path:
+    with resources.as_file(resources.files("data") / "PBS-musl-static.toml") as config:
+        subprocess.run(
+            args=[
+                sys.executable,
+                str(science_pyz),
+                "lift",
+                "--libc",
+                "musl+static",
+                "build",
+                "--dest-dir",
+                str(tmp_path),
+                str(config),
+            ],
+            check=True,
+        )
+    return tmp_path / CURRENT_PLATFORM.binary_name("musl-static")
+
+
+skip_if_not_linux_x86_64 = pytest.mark.skipif(
+    CURRENT_PLATFORM is not Platform.Linux_x86_64, reason="This test needs to run a Linux scie."
+)
+
+
+@skip_if_not_linux_x86_64
+def test_PBS_musl_static_variants(tmp_path: Path, musl_static: Path) -> None:
+    scie_base = tmp_path / "scie-base"
+    script = dedent(
+        """\
+        import sys
+        import sysconfig
+
+
+        print("Debug?:", bool(sysconfig.get_config_var("Py_DEBUG")), file=sys.stderr)
+        print("Python", ".".join(map(str, sys.version_info[:3])))
+        """
+    )
+
+    def assert_scie(*, debug: bool) -> None:
+        result = subprocess.run(
+            args=[musl_static, "-c", script],
+            env={
+                **os.environ,
+                "SCIE_BASE": str(scie_base),
+                "PYTHON": "debug" if debug else "regular",
+            },
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert f"Debug?: {debug}\n" == result.stderr
+        assert "Python 3.14.6\n" == result.stdout
+
+    assert_scie(debug=False)
+    assert_scie(debug=True)
+
+
+@skip_if_not_linux_x86_64
+@pytest.mark.skipif(
+    which("docker") is None, reason="The docker binary must be present to run this test."
+)
+def test_PBS_musl_static_in_image(tmp_path: Path, musl_static: Path) -> None:
+    def assert_musl_static_in_image(image: str) -> None:
+        result = subprocess.run(
+            args=[
+                "docker",
+                "run",
+                "--rm",
+                "-v",
+                f"{musl_static}:/musl-static",
+                image,
+                "/musl-static",
+                "-V",
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        assert "Python 3.14.6\n" == result.stdout
+
+    assert_musl_static_in_image("alpine")
+    assert_musl_static_in_image("debian:stable-slim")

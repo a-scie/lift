@@ -168,6 +168,7 @@ class LibC(Enum):
 
     GLIBC = "gnu"
     MUSL = "musl"
+    MUSL_STATIC = "musl+static"
 
     def __str__(self) -> str:
         return self.value
@@ -210,6 +211,8 @@ class PlatformSpec:
     def qualified_binary_name(self, binary_name: str, gnu_prefix: bool = False) -> str:
         if LibC.MUSL is self.libc or (LibC.GLIBC is self.libc and gnu_prefix):
             return self.platform.qualified_binary_name(binary_name, self.libc.value)
+        elif LibC.MUSL_STATIC is self.libc:
+            return self.platform.qualified_binary_name(binary_name, LibC.MUSL.value)
         return self.platform.qualified_binary_name(binary_name)
 
     @property

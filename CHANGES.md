@@ -1,5 +1,10 @@
 # Release Notes
 
+## 0.20.0
+
+This release adds [PBS][PBS] provider support for static musl distributions via the new libc enum
+value of 'musl+static'. Both regular and debug (via the 'd' version suffix) builds are available.
+
 ## 0.19.0
 
 This release adds [PBS][PBS] provider support for free-threaded install_only and
