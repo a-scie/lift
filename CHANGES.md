@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.21.0
+
+This release add [PBS][PBS] and [PyPy](https://pypy.org/) provider support for selecting windowed
+interpreter binaries on Windows. Both now support the `#{<id>:pythonw}` placeholder for this and the
+PyPy provider additionally supports the `#{<id>:pypyw}` placeholder. On non-Windows platforms these
+new placeholders are aliases for the `python` and `pypy` placeholders.
+
+In addition, this release adds support for a new `[lift] windowed` boolean setting. When the lift
+manifest is marked as windowed with this setting, scies targeting Windows will be generated with a
+`scie-jumpw.exe` scie tip that avoids launching a console window.
+
 ## 0.20.0
 
 This release adds [PBS][PBS] provider support for static musl distributions via the new libc enum

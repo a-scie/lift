@@ -165,6 +165,11 @@ class PyPy(Provider[Config]):
     (`#{<id>:python}`) are supported and will be substituted with the selected distribution's PyPy
     interpreter binary path.
 
+    For all platforms, a `pypyw` placeholder (`#{<id>:pypyw}`) and a `pythonw` placeholder
+    (`#{<id>:pythonw}`) are supported. On Windows they will be substituted with the selected
+    distribution's windowed PyPy interpreter binary path. On all other platforms they are synonyms
+    for the `pypy` and `python` placeholders, respectively.
+
     [PyPy]: https://pypy.org/
     """
 
@@ -340,9 +345,15 @@ class PyPy(Provider[Config]):
         )
 
         placeholders = {}
-        pypy = (
-            "pypy" if 2 == selected_asset.version.major else f"pypy{selected_asset.version.major}"
-        )
+        if 3 == selected_asset.version.major and selected_asset.release in (
+            "v7.3.2",
+            "v7.3.3",
+            "v7.3.4",
+            "v7.3.5",
+        ):
+            pypy = f"pypy{selected_asset.version.major}"
+        else:
+            pypy = "pypy"
 
         # These 4 distributions are the only distributions with `-portable` in the archive name, but
         # not in the top level archive dir name:
@@ -358,9 +369,15 @@ class PyPy(Provider[Config]):
             pypy_binary = f"{top_level_archive_dir}\\{pypy}.exe"
             placeholders[Identifier("pypy")] = pypy_binary
             placeholders[Identifier("python")] = pypy_binary
+
+            pypyw_binary = f"{top_level_archive_dir}\\{pypy}w.exe"
+            placeholders[Identifier("pypyw")] = pypyw_binary
+            placeholders[Identifier("pythonw")] = pypyw_binary
         else:
             pypy_binary = f"{top_level_archive_dir}/bin/{pypy}"
             placeholders[Identifier("pypy")] = pypy_binary
             placeholders[Identifier("python")] = pypy_binary
+            placeholders[Identifier("pypyw")] = pypy_binary
+            placeholders[Identifier("pythonw")] = pypy_binary
 
         return Distribution(id=self.id, file=file, placeholders=FrozenDict(placeholders))

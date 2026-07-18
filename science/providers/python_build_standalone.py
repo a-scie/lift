@@ -342,6 +342,10 @@ class PythonBuildStandalone(Provider[Config]):
     For all platforms, a `python` placeholder (`#{<id>:python}`) is supported and will be
     substituted with the selected distribution's Python binary path.
 
+    For all platforms, a `pythonw` placeholder (`#{<id>:pythonw}`) is supported. On Windows, it will
+    be substituted with the selected distribution's windowed Python binary path. On all other
+    platforms it is a synonym for the `python` placeholder.
+
     On the Linux and macOS platforms a `pip` placeholder (`#{<id>:pip}`) is supported and will be
     substituted with the selected distribution's pip script path.
 
@@ -620,16 +624,22 @@ class PythonBuildStandalone(Provider[Config]):
             ):
                 if platform_spec.is_windows:
                     placeholders[Identifier("python")] = "python\\python.exe"
+                    placeholders[Identifier("pythonw")] = "python\\pythonw.exe"
                 else:
                     version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
-                    placeholders[Identifier("python")] = f"python/bin/python{version}"
+                    python_binary = f"python/bin/python{version}"
+                    placeholders[Identifier("python")] = python_binary
+                    placeholders[Identifier("pythonw")] = python_binary
                     placeholders[Identifier("pip")] = f"python/bin/pip{version}"
             case flavor if flavor.endswith("-full"):
                 if platform_spec.is_windows:
                     placeholders[Identifier("python")] = "python\\install\\python.exe"
+                    placeholders[Identifier("pythonw")] = "python\\install\\pythonw.exe"
                 else:
                     version = f"{selected_asset.version.major}.{selected_asset.version.minor}"
-                    placeholders[Identifier("python")] = f"python/install/bin/python{version}"
+                    python_binary = f"python/install/bin/python{version}"
+                    placeholders[Identifier("python")] = python_binary
+                    placeholders[Identifier("pythonw")] = python_binary
                     placeholders[Identifier("pip")] = f"python/install/bin/pip{version}"
             case flavor:
                 error_lines = [
