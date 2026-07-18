@@ -34,24 +34,42 @@ def download_a_scie_executables(
             dest = dest_dir / project_name / "latest" / "download"
         dest.mkdir(parents=True, exist_ok=True)
         for platform_spec in platform_specs:
-            binary = dest / a_scie.qualify_binary_name(
-                binary_name, version=version, platform_spec=platform_spec
-            )
-            click.echo(
-                f"Downloading {binary_name} {version or 'latest'} for {platform_spec} to "
-                f"{binary}...",
-                err=True,
-            )
-            result = a_scie.load_project_release(
-                project_name=project_name,
-                binary_name=binary_name,
-                version=version,
-                platform_spec=platform_spec,
-            )
-            shutil.copy(result.path, binary)
-            binary.with_name(f"{binary.name}.sha256").write_text(
-                f"{result.digest.fingerprint} *{binary.name}"
-            )
+            downloaded = set[Path]()
+
+            def download_binary(windowed: bool = False) -> None:
+                binary = dest / a_scie.qualify_binary_name(
+                    binary_name,
+                    version=version,
+                    platform_spec=platform_spec,
+                    windowed=windowed,
+                    warn=False,
+                )
+                if binary in downloaded:
+                    return
+
+                click.echo(
+                    f"Downloading {binary_name} {version or 'latest'} for {platform_spec} to "
+                    f"{binary}...",
+                    err=True,
+                )
+                result = a_scie.load_project_release(
+                    project_name=project_name,
+                    binary_name=binary_name,
+                    version=version,
+                    platform_spec=platform_spec,
+                    windowed=windowed,
+                    warn=False,
+                )
+                downloaded.add(result.path)
+                shutil.copy(result.path, binary)
+                binary.with_name(f"{binary.name}.sha256").write_text(
+                    f"{result.digest.fingerprint} *{binary.name}"
+                )
+                downloaded.add(binary)
+
+            download_binary()
+            if binary_name == "scie-jump" and platform_spec.is_windows:
+                download_binary(windowed=True)
 
 
 def download_provider_distribution(

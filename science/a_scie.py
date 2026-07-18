@@ -25,6 +25,7 @@ def qualify_binary_name(
     version: Version | None = None,
     platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
     windowed: bool = False,
+    warn: bool = True,
 ) -> str:
     # N.B.: The scie-jump added support for `-{gnu,musl}-linux-{aarch,x86_}64` suffixes in the
     # 1.9.0 release.
@@ -43,11 +44,12 @@ def qualify_binary_name(
         and version
         and version < Version("1.12.0")
     ):
-        logger.warning(
-            f"There is no scie-jumpw.exe released for scie-jump {version}.\n"
-            f"When the scie launches it will open a console window behind the main window.\n"
-            f"For windowed application support, you must use scie-jump 1.12.0 or higher."
-        )
+        if warn:
+            logger.warning(
+                f"There is no scie-jumpw.exe released for scie-jump {version}.\n"
+                f"When the scie launches it will open a console window behind the main window.\n"
+                f"For windowed application support, you must use scie-jump 1.12.0 or higher."
+            )
         windowed = False
     return platform_spec.platform.qualified_binary_name(binary_name, windowed=windowed)
 
@@ -66,9 +68,10 @@ def load_project_release(
     platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
     base_url: Url | None = None,
     windowed: bool = False,
+    warn: bool = True,
 ) -> LoadResult:
     qualified_binary_name = qualify_binary_name(
-        binary_name, version=version, platform_spec=platform_spec, windowed=windowed
+        binary_name, version=version, platform_spec=platform_spec, windowed=windowed, warn=warn
     )
     root_url = (base_url or f"https://github.com/a-scie/{project_name}/releases").rstrip("/")
     if version:

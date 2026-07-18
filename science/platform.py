@@ -237,7 +237,7 @@ class PlatformSpec:
         return self.platform.join_path(*components)
 
     def __repr__(self) -> str:
-        if self.libc:
+        if self.libc and self.platform.os is Os.Linux:
             return f"""{{platform = "{self.platform}", libc = "{self.libc}"}}"""
         return self.platform.value
 
