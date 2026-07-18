@@ -484,6 +484,22 @@ def _list(emit_json: bool) -> None:
             click.echo(textwrap.indent(provider_info.description, prefix=indent))
 
 
+def use_jump_option():
+    return click.option(
+        "--use-jump",
+        metavar="PATH",
+        type=Path,
+        help=dedent(
+            """\
+            The path to a scie-jump executable or else the path of a clone of the scie-jump repo.
+
+            Mainly useful for testing new `scie-jump` fixes or integrating new `scie-jump` features
+            into science. The canonical repo to clone is at https://github.com/a-scie/jump.
+            """
+        ),
+    )
+
+
 pass_lift = click.make_pass_decorator(LiftConfig)
 
 
@@ -683,6 +699,7 @@ pass_lift = click.make_pass_decorator(LiftConfig)
     callback=lambda _ctx, _param, value: [LibC(v) for v in value],
     help="Override any configured libc providers and use these libc providers instead.",
 )
+@use_jump_option()
 @click.pass_context
 def _lift(
     ctx: click.Context,
@@ -693,6 +710,7 @@ def _lift(
     app_info: list[AppInfo],
     platforms: list[Platform],
     libcs: list[LibC | None],
+    use_jump: Path | None,
 ) -> None:
     # N.B.: Help is defined above in the _lift group decorator since it's a dynamic string.
 
@@ -707,6 +725,7 @@ def _lift(
         platform_specs=tuple(
             PlatformSpec(platform, libc) for platform in platforms for libc in libcs
         ),
+        use_jump=use_jump,
     )
 
 
@@ -802,22 +821,6 @@ def preserve_sandbox_option():
             sandbox, the native `scie-jump` binary is also included such that you can change directory
             to the sandbox and run `scie-jump` (or `scie-jump.exe` on Windows) to test assembling the
             scie "by hand".
-            """
-        ),
-    )
-
-
-def use_jump_option():
-    return click.option(
-        "--use-jump",
-        metavar="REPO_PATH",
-        type=Path,
-        help=dedent(
-            """\
-            The path to a clone of the scie-jump repo.
-
-            Mainly useful for testing new `scie-jump` fixes or integrating new `scie-jump` features
-            into science. The canonical repo to clone is at https://github.com/a-scie/jump.
             """
         ),
     )

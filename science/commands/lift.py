@@ -100,6 +100,7 @@ class LiftConfig:
     app_info: tuple[AppInfo, ...] = ()
     app_name: str | None = None
     platform_specs: tuple[PlatformSpec, ...] = ()
+    use_jump: Path | None = None
 
 
 def export_manifest(
@@ -298,10 +299,15 @@ def export_manifest(
 
         build_info = application.build_info if lift_config.include_provenance else None
 
+        use_jump = lift_config.use_jump or use_jump
         load_result = (
-            a_scie.custom_jump(repo_path=use_jump)
+            a_scie.custom_jump(path=use_jump)
             if use_jump
-            else a_scie.jump(specification=application.scie_jump, platform_spec=platform_spec)
+            else a_scie.jump(
+                specification=application.scie_jump,
+                platform_spec=platform_spec,
+                windowed=application.windowed,
+            )
         )
         if load_result.version:
             scie_jump = ScieJump(version=load_result.version, digest=load_result.digest)

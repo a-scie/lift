@@ -2,6 +2,7 @@
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
 import atexit
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -16,11 +17,14 @@ from science.hashing import Digest, Fingerprint
 from science.model import Ptex, ScieJump, Url
 from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, Platform, PlatformSpec
 
+logger = logging.getLogger(__name__)
+
 
 def qualify_binary_name(
     binary_name: str,
     version: Version | None = None,
     platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
+    windowed: bool = False,
 ) -> str:
     # N.B.: The scie-jump added support for `-{gnu,musl}-linux-{aarch,x86_}64` suffixes in the
     # 1.9.0 release.
@@ -32,7 +36,20 @@ def qualify_binary_name(
     ):
         return platform_spec.qualified_binary_name(binary_name, gnu_prefix=True)
 
-    return platform_spec.platform.qualified_binary_name(binary_name)
+    if (
+        windowed
+        and binary_name == "scie-jump"
+        and platform_spec.is_windows
+        and version
+        and version < Version("1.12.0")
+    ):
+        logger.warning(
+            f"There is no scie-jumpw.exe released for scie-jump {version}.\n"
+            f"When the scie launches it will open a console window behind the main window.\n"
+            f"For windowed application support, you must use scie-jump 1.12.0 or higher."
+        )
+        windowed = False
+    return platform_spec.platform.qualified_binary_name(binary_name, windowed=windowed)
 
 
 @dataclass(frozen=True)
@@ -48,9 +65,10 @@ def load_project_release(
     fingerprint: Digest | Fingerprint | None = None,
     platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
     base_url: Url | None = None,
+    windowed: bool = False,
 ) -> LoadResult:
     qualified_binary_name = qualify_binary_name(
-        binary_name, version=version, platform_spec=platform_spec
+        binary_name, version=version, platform_spec=platform_spec, windowed=windowed
     )
     root_url = (base_url or f"https://github.com/a-scie/{project_name}/releases").rstrip("/")
     if version:
@@ -71,7 +89,9 @@ def load_project_release(
 
 
 def jump(
-    specification: ScieJump | None = None, platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC
+    specification: ScieJump | None = None,
+    platform_spec: PlatformSpec = CURRENT_PLATFORM_SPEC,
+    windowed: bool = False,
 ) -> LoadResult:
     version = specification.version if specification else None
     fingerprint = specification.digest if specification and specification.digest else None
@@ -83,17 +103,17 @@ def jump(
         fingerprint=fingerprint,
         platform_spec=platform_spec,
         base_url=base_url,
+        windowed=windowed,
     )
 
 
-def custom_jump(repo_path: Path) -> LoadResult:
-    dist_dir = tempfile.mkdtemp()
-    atexit.register(shutil.rmtree, dist_dir, ignore_errors=True)
-    subprocess.run(
-        args=["cargo", "run", "-p", "package", "--", dist_dir], cwd=repo_path, check=True
-    )
+def custom_jump(path: Path) -> LoadResult:
     qualified_binary_name = CURRENT_PLATFORM.qualified_binary_name("scie-jump")
-    path = Path(dist_dir) / qualified_binary_name
+    if path.is_dir():
+        dist_dir = tempfile.mkdtemp()
+        atexit.register(shutil.rmtree, dist_dir, ignore_errors=True)
+        subprocess.run(args=["cargo", "run", "-p", "package", "--", dist_dir], cwd=path, check=True)
+        path = Path(dist_dir) / qualified_binary_name
     return LoadResult(path=path, digest=Digest.hash(path), binary_name=qualified_binary_name)
 
 

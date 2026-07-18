@@ -66,14 +66,22 @@ class OsArch:
     def extension(self):
         return ".exe" if self.is_windows else ""
 
+    def _windowed_indicator(self, windowed: bool = False):
+        return "w" if windowed and self.os is Os.Windows else ""
+
     def join_path(self, *components: str) -> str:
         return ("\\" if self.is_windows else "/").join(components)
 
-    def binary_name(self, binary_name: str) -> str:
-        return f"{binary_name}{self.extension}"
+    def binary_name(self, binary_name: str, windowed: bool = False) -> str:
+        windowed_indicator = self._windowed_indicator(windowed)
+        return f"{binary_name}{windowed_indicator}{self.extension}"
 
-    def qualified_binary_name(self, binary_name: str, *extra_qualifiers: str) -> str:
-        return f"{binary_name}-{'-'.join((*extra_qualifiers, self.value))}{self.extension}"
+    def qualified_binary_name(
+        self, binary_name: str, *extra_qualifiers: str, windowed: bool = False
+    ) -> str:
+        qualifiers = "-".join((*extra_qualifiers, self.value))
+        windowed_indicator = self._windowed_indicator(windowed)
+        return f"{binary_name}-{qualifiers}{windowed_indicator}{self.extension}"
 
     def __str__(self) -> str:
         return self.value

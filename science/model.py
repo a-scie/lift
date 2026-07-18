@@ -563,6 +563,16 @@ class InterpreterGroup:
 class Application(Dataclass):
     name: str
     description: str | None = None
+    windowed: bool = dataclasses.field(
+        default=False,
+        metadata=metadata(
+            f"""Indicates the scie application is windowed.
+
+            On Windows, this ensures a [`scie-jump`](#{Ref(ScieJump)}) with support for launching
+            windowed apps (`scie-jumpw.exe`) is used. On all other platforms this option is ignored.
+            """
+        ),
+    )
     load_dotenv: bool = False
     build_info: BuildInfo | None = dataclasses.field(default=None, metadata=metadata(inline=True))
     platform_specs: frozenset[PlatformSpec] = dataclasses.field(
