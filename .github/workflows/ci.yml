@@ -79,7 +79,7 @@ jobs:
       SCIENCE_NET_TIMEOUT: 30.0
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v7.6.0
+        uses: astral-sh/setup-uv@v10.3.0
       - name: Setup uv
         run: |
           export UV="$(which uv)"

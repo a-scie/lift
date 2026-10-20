@@ -6,7 +6,7 @@ workflows:
     '.github/workflows/ci.yml':
         - 'actions/cache@v5.1.0'
         - 'actions/checkout@v6.1.0'
-        - 'astral-sh/setup-uv@v7.6.0'
+        - 'astral-sh/setup-uv@v10.3.0'
     '.github/workflows/doc-site.yml':
         - 'actions/checkout@v6.1.0'
         - 'actions/configure-pages@v5.0.0'
@@ -69,6 +69,11 @@ dependencies:
         repo_id: 496012378
         uses:
             - 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02'
+    'astral-sh/setup-uv@v10.3.0':
+        ref: 'v10.3.0'
+        commit: 'sha1-1c37ad07a6a961277cf70c0d37d6f313000f5884'
+        owner_id: 115962839
+        repo_id: 846733598
     'astral-sh/setup-uv@v7.6.0':
         ref: 'v7.6.0'
         commit: 'sha1-37802adc94f370d6bfd71619e3f0bf239e1f3b78'
