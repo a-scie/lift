@@ -59,7 +59,7 @@ jobs:
             arch: riscv64
           - os: ubuntu-24.04
             name: Linux s390x
-            image: debian/bookworm
+            image: debian/trixie
             arch: s390x
           - os: ubuntu-24.04
             name: Linux powerpc64le
