@@ -59,11 +59,11 @@ jobs:
             arch: riscv64
           - os: ubuntu-24.04
             name: Linux s390x
-            image: debian/bookworm
+            image: debian/trixie
             arch: s390x
           - os: ubuntu-24.04
             name: Linux powerpc64le
-            image: debian/bookworm
+            image: debian/trixie
             arch: ppc64le
           - os: macos-15-intel
             name: macOS x86-64
@@ -79,14 +79,14 @@ jobs:
       SCIENCE_NET_TIMEOUT: 30.0
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.3.0
       - name: Setup uv
         run: |
           export UV="$(which uv)"
           "${UV}" -V
           echo UV="${UV}" >> ${GITHUB_ENV}
       - name: Checkout Lift
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
       - name: Ensure aarch64 Python for Windows ARM
         if: matrix.os == 'windows-11-arm'
         run: |
@@ -96,7 +96,7 @@ jobs:
           echo UV_PYTHON="${UV_PYTHON_VERSION}" >> ${GITHUB_ENV}
       - name: Restore MyPy Cache
         id: restore-mypy-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v5.1.0
         with:
           path: .mypy_cache
           # We're using a key suffix / restore-keys prefix trick here to get an updatable cache.
@@ -113,7 +113,7 @@ jobs:
           "${UV}" run dev-cmd docker -- --image ${{ matrix.image }} --arch ${{ matrix.arch }} \
             ci --skip test --timings
       - name: Cache MyPy
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v5.1.0
         if: github.ref == 'refs/heads/main'
         with:
           path: .mypy_cache

@@ -11,15 +11,15 @@ version = "0.11.0"
 version2 = "1.8.0"
 
 [[lift.interpreters]]
-id = "cpython310"
+id = "cpython314"
 provider = "PythonBuildStandalone"
-version = "3.10"
+version = "3.14"
 lazy = true
 
 [[lift.interpreters]]
-id = "cpython311"
+id = "cpython315"
 provider = "PythonBuildStandalone"
-version = "3.11"
+version = "3.15"
 # N.B: `lizzy` is invalid, should be `lazy`.
 lizzy = true
 
@@ -27,8 +27,8 @@ lizzy = true
 id = "cpython"
 selector = "{scie.env.PYTHON}"
 members = [
-    "cpython310",
-    "cpython311",
+    "cpython314",
+    "cpython315",
 ]
 
 [[lift.commands]]

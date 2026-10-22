@@ -28,13 +28,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v7.6.0
       - name: Checkout Lift
         if: inputs.ref == ''
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
       - name: Checkout Lift
         if: inputs.ref != ''
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ inputs.ref }}
       - name: Build Doc Site
@@ -43,11 +43,11 @@ jobs:
           XDG_CACHE_HOME: "<USER_CACHE_DIR>"
         run: uv run dev-cmd --timings doc linkcheck
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v5.0.0
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v4.0.0
         with:
           path: "docs/build/html/"
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5
