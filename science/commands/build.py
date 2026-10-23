@@ -42,10 +42,7 @@ def assemble_scies(
     native_jump_path = (
         a_scie.custom_jump(path=use_jump)
         if use_jump
-        else a_scie.jump(
-            specification=application.scie_jump,
-            windowed=application.windowed,
-        )
+        else a_scie.jump(specification=application.scie_jump)
     ).path
 
     scies = list[ScieAssembly]()
