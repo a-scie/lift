@@ -1,7 +1,6 @@
 # Copyright 2023 Science project contributors.
 # Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-import dataclasses
 import hashlib
 import io
 import shutil
@@ -15,7 +14,7 @@ from science.commands import lift
 from science.commands.lift import LiftConfig, PlatformInfo
 from science.fs import temporary_directory
 from science.model import Application
-from science.platform import CURRENT_PLATFORM, CURRENT_PLATFORM_SPEC, PlatformSpec
+from science.platform import CURRENT_PLATFORM, PlatformSpec
 
 
 @dataclass(frozen=True)
@@ -31,18 +30,6 @@ class AssemblyInfo:
     scies: tuple[ScieAssembly, ...]
 
 
-def _native_jump(
-    application: Application, platform_specs: tuple[PlatformSpec, ...]
-) -> a_scie.LoadResult:
-    # The native scie-jump assembles each scie, so it comes from the same release and mirror as the
-    # scie-jump each scie embeds. A configured digest is that of one platform's binary, so it only
-    # applies when that platform is the only one and is the current one.
-    specification = application.scie_jump
-    if specification and specification.digest and platform_specs != (CURRENT_PLATFORM_SPEC,):
-        specification = dataclasses.replace(specification, digest=None)
-    return a_scie.jump(specification=specification)
-
-
 def assemble_scies(
     lift_config: LiftConfig,
     application: Application,
@@ -52,9 +39,13 @@ def assemble_scies(
     use_jump: Path | None,
     hash_functions: list[str],
 ) -> AssemblyInfo:
-    specs = tuple(platform_specs) or tuple(application.platform_specs)
     native_jump_path = (
-        a_scie.custom_jump(path=use_jump) if use_jump else _native_jump(application, specs)
+        a_scie.custom_jump(path=use_jump)
+        if use_jump
+        else a_scie.jump(
+            specification=application.scie_jump,
+            windowed=application.windowed,
+        )
     ).path
 
     scies = list[ScieAssembly]()
@@ -62,7 +53,7 @@ def assemble_scies(
         lift_config,
         application,
         dest_dir=dest_dir,
-        platform_specs=specs,
+        platform_specs=platform_specs,
         use_jump=use_jump,
     ):
         with temporary_directory("assemble") as build_dir:

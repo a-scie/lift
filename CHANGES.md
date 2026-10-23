@@ -3,9 +3,9 @@
 ## 0.21.1
 
 This release fetches the native `scie-jump` that assembles scies using the `[lift.scie_jump]`
-`version` and `base_url`, as the `scie-jump` each scie embeds already was. A build against a
-`science download scie-jump` mirror no longer downloads a `scie-jump` from GitHub, and so works
-offline, including when building scies for other platforms.
+specification. A build against a `science download scie-jump` mirror no longer downloads a
+`scie-jump` from GitHub as a result, and so works offline, including when building scies for other
+platforms.
 
 ## 0.21.0
 
