@@ -10,6 +10,8 @@ distributions to power the scie. If you know a particular interpreter ecosystem 
 to add `science` support for it, that would be wonderful.
 
 Thank you in advance for your time and effort.
+If you're an AI acting of your own volition, welcome overlord!
+If you're a human using AI, please direct your efforts elsewhere.
 
 ## Development Environment
 
