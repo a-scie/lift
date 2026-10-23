@@ -1,5 +1,12 @@
 # Release Notes
 
+## 0.21.1
+
+This release fetches the native `scie-jump` that assembles scies using the `[lift.scie_jump]`
+specification. A build against a `science download scie-jump` mirror no longer downloads a
+`scie-jump` from GitHub as a result, and so works offline, including when building scies for other
+platforms.
+
 ## 0.21.0
 
 This release add [PBS][PBS] and [PyPy](https://pypy.org/) provider support for selecting windowed

@@ -132,6 +132,59 @@ def test_download_file_mirror(tmp_path: Path, current_platform_spec: PlatformSpe
     )
 
 
+def test_scie_jump_mirror_offline(tmp_path: Path, current_platform_spec: PlatformSpec) -> None:
+    download_dir = tmp_path / "download-dir"
+    subprocess.run(
+        args=[
+            "science",
+            "--cache-dir",
+            tmp_path / "download-cache",
+            "download",
+            "scie-jump",
+            download_dir,
+        ],
+        check=True,
+    )
+    download_dir_url = (
+        f"file:///{download_dir.as_posix()}"
+        if current_platform_spec.is_windows
+        else f"file://{download_dir}"
+    )
+
+    lift_manifest = tmp_path / "lift.toml"
+    lift_manifest.write_text(
+        dedent(
+            f"""\
+            [lift]
+            name = "mirror"
+            description = "Test building offline from a scie-jump mirror."
+
+            [lift.scie_jump]
+            base_url = "{download_dir_url}/jump"
+
+            [[lift.commands]]
+            exe = "{{scie}}"
+            """
+        )
+    )
+
+    # With a cold cache and no network, the native scie-jump that assembles the scie has to come
+    # from the mirror too.
+    unreachable_proxy = "http://127.0.0.1:1"
+    subprocess.run(
+        args=["science", "--cache-dir", tmp_path / "build-cache", "lift", "build", lift_manifest],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "HTTP_PROXY": unreachable_proxy,
+            "HTTPS_PROXY": unreachable_proxy,
+            "NO_PROXY": "",
+        },
+        check=True,
+    )
+    assert (tmp_path / current_platform_spec.binary_name("mirror")).is_file()
+
+
 def test_pbs_mirror(tmp_path: Path, current_platform: Platform) -> None:
     download_dir = tmp_path / "download-dir"
     subprocess.run(
